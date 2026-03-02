@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -119,9 +120,8 @@ export default function ResultsPage() {
             return (
               <Card
                 key={question.$id}
-                className={`border-l-4 ${
-                  isCorrect ? 'border-green-500' : 'border-red-500'
-                } cursor-pointer hover:shadow-md transition-shadow`}
+                className={`border-l-4 ${isCorrect ? 'border-green-500' : 'border-red-500'
+                  } cursor-pointer hover:shadow-md transition-shadow`}
                 onClick={() => toggleExpand(index)}
               >
                 <CardContent className="p-4">
@@ -165,13 +165,12 @@ export default function ResultsPage() {
                           return (
                             <div
                               key={optionKey}
-                              className={`p-3 rounded-lg border-2 ${
-                                isCorrectOption
+                              className={`p-3 rounded-lg border-2 ${isCorrectOption
                                   ? 'bg-green-50 border-green-500 text-green-800'
                                   : isSelectedOption && !isCorrectOption
-                                  ? 'bg-red-50 border-red-500 text-red-800'
-                                  : 'bg-gray-50 border-gray-200'
-                              }`}
+                                    ? 'bg-red-50 border-red-500 text-red-800'
+                                    : 'bg-gray-50 border-gray-200'
+                                }`}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">

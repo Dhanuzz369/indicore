@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -50,10 +51,10 @@ export default function LoginPage() {
     try {
       await signIn(data.email, data.password)
       toast.success('Welcome back!')
-      
+
       // Small delay to ensure session cookie is set
       await new Promise(resolve => setTimeout(resolve, 500))
-      
+
       // Force a hard navigation to ensure middleware picks up the session
       window.location.href = '/dashboard'
     } catch (error) {
@@ -134,8 +135,8 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link 
-                    href="#" 
+                  <Link
+                    href="#"
                     className="text-sm text-[#FF6B00] hover:underline"
                   >
                     Forgot password?
@@ -169,9 +170,9 @@ export default function LoginPage() {
               </div>
 
               {/* Login Button */}
-              <Button 
-                type="submit" 
-                className="w-full bg-[#FF6B00] hover:bg-[#FF8C00]" 
+              <Button
+                type="submit"
+                className="w-full bg-[#FF6B00] hover:bg-[#FF8C00]"
                 disabled={loading}
                 size="lg"
               >

@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { getCurrentUser } from '@/lib/appwrite/auth'
@@ -98,7 +99,7 @@ export default function DashboardPage() {
   }
 
   // Calculate accuracy percentage
-  const accuracyPercentage = stats 
+  const accuracyPercentage = stats
     ? Math.round((stats.total_correct / Math.max(stats.total_attempted, 1)) * 100) + '%'
     : '0%'
 

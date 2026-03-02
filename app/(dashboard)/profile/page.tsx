@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -122,11 +123,11 @@ export default function ProfilePage() {
   // Get initials
   const initials = profile?.full_name
     ? profile.full_name
-        .split(' ')
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
+      .split(' ')
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
     : 'U'
 
   // ─────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -25,7 +26,7 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(true)
   const [startLoading, setStartLoading] = useState(false)
   const [subjects, setSubjects] = useState<Subject[]>([])
-  
+
   const [selectedExam, setSelectedExam] = useState('UPSC')
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
   const [selectedYears, setSelectedYears] = useState<number[]>([])
@@ -186,11 +187,10 @@ export default function QuizPage() {
                   <button
                     key={exam}
                     onClick={() => setSelectedExam(exam)}
-                    className={`px-4 py-1 rounded-full font-medium transition-colors ${
-                      selectedExam === exam
+                    className={`px-4 py-1 rounded-full font-medium transition-colors ${selectedExam === exam
                         ? 'bg-[#FF6B00] text-white'
                         : 'border border-gray-300 hover:border-[#FF6B00] text-gray-700'
-                    }`}
+                      }`}
                   >
                     {exam}
                   </button>
@@ -209,11 +209,10 @@ export default function QuizPage() {
                 {/* All Subjects Toggle */}
                 <button
                   onClick={toggleAllSubjects}
-                  className={`px-4 py-1 rounded-full font-medium transition-colors ${
-                    selectedSubjects.length === subjects.length
+                  className={`px-4 py-1 rounded-full font-medium transition-colors ${selectedSubjects.length === subjects.length
                       ? 'bg-[#FFF3EC] border border-[#FF6B00] text-[#FF6B00]'
                       : 'border border-gray-300 hover:border-[#FF6B00] text-gray-700'
-                  }`}
+                    }`}
                 >
                   All Subjects
                 </button>
@@ -223,11 +222,10 @@ export default function QuizPage() {
                   <button
                     key={subject.$id}
                     onClick={() => toggleSubject(subject.$id)}
-                    className={`px-4 py-1 rounded-full font-medium transition-colors ${
-                      selectedSubjects.includes(subject.$id)
+                    className={`px-4 py-1 rounded-full font-medium transition-colors ${selectedSubjects.includes(subject.$id)
                         ? 'bg-[#FFF3EC] border border-[#FF6B00] text-[#FF6B00]'
                         : 'border border-gray-300 hover:border-[#FF6B00] text-gray-700'
-                    }`}
+                      }`}
                   >
                     {subject.name}
                   </button>
@@ -246,11 +244,10 @@ export default function QuizPage() {
                 {/* All Years Toggle */}
                 <button
                   onClick={toggleAllYears}
-                  className={`px-4 py-1 rounded-full font-medium transition-colors ${
-                    selectedYears.length === YEAR_OPTIONS.length
+                  className={`px-4 py-1 rounded-full font-medium transition-colors ${selectedYears.length === YEAR_OPTIONS.length
                       ? 'bg-[#FFF3EC] border border-[#FF6B00] text-[#FF6B00]'
                       : 'border border-gray-300 hover:border-[#FF6B00] text-gray-700'
-                  }`}
+                    }`}
                 >
                   All Years
                 </button>
@@ -260,11 +257,10 @@ export default function QuizPage() {
                   <button
                     key={year}
                     onClick={() => toggleYear(year)}
-                    className={`px-4 py-1 rounded-full font-medium transition-colors ${
-                      selectedYears.includes(year)
+                    className={`px-4 py-1 rounded-full font-medium transition-colors ${selectedYears.includes(year)
                         ? 'bg-[#FFF3EC] border border-[#FF6B00] text-[#FF6B00]'
                         : 'border border-gray-300 hover:border-[#FF6B00] text-gray-700'
-                    }`}
+                      }`}
                   >
                     {year}
                   </button>
@@ -284,11 +280,10 @@ export default function QuizPage() {
                   <button
                     key={count}
                     onClick={() => setQuestionCount(count)}
-                    className={`px-4 py-1 rounded-full font-medium transition-colors ${
-                      questionCount === count
+                    className={`px-4 py-1 rounded-full font-medium transition-colors ${questionCount === count
                         ? 'bg-[#FF6B00] text-white'
                         : 'border border-gray-300 hover:border-[#FF6B00] text-gray-700'
-                    }`}
+                      }`}
                   >
                     {count}
                   </button>

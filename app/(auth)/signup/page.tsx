@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -57,15 +58,15 @@ export default function SignupPage() {
     try {
       // Step 1: Create Appwrite account and session
       const user = await signUp(data.email, data.password, data.fullName)
-      
+
       // Step 2: Create user profile in database
       await createProfile(user.$id, data.fullName)
-      
+
       // Step 3: Initialize user statistics
       await createUserStats(user.$id)
-      
+
       toast.success('Account created successfully!')
-      
+
       // Step 4: Redirect to onboarding
       router.push('/onboarding')
     } catch (error) {
@@ -221,9 +222,9 @@ export default function SignupPage() {
               </div>
 
               {/* Sign Up Button */}
-              <Button 
-                type="submit" 
-                className="w-full bg-[#FF6B00] hover:bg-[#FF8C00]" 
+              <Button
+                type="submit"
+                className="w-full bg-[#FF6B00] hover:bg-[#FF8C00]"
                 disabled={loading}
                 size="lg"
               >

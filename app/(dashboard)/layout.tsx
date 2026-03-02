@@ -1,4 +1,6 @@
 'use client'
+export const dynamic = 'force-dynamic'
+
 
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -129,8 +131,8 @@ export default function DashboardLayout({
               href={item.href}
               onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
             >
               <item.icon className="h-5 w-5" />
