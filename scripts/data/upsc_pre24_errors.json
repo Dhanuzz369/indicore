@@ -1,0 +1,452 @@
+[
+  {
+    "row": 2,
+    "question": "Consider the following statements:\n\nStatement-I: The atmosphere is heated more b",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 3,
+    "question": "Consider the following statements:\n\nStatement-I: The atmosphere is heated more b",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 4,
+    "question": "Consider the following statements:\n\nStatement-I: Thickness of the troposphere at",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 5,
+    "question": "Which of the following is/are correct inference/inferences from\nisothermal maps ",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 6,
+    "question": "Which of the following countries are well known as the two largest\ncocoa produce",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 7,
+    "question": "With reference to the Himalayan rivers joining the Ganga downstream\nof Prayagraj",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 8,
+    "question": "Consider the following statements:\n\nStatement-I : Rainfall is one of the reasons",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 9,
+    "question": "Consider the following countries:\n\nFinland\n\nGermany\n\nNorway\n\nRussia\n\nHow many of",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 10,
+    "question": "Consider the following information:\n\n\\| Waterfall \\| Region \\| River \\|\n\n\\|\\-\\--",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 11,
+    "question": "Consider the following information:\n\n\\| Region \\| Name of the mountain range \\| ",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 16,
+    "question": "On June 21 every year, which of the following latitude(s)\nexperience(s) a sunlig",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 17,
+    "question": "One of the following regions has the world\\'s largest tropical\npeatland, which h",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 22,
+    "question": "The organisms \\\"Cicada, Froghopper and Pond skater\\\" are:",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 23,
+    "question": "Consider the following statements:\n\nStatement-I: Many chewing gums found in the ",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 24,
+    "question": "Consider the following pairs:\n\n\\| Country \\| Animal found in its natural habitat",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 25,
+    "question": "Consider the following statements regarding World Toilet\nOrganization:\n\nIt is on",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 26,
+    "question": "Consider the following statements:\n\nLions do not have a particular breeding seas",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 27,
+    "question": "Which one of the following is the correct description of \\\"100\nMillion Farmers\\\"",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 28,
+    "question": "Consider the following:\n\nBattery storage\n\nBiomass generators\n\nFuel cells\n\nRoofto",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 29,
+    "question": "Which one of the following shows a unique relationship with an\ninsect that has c",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 30,
+    "question": "Consider the following\n\nButterflies\n\nFish\n\nFrogs\n\nHow many of the above have poi",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 31,
+    "question": "Consider the following:\n\nCashew\n\nPapaya\n\nRed sanders\n\nHow many of the above tree",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 32,
+    "question": "With reference to radioisotope thermoelectric generators (RTGs),\nconsider the fo",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 33,
+    "question": "Consider the following statements:\n\nStatement-I: Giant stars live much longer th",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 34,
+    "question": "Which one of the following is synthesised in human body that\ndilates blood vesse",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 35,
+    "question": "Consider the following activities:\n\nIdentification of narcotics on passengers at",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 36,
+    "question": "Consider the following aircraft:\n\nRafael\n\nMiG-29\n\nTejas MK-1\n\nHow many of the ab",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 37,
+    "question": "In which of the following are hydrogels used?\n\nControlled drug delivery in patie",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 38,
+    "question": "Which one of the following is the exhaust pipe emission from Fuel\nCell Electric ",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 39,
+    "question": "Recently, the term \\\"pumped-storage hydropower\\\" is actually and\nappropriately d",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 40,
+    "question": "\\\"Membrane Bioreactors\\\" are often discussed in the context of:",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 41,
+    "question": "With reference to the Indian economy, \\\"Collateral Borrowing and\nLending Obligat",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 42,
+    "question": "The total fertility rate in an economy is defined as:",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 43,
+    "question": "Consider the following statements:\n\nIn India, Non-Banking Financial Companies ca",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 44,
+    "question": "In India, which of the following can trade in Corporate Bonds and\nGovernment Sec",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 45,
+    "question": "Consider the following:\n\nExchange-Traded Funds (ETF)\n\nMotor vehicles\n\nCurrency s",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 46,
+    "question": "With reference to the sectors of the Indian economy, consider the\nfollowing pair",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 47,
+    "question": "Consider the following materials:\n\nAgricultural residues\n\nCorn grain\n\nWastewater",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 48,
+    "question": "With reference to physical capital in Indian economy, consider the\nfollowing pai",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 49,
+    "question": "Which one of the following words/phrases is most appropriately used\nto denote \\\"",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 50,
+    "question": "With reference to the rule/rules imposed by the Reserve Bank of\nIndia while trea",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 51,
+    "question": "With reference to Corporate Social Responsibility (CSR) rules in\nIndia, consider",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 52,
+    "question": "Consider the following statements:\n\nStatement-I: If the United States of America",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 54,
+    "question": "Consider the following statements in respect of the digital rupee:\n\nIt is a sove",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 55,
+    "question": "With reference to ancient India, Gautama Buddha was generally known\nby which of ",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 56,
+    "question": "Consider the following information:\n\n\\| Archaeological Site \\| State \\| Descript",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 57,
+    "question": "Who of the following rulers of medieval India gave permission to\nthe Portuguese ",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 59,
+    "question": "Consider the following statements:\n\nThere are no parables in Upanishads.\n\nUpanis",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 60,
+    "question": "Consider the following statements:\n\nIndia is a member of the International Grain",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 61,
+    "question": "Which one of the following was the latest inclusion in the\nIntangible Cultural H",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 62,
+    "question": "Who was the Provisional President of the Constituent Assembly\nbefore Dr. Rajendr",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 63,
+    "question": "With reference to the Government of India Act, 1935, consider the\nfollowing stat",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 64,
+    "question": "Which one of the following is a work attributed to playwright\nBhasa?",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 65,
+    "question": "Sanghabhuti, an Indian Buddhist monk, who travelled to China at the\nend of the f",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 66,
+    "question": "Consider the following properties included in the World Heritage\nList released b",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 67,
+    "question": "As per Article 368 of the Constitution of India, the Parliament may\namend any pr",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 68,
+    "question": "Consider the following countries:\n\nItaly\n\nJapan\n\nNigeria\n\nSouth Korea\n\nSouth Afr",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 69,
+    "question": "Which of the following statements are correct in respect of a Money\nBill in the ",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 70,
+    "question": "Which of the following is/are correctly matched in terms of\nequivalent rank in t",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 71,
+    "question": "The North Eastern Council (NEC) was established by the North\nEastern Council Act",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 72,
+    "question": "How many Delimitation Commissions have been constituted by the\nGovernment of Ind",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 73,
+    "question": "The Constitution (71st Amendment) Act, 1992 amends the Eighth\nSchedule to the Co",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 74,
+    "question": "Consider the following pairs:\n\n\\| Party \\| Its Leader \\|\n\n\\|\\-\\--\\|\\-\\--\\|\n\n\\| 1",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 75,
+    "question": "Which of the following statements are correct about the\nConstitution of India?\n\n",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 76,
+    "question": "Which one of the following statements is correct as per the\nConstitution of Indi",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 77,
+    "question": "Under which of the following Articles of the Constitution of India,\nhas the Supr",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 78,
+    "question": "What are the duties of the Chief of Defence Staff (CDS) as Head of\nthe Departmen",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 79,
+    "question": "Operations undertaken by the Army towards upliftment of the local\npopulation in ",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 80,
+    "question": "The longest border between any two countries in the world is\nbetween:",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 81,
+    "question": "Which of the following statements about the Ethics Committee in the\nLok Sabha ar",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 82,
+    "question": "Consider the following statements regarding Nari \\'Shakti Vandan\nAdhiniyam\\':\n\nP",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 83,
+    "question": "Which of the following statements about Exercise \\'Mitra\nShakti-2023\\' are corre",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 84,
+    "question": "A Writ of Prohibition is an order issued by the Supreme Court or\nHigh Courts to:",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 85,
+    "question": "Consider the following statements:\n\nIt is the Governor of the State who recogniz",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 86,
+    "question": "With reference to Union Budget, consider the following statements:\n\nThe Union Fi",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 87,
+    "question": "Who of the following is the author of the books \\\"The India Way\\\"\nand \\\"Why Bhar",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 88,
+    "question": "Consider the following pairs:\n\n\\| Country \\| Reason for being in the news \\|\n\n\\|",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 89,
+    "question": "Consider the following statements:\n\nStatement-I: Sumed pipeline is a strategic r",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 90,
+    "question": "Consider the following statements:\n\nThe Red Sea receives very little precipitati",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 91,
+    "question": "According to the Environmental Protection Agency (EPA), which one\nof the followi",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 92,
+    "question": "Consider the following statements:\n\nStatement-I: There is instability and worsen",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 93,
+    "question": "Consider the following statements:\n\nStatement-I: India does not import apples fr",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 94,
+    "question": "With reference to the Speaker of the Lok Sabha, consider the\nfollowing statement",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 95,
+    "question": "With reference to the Indian Parliament, consider the following\nstatements:\n\nA b",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 96,
+    "question": "With reference to the Parliament of India, consider the following\nstatements:\n\nP",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 97,
+    "question": "Consider the following statements:\n\nStatement-I: The European Parliament approve",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 98,
+    "question": "Consider the following statements:\n\nStatement-I: Recently, Venezuela has achieve",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 99,
+    "question": "With reference to the Digital India Land Records Modernisation\nProgramme, consid",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 100,
+    "question": "With reference to the \\'Pradhan Mantri Surakshit Matritva\nAbhiyan\\', consider th",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  },
+  {
+    "row": 101,
+    "question": "With reference to the Pradhan Mantri Shram Yogi Maan-dhan (PM-SYM)\nYojana, consi",
+    "error": "app.69a53069003364bd79a9@service.sgp.cloud.appwrite.io (role: applications) missing scopes ([\"documents.write\"])"
+  }
+]
