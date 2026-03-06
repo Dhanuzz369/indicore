@@ -33,7 +33,7 @@ export function ExplanationBox({
           </div>
 
           {/* Explanation Text */}
-          <p className="text-gray-700 leading-relaxed">{explanation}</p>
+          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{explanation}</p>
 
           {/* Next Button */}
           <div className="flex justify-end pt-2">

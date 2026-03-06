@@ -43,7 +43,7 @@ export function QuestionCard({ question, questionNumber, totalQuestions }: Quest
         </div>
 
         {/* Question Text */}
-        <p className="text-lg font-medium leading-relaxed text-gray-900">
+        <p className="text-lg font-medium leading-relaxed text-gray-900 whitespace-pre-wrap">
           {question.question_text}
         </p>
       </div>

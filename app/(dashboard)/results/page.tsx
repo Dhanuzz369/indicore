@@ -151,7 +151,7 @@ export default function ResultsPage() {
                   {isExpanded && (
                     <div className="mt-4 pt-4 border-t space-y-4">
                       {/* Full Question */}
-                      <p className="text-base font-medium leading-relaxed">
+                      <p className="text-base font-medium leading-relaxed whitespace-pre-wrap">
                         {question.question_text}
                       </p>
 
@@ -166,16 +166,16 @@ export default function ResultsPage() {
                             <div
                               key={optionKey}
                               className={`p-3 rounded-lg border-2 ${isCorrectOption
-                                  ? 'bg-green-50 border-green-500 text-green-800'
-                                  : isSelectedOption && !isCorrectOption
-                                    ? 'bg-red-50 border-red-500 text-red-800'
-                                    : 'bg-gray-50 border-gray-200'
+                                ? 'bg-green-50 border-green-500 text-green-800'
+                                : isSelectedOption && !isCorrectOption
+                                  ? 'bg-red-50 border-red-500 text-red-800'
+                                  : 'bg-gray-50 border-gray-200'
                                 }`}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <span className="font-semibold">{optionKey}.</span>
-                                  <span>{optionText}</span>
+                                  <span className="whitespace-pre-wrap pb-1">{optionText}</span>
                                 </div>
                                 {isCorrectOption && (
                                   <CheckCircle className="h-5 w-5 text-green-600" />
@@ -192,7 +192,7 @@ export default function ResultsPage() {
                       {/* Explanation */}
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <p className="text-sm font-semibold text-blue-900 mb-2">Explanation:</p>
-                        <p className="text-sm text-blue-800 leading-relaxed">
+                        <p className="text-sm text-blue-800 leading-relaxed whitespace-pre-wrap">
                           {question.explanation}
                         </p>
                       </div>
