@@ -130,24 +130,40 @@ function parseOptions(optionsCell) {
     if (!optionsCell) return null
     const result = { a: '', b: '', c: '', d: '' }
 
-    // Strategy 1: split by newlines
-    const lines = optionsCell.split('\n').map(l => l.trim()).filter(Boolean)
+    // Strategy 1: line-by-line assembly (highly robust for newlines)
+    let currentKey = null
+    const lines = optionsCell.split('\n')
     for (const line of lines) {
-        const match = line.match(/^\(?([abcdABCD])\)?[.)]\s*(.+)/)
-        if (match) result[match[1].toLowerCase()] = match[2].trim()
+        const trimmed = line.trim()
+        if (!trimmed) {
+            if (currentKey) result[currentKey] += '\n'
+            continue
+        }
+        // Match things like 'a)', '(a)', 'a.', '(a).'
+        const match = trimmed.match(/^\(?([abcdABCD])\)?[.)]\s*(.+)/)
+        if (match) {
+            currentKey = match[1].toLowerCase()
+            result[currentKey] = match[2].trim()
+        } else if (currentKey) {
+            const prefix = result[currentKey] && !result[currentKey].endsWith('\n') ? '\n' : ''
+            result[currentKey] += prefix + trimmed
+        }
     }
 
-    // Strategy 2: regex on full string
-    if (!result.b) {
-        const aM = optionsCell.match(/\(?a\)?[.)]\s*([\s\S]+?)(?=\(?b\)?[.])/i)
-        const bM = optionsCell.match(/\(?b\)?[.)]\s*([\s\S]+?)(?=\(?c\)?[.])/i)
-        const cM = optionsCell.match(/\(?c\)?[.)]\s*([\s\S]+?)(?=\(?d\)?[.])/i)
-        const dM = optionsCell.match(/\(?d\)?[.)]\s*([\s\S]+?)$/i)
-        if (aM) result.a = aM[1].trim()
-        if (bM) result.b = bM[1].trim()
-        if (cM) result.c = cM[1].trim()
-        if (dM) result.d = dM[1].trim()
-    }
+    // If Strategy 1 succeeded, return
+    if (result.a && result.b && result.c && result.d) return result
+
+    // Strategy 2: regex over full multiline string as fallback
+    const text = optionsCell.trim()
+    const aM = text.match(/\(?a\)?[.)]\s*([\s\S]+?)(?=(?:^|\n|\s)\(?b\)?[.)]|$)/i)
+    const bM = text.match(/\(?b\)?[.)]\s*([\s\S]+?)(?=(?:^|\n|\s)\(?c\)?[.)]|$)/i)
+    const cM = text.match(/\(?c\)?[.)]\s*([\s\S]+?)(?=(?:^|\n|\s)\(?d\)?[.)]|$)/i)
+    const dM = text.match(/\(?d\)?[.)]\s*([\s\S]+?)$/i)
+
+    if (aM) result.a = aM[1].trim()
+    if (bM) result.b = bM[1].trim()
+    if (cM) result.c = cM[1].trim()
+    if (dM) result.d = dM[1].trim()
 
     if (!result.a || !result.b || !result.c || !result.d) return null
     return result
