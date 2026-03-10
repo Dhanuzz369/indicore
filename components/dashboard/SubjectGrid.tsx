@@ -28,7 +28,7 @@ export function SubjectGrid({ subjects }: SubjectGridProps) {
         <Card
           key={subject.$id}
           className="hover:shadow-md transition-shadow duration-200 cursor-pointer group"
-          onClick={() => router.push(`/quiz?subject=${subject.slug}`)}
+          onClick={() => router.push(`/quiz?tab=subject&subject=${subject.slug}`)}
         >
           <CardContent className="p-4">
             {/* Left colored border */}
@@ -36,10 +36,10 @@ export function SubjectGrid({ subjects }: SubjectGridProps) {
               className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
               style={{ backgroundColor: subject.color || '#FF6B00' }}
             />
-            
+
             <div className="space-y-2">
               <h3 className="font-semibold text-base">{subject.name}</h3>
-              
+
               <div className="flex items-center text-sm text-[#FF6B00] group-hover:translate-x-1 transition-transform">
                 <span>Practice</span>
                 <ArrowRight className="h-4 w-4 ml-1" />

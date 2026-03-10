@@ -24,20 +24,42 @@ export async function getSubjects() {
   return await databases.listDocuments(DATABASE_ID, COLLECTIONS.SUBJECTS)
 }
 
-// ─── QUESTIONS ──────────────────────────────────────
 export async function getQuestions(filters: {
   examType?: string
   subjectId?: string
   year?: number
+  years?: number[]
+  difficulty?: string
   limit?: number
 }) {
   const queries = [Query.equal('is_active', true)]
   if (filters.examType) queries.push(Query.equal('exam_type', filters.examType))
   if (filters.subjectId) queries.push(Query.equal('subject_id', filters.subjectId))
   if (filters.year) queries.push(Query.equal('year', filters.year))
+  if (filters.difficulty && filters.difficulty !== 'all')
+    queries.push(Query.equal('difficulty', filters.difficulty))
   queries.push(Query.limit(filters.limit ?? 20))
+  // Removing OrderAsc for now because it might need index in Appwrite. If you had it in the prompt, let's keep it.
+  queries.push(Query.orderAsc('year'))
 
   return await databases.listDocuments(DATABASE_ID, COLLECTIONS.QUESTIONS, queries)
+}
+
+export async function getQuestionCountBySubject(subjectId: string): Promise<number> {
+  try {
+    const result = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.QUESTIONS,
+      [
+        Query.equal('subject_id', subjectId),
+        Query.equal('is_active', true),
+        Query.limit(1),
+      ]
+    )
+    return result.total
+  } catch {
+    return 0
+  }
 }
 
 // ─── ATTEMPTS ───────────────────────────────────────

@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
 import { getCurrentUser } from '@/lib/appwrite/auth'
 import { saveAttempt, incrementStats } from '@/lib/appwrite/queries'
-import { QuestionCard } from '@/components/quiz/QuestionCard'
 import { OptionButton } from '@/components/quiz/OptionButton'
 import { ExplanationBox } from '@/components/quiz/ExplanationBox'
+import { QuizProgressBar } from '@/components/quiz/QuizProgressBar'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
@@ -34,10 +34,12 @@ export default function TestSessionPage() {
     startTime,
     elapsedSeconds,
     isSubmitted,
+    isAnswered,
     setElapsed,
     startTimer,
     submitTest,
-    submitAnswer
+    submitAnswer,
+    nextQuestion
   } = useQuizStore()
 
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
@@ -74,18 +76,45 @@ export default function TestSessionPage() {
   const answeredCount = Object.keys(answers).length
   const total = questions.length
   const unanswered = total - answeredCount
+  const isLastQuestion = currentIndex === total - 1
+
+  // Calculate correct count for progress bar (only relevant in practice mode usually)
+  const correctCount = Object.values(answers).filter((a) => a.isCorrect).length
 
   // Format time
   const mins = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0')
   const secs = (elapsedSeconds % 60).toString().padStart(2, '0')
 
-  // Handle option click
-  const handleOptionClick = (optionKey: 'A' | 'B' | 'C' | 'D') => {
-    if (isSubmitted) return
-    submitAnswer(currentQuestion.$id, optionKey, currentQuestion.correct_option)
+  // Handle option click (diverges based on testMode)
+  const handleOptionClick = async (optionKey: 'A' | 'B' | 'C' | 'D') => {
+    if (testMode) {
+      if (isSubmitted) return
+      submitAnswer(currentQuestion.$id, optionKey, currentQuestion.correct_option)
+    } else {
+      // PRACTICE MODE
+      if (isAnswered) return
+      const isCorrect = optionKey === currentQuestion.correct_option
+      submitAnswer(currentQuestion.$id, optionKey, currentQuestion.correct_option)
+
+      // Save to database immediately in practice mode
+      try {
+        const user = await getCurrentUser()
+        if (user) {
+          await saveAttempt({
+            user_id: user.$id,
+            question_id: currentQuestion.$id,
+            selected_option: optionKey,
+            is_correct: isCorrect,
+          })
+          await incrementStats(user.$id, isCorrect)
+        }
+      } catch (error) {
+        console.error('Failed to save attempt:', error)
+      }
+    }
   }
 
-  // Handle final submit
+  // Handle final submit (only for test mode)
   const handleConfirmSubmit = async () => {
     setShowSubmitDialog(false)
     setIsSaving(true)
@@ -112,18 +141,35 @@ export default function TestSessionPage() {
     }
   }
 
+  const handleNextInPractice = () => {
+    if (isLastQuestion) {
+      router.push('/results')
+    } else {
+      nextQuestion()
+    }
+  }
+
   const getOptionState = (optionKey: 'A' | 'B' | 'C' | 'D') => {
     const selectedOption = currentAnswer?.selectedOption
     const correctOption = currentQuestion.correct_option
 
-    if (isSubmitted) {
+    if (testMode) {
+      if (isSubmitted) {
+        if (optionKey === selectedOption && optionKey === correctOption) return 'correct'
+        if (optionKey === selectedOption && optionKey !== correctOption) return 'incorrect'
+        if (optionKey === correctOption && selectedOption !== correctOption) return 'revealed'
+        return 'default'
+      } else {
+        // Not submitted yet
+        if (optionKey === selectedOption) return 'selected'
+        return 'default'
+      }
+    } else {
+      // PRACTICE MODE
+      if (!isAnswered) return 'default'
       if (optionKey === selectedOption && optionKey === correctOption) return 'correct'
       if (optionKey === selectedOption && optionKey !== correctOption) return 'incorrect'
       if (optionKey === correctOption && selectedOption !== correctOption) return 'revealed'
-      return 'default'
-    } else {
-      // Not submitted yet
-      if (optionKey === selectedOption) return 'selected'
       return 'default'
     }
   }
@@ -136,7 +182,7 @@ export default function TestSessionPage() {
       <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="font-semibold text-gray-800 line-clamp-1 max-w-[40%]">
-            {paperLabel || 'Full Length Test'}
+            {paperLabel || (testMode ? 'Full Length Test' : 'Subject Practice')}
           </div>
           <div className="font-medium text-gray-500">
             Q {currentIndex + 1} / {total}
@@ -150,10 +196,20 @@ export default function TestSessionPage() {
       {/* ───────────────────────────────────────────────────────────── */}
       {/* MAIN CONTENT AREA */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="flex-1 max-w-7xl mx-auto w-full flex flex-col md:flex-row relative">
+      <div className={`flex-1 max-w-7xl mx-auto w-full flex flex-col md:flex-row relative ${!testMode ? 'justify-center' : ''}`}>
 
         {/* Left: Question Area */}
-        <div className="flex-1 w-full max-w-3xl mx-auto p-4 md:p-6 space-y-6 pb-24">
+        <div className="flex-1 w-full max-w-3xl p-4 md:p-6 space-y-6 pb-24">
+
+          {/* Progress bar in practice mode */}
+          {!testMode && (
+            <QuizProgressBar
+              current={currentIndex + 1}
+              total={questions.length}
+              correctCount={correctCount}
+            />
+          )}
+
           <div className="flex items-center gap-3">
             <span className="bg-[#FF6B00] text-white px-3 py-1 rounded-md font-bold shadow-sm">
               Q.{currentIndex + 1}
@@ -172,120 +228,128 @@ export default function TestSessionPage() {
                 text={currentQuestion[`option_${key.toLowerCase()}` as keyof typeof currentQuestion] as string}
                 state={getOptionState(key)}
                 onClick={() => handleOptionClick(key)}
-                disabled={isSubmitted}
+                disabled={testMode ? isSubmitted : isAnswered}
               />
             ))}
           </div>
 
-          {/* Explanation if submitted */}
-          {isSubmitted && (
+          {/* Explanation */}
+          {(testMode ? isSubmitted : isAnswered) && (
             <ExplanationBox
               explanation={currentQuestion.explanation}
               correctOption={currentQuestion.correct_option}
-              onNext={() => { }}
-              isLastQuestion={currentIndex === total - 1}
+              onNext={!testMode ? handleNextInPractice : () => { }}
+              isLastQuestion={isLastQuestion}
             />
           )}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between pt-6 border-t mt-8">
-            <Button
-              variant="outline"
-              disabled={currentIndex === 0}
-              onClick={() => useQuizStore.setState({ currentIndex: currentIndex - 1 })}
-            >
-              &larr; Previous
-            </Button>
-            <Button
-              variant="outline"
-              disabled={currentIndex === total - 1}
-              onClick={() => useQuizStore.setState({ currentIndex: currentIndex + 1 })}
-            >
-              Next &rarr;
-            </Button>
-          </div>
+          {/* Navigation Buttons (Test Mode) */}
+          {testMode && (
+            <div className="flex justify-between pt-6 border-t mt-8">
+              <Button
+                variant="outline"
+                disabled={currentIndex === 0}
+                onClick={() => useQuizStore.setState({ currentIndex: currentIndex - 1 })}
+              >
+                &larr; Previous
+              </Button>
+              <Button
+                variant="outline"
+                disabled={currentIndex === total - 1}
+                onClick={() => useQuizStore.setState({ currentIndex: currentIndex + 1 })}
+              >
+                Next &rarr;
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Right: Navigation Grid (Desktop) */}
-        <div className="hidden md:block w-72 border-l bg-white p-6 shrink-0 relative">
-          <div className="sticky top-24">
-            <h3 className="font-bold text-gray-800 mb-4">Questions</h3>
-            <div className="grid grid-cols-5 gap-2">
-              {questions.map((q, idx) => {
-                const qAns = answers[q.$id];
-                const isCurrent = idx === currentIndex;
-                const isAnswered = !!qAns;
+        {/* Right: Navigation Grid (Test Mode Only) */}
+        {testMode && (
+          <div className="hidden md:block w-72 border-l bg-white p-6 shrink-0 relative">
+            <div className="sticky top-24">
+              <h3 className="font-bold text-gray-800 mb-4">Questions</h3>
+              <div className="grid grid-cols-5 gap-2">
+                {questions.map((q, idx) => {
+                  const qAns = answers[q.$id];
+                  const isCurrent = idx === currentIndex;
+                  const isAnswered = !!qAns;
 
-                let btnClass = "h-10 w-10 flex items-center justify-center rounded-md font-medium text-sm transition-colors ";
+                  let btnClass = "h-10 w-10 flex items-center justify-center rounded-md font-medium text-sm transition-colors ";
 
-                if (isCurrent) {
-                  btnClass += "ring-2 ring-offset-1 ring-[#FF6B00] ";
-                }
+                  if (isCurrent) {
+                    btnClass += "ring-2 ring-offset-1 ring-[#FF6B00] ";
+                  }
 
-                if (isAnswered) {
-                  btnClass += "bg-green-100 text-green-800 border-green-200 border cursor-pointer";
-                } else {
-                  btnClass += "bg-white border text-gray-600 hover:bg-gray-50 cursor-pointer";
-                }
+                  if (isAnswered) {
+                    btnClass += "bg-green-100 text-green-800 border-green-200 border cursor-pointer";
+                  } else {
+                    btnClass += "bg-white border text-gray-600 hover:bg-gray-50 cursor-pointer";
+                  }
 
-                return (
-                  <button
-                    key={q.$id}
-                    onClick={() => useQuizStore.setState({ currentIndex: idx })}
-                    className={btnClass}
-                  >
-                    {idx + 1}
-                  </button>
-                )
-              })}
+                  return (
+                    <button
+                      key={q.$id}
+                      onClick={() => useQuizStore.setState({ currentIndex: idx })}
+                      className={btnClass}
+                    >
+                      {idx + 1}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* BOTTOM FIXED BAR */}
+      {/* BOTTOM FIXED BAR (Test Mode Only) */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="sticky bottom-0 bg-white border-t px-4 py-4 md:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="text-green-600 font-semibold">
-            {answeredCount}/{total} Answered
+      {testMode && (
+        <div className="sticky bottom-0 bg-white border-t px-4 py-4 md:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="text-green-600 font-semibold">
+              {answeredCount}/{total} Answered
+            </div>
+
+            <Button
+              className="bg-[#FF6B00] hover:bg-[#FF8C00] text-white px-8"
+              disabled={answeredCount === 0 || isSubmitted || isSaving}
+              onClick={() => setShowSubmitDialog(true)}
+            >
+              {isSaving ? <Loader2 className="animate-spin h-5 w-5" /> : 'Submit Test'}
+            </Button>
           </div>
-
-          <Button
-            className="bg-[#FF6B00] hover:bg-[#FF8C00] text-white px-8"
-            disabled={answeredCount === 0 || isSubmitted || isSaving}
-            onClick={() => setShowSubmitDialog(true)}
-          >
-            {isSaving ? <Loader2 className="animate-spin h-5 w-5" /> : 'Submit Test'}
-          </Button>
         </div>
-      </div>
+      )}
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* SUBMIT CONFIRMATION DIALOG */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Submit Test?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have answered {answeredCount} out of {total} questions.<br />
-              {unanswered > 0 && <span><strong>{unanswered} questions are unanswered.</strong><br /></span>}
-              Are you sure you want to submit? You cannot change your answers after submitting.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Review Answers</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.preventDefault(); handleConfirmSubmit(); }}
-              className="bg-[#FF6B00] hover:bg-[#FF8C00]"
-            >
-              Submit Test
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {testMode && (
+        <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Submit Test?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have answered {answeredCount} out of {total} questions.<br />
+                {unanswered > 0 && <span><strong>{unanswered} questions are unanswered.</strong><br /></span>}
+                Are you sure you want to submit? You cannot change your answers after submitting.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Review Answers</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.preventDefault(); handleConfirmSubmit(); }}
+                className="bg-[#FF6B00] hover:bg-[#FF8C00]"
+              >
+                Submit Test
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
     </div>
   )
