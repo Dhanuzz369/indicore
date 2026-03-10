@@ -3,7 +3,7 @@ import { CheckCircle, XCircle } from 'lucide-react'
 interface OptionButtonProps {
   optionKey: 'A' | 'B' | 'C' | 'D'
   text: string
-  state: 'default' | 'correct' | 'incorrect' | 'revealed'
+  state: 'default' | 'correct' | 'incorrect' | 'revealed' | 'selected'
   onClick: () => void
   disabled: boolean
 }
@@ -21,6 +21,8 @@ export function OptionButton({ optionKey, text, state, onClick, disabled }: Opti
         return `${baseClasses} bg-red-50 border-2 border-red-500 text-red-800`
       case 'revealed':
         return `${baseClasses} bg-green-50 border-2 border-green-400 text-green-700`
+      case 'selected':
+        return `${baseClasses} bg-[#FFF3EC] border-2 border-[#FF6B00] text-[#FF6B00]`
       default:
         return `${baseClasses} bg-white border-2 border-gray-200 hover:border-[#FF6B00] hover:bg-[#FFF3EC] ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
           }`
@@ -33,10 +35,10 @@ export function OptionButton({ optionKey, text, state, onClick, disabled }: Opti
         {/* Option Letter Badge */}
         <div
           className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center font-semibold text-sm ${state === 'correct' || state === 'revealed'
-              ? 'bg-green-500 text-white'
-              : state === 'incorrect'
-                ? 'bg-red-500 text-white'
-                : 'bg-gray-100 text-gray-700'
+            ? 'bg-green-500 text-white'
+            : state === 'incorrect'
+              ? 'bg-red-500 text-white'
+              : 'bg-gray-100 text-gray-700'
             }`}
         >
           {optionKey}

@@ -26,10 +26,11 @@ async function clearData() {
             break
         }
 
-        const promises = docs.map(doc => databases.deleteDocument(DB_ID, TABLE_ID, doc.$id))
-        await Promise.all(promises)
-        deleted += docs.length
-        console.log(`Deleted ${deleted} documents...`)
+        for (const doc of docs) {
+            await databases.deleteDocument(DB_ID, TABLE_ID, doc.$id)
+            deleted++
+            if (deleted % 10 === 0) console.log(`Deleted ${deleted} documents...`)
+        }
     }
 
     console.log('Done clearing database!')

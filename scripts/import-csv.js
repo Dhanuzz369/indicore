@@ -269,6 +269,7 @@ async function importCSV(csvPath, examType, year) {
         const optionsCell = (row[2] || '').trim()
         const answerRaw = (row[3] || '').trim()
         const explanation = (row[4] || '').trim()
+        const subjectRaw = (row[5] || '').trim()
 
         if (!questionText || questionText.length < 15) {
             skipped++
@@ -291,11 +292,14 @@ async function importCSV(csvPath, examType, year) {
             continue
         }
 
-        const subject = detectSubject(questionText, explanation)
+        let subjectStr = subjectRaw.toLowerCase()
+        if (!SUBJECT_ID_MAP[subjectStr]) {
+            subjectStr = detectSubject(questionText, explanation)
+        }
         const difficulty = detectDifficulty(questionText)
-        const subjectId = SUBJECT_ID_MAP[subject] || 'geography'
+        const subjectId = SUBJECT_ID_MAP[subjectStr] || 'geography'
 
-        subjectCount[subject] = (subjectCount[subject] || 0) + 1
+        subjectCount[subjectStr] = (subjectCount[subjectStr] || 0) + 1
 
         try {
             await databases.createDocument(DB_ID, TABLE_ID, ID.unique(), {

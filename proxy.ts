@@ -19,8 +19,6 @@ import type { NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // ─────────────────────────────────────────────────────────────────
   // 1. CHECK AUTHENTICATION STATUS
   // ─────────────────────────────────────────────────────────────────
   // We use our own "indicore_session" cookie which is set client-side

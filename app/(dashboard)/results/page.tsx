@@ -9,10 +9,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, XCircle, ChevronDown, ChevronUp, Trophy, Target, BookOpen } from 'lucide-react'
 import type { Question } from '@/types'
+import { toast } from 'sonner'
 
 export default function ResultsPage() {
   const router = useRouter()
-  const { questions, answers, getScore, reset } = useQuizStore()
+  const { questions, answers, getScore, reset, paperLabel, elapsedSeconds } = useQuizStore()
   const score = getScore()
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
 
@@ -74,6 +75,12 @@ export default function ResultsPage() {
             </h1>
             <p className="text-2xl font-semibold">{score.percentage}% Accuracy</p>
             <p className="text-xl opacity-90">{getScoreMessage()}</p>
+            {(paperLabel || elapsedSeconds > 0) && (
+              <div className="mt-4 pt-4 border-t border-white/20 text-sm opacity-90">
+                {paperLabel && <p className="font-semibold text-lg">{paperLabel}</p>}
+                {elapsedSeconds > 0 && <p>Completed in {Math.floor(elapsedSeconds / 60)} mins {elapsedSeconds % 60} secs</p>}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -220,6 +227,14 @@ export default function ResultsPage() {
             size="lg"
           >
             Dashboard
+          </Button>
+          <Button
+            onClick={() => toast.info('Coming soon!')}
+            variant="outline"
+            className="flex-1"
+            size="lg"
+          >
+            Download Results
           </Button>
         </div>
       </div>
