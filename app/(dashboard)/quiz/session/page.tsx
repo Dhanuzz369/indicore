@@ -180,9 +180,9 @@ export default function TestSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* TOP NAVIGATION BAR */}
+      {/* TOP NAVIGATION BAR - fixed, never scrolls */}
       {/* ───────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -199,12 +199,12 @@ export default function TestSessionPage() {
       </header>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* MAIN CONTENT AREA */}
+      {/* MAIN CONTENT AREA - independently scrollable */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className={`flex-1 max-w-7xl mx-auto w-full flex flex-col md:flex-row relative ${!testMode ? 'justify-center' : ''}`}>
+      <div className={`flex-1 max-w-7xl mx-auto w-full flex flex-col md:flex-row relative overflow-y-auto`}>
 
         {/* Left: Question Area */}
-        <div className="flex-1 w-full max-w-3xl p-4 md:p-6 space-y-6 pb-24">
+        <div className="flex-1 w-full max-w-3xl mx-auto p-4 md:p-6 space-y-6 pb-24">
 
           {/* Progress bar in practice mode */}
           {!testMode && (

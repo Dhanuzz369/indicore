@@ -1,14 +1,25 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-
 import { useState, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getCurrentUser, signOut, clearSessionCookie } from '@/lib/appwrite/auth'
 import { getProfile } from '@/lib/appwrite/queries'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  LayoutDashboard,
+  Brain,
+  BarChart3,
+  User,
+  LogOut,
+  Trophy,
+  ChevronRight,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import type { Profile } from '@/types'
+import { usePathname } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,50 +28,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  LayoutDashboard,
-  Brain,
-  BarChart3,
-  User,
-  LogOut,
-  Menu,
-  Trophy
-} from 'lucide-react'
-import { toast } from 'sonner'
-import type { Profile } from '@/types'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Practice Quiz', href: '/quiz', icon: Brain },
+  { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Practice', href: '/quiz', icon: Brain },
   { name: 'Results', href: '/results', icon: BarChart3 },
   { name: 'Profile', href: '/profile', icon: User },
 ]
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+function getInitials(name: string) {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const user = await getCurrentUser()
-        if (!user) {
-          router.push('/login')
-          return
-        }
+        if (!user) { router.push('/login'); return }
         const userProfile = await getProfile(user.$id)
         setProfile(userProfile as unknown as Profile)
-      } catch (error) {
-        console.error('Failed to fetch user data:', error)
+      } catch {
         clearSessionCookie()
         router.push('/login')
       } finally {
@@ -75,155 +68,169 @@ export default function DashboardLayout({
       await signOut()
       toast.success('Signed out successfully')
       router.push('/login')
-    } catch (error) {
+    } catch {
       clearSessionCookie()
-      toast.error('Failed to sign out')
       router.push('/login')
     }
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
+  // Detect if current page is the quiz session (full screen, no nav)
+  const isSessionPage = pathname === '/quiz/session'
 
   if (loading) {
     return (
-      <div className="flex h-screen">
-        <div className="hidden md:flex md:w-64 md:flex-col border-r bg-card">
-          <div className="flex h-16 items-center border-b px-6">
-            <Skeleton className="h-8 w-32" />
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-[#FF6B00]/20 flex items-center justify-center mx-auto">
+            <Trophy className="h-6 w-6 text-[#FF6B00]" />
           </div>
-          <div className="flex-1 space-y-2 p-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-10 w-full" />
-            ))}
-          </div>
-        </div>
-        <div className="flex-1 flex flex-col">
-          <Skeleton className="h-16 w-full" />
-          <div className="flex-1 p-8">
-            <Skeleton className="h-full w-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32 mx-auto" />
+            <Skeleton className="h-3 w-20 mx-auto" />
           </div>
         </div>
       </div>
     )
   }
 
-  const Sidebar = () => (
-    <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold">Indicore</span>
-        </Link>
-      </div>
-      <nav className="flex-1 space-y-1 p-4">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                }`}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </Link>
-          )
-        })}
-      </nav>
-    </div>
-  )
+  // Session page: full-screen, no header/footer chrome
+  if (isSessionPage) {
+    return <>{children}</>
+  }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col border-r bg-card">
-        <Sidebar />
-      </aside>
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
 
-      {/* Mobile Sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-64">
-          <Sidebar />
-        </SheetContent>
-      </Sheet>
-
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Navbar */}
-        <header className="flex h-16 items-center justify-between border-b bg-card px-4 md:px-6">
-          <div className="flex items-center gap-4">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64">
-                <Sidebar />
-              </SheetContent>
-            </Sheet>
-            <div className="hidden md:block">
-              <h2 className="text-lg font-semibold">
-                {navigation.find((item) => item.href === pathname)?.name || 'Dashboard'}
-              </h2>
+      {/* ── Desktop Left Sidebar ── */}
+      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-100 shrink-0">
+        {/* Logo */}
+        <div className="h-16 flex items-center px-6 border-b border-gray-100">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#FF6B00] flex items-center justify-center">
+              <Trophy className="h-4 w-4 text-white" />
             </div>
-          </div>
+            <span className="text-xl font-bold text-gray-900">Indicore</span>
+          </Link>
+        </div>
 
+        {/* Nav */}
+        <nav className="flex-1 p-4 space-y-1">
+          {navigation.map(item => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
+                    ? 'bg-[#FF6B00] text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+              >
+                <item.icon className="h-5 w-5 shrink-0" />
+                {item.name}
+                {isActive && <ChevronRight className="h-4 w-4 ml-auto opacity-70" />}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* User card at bottom */}
+        <div className="p-4 border-t border-gray-100">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
+              <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left">
+                <Avatar className="h-9 w-9 shrink-0">
+                  <AvatarFallback className="bg-[#FF6B00] text-white text-sm font-semibold">
                     {profile ? getInitials(profile.full_name) : 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden md:inline-block text-sm font-medium">
-                  {profile?.full_name}
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{profile?.full_name}</p>
-                  {profile?.target_exam && (
-                    <p className="text-xs text-muted-foreground">
-                      Target: {profile.target_exam} {profile.target_year}
-                    </p>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{profile?.full_name}</p>
+                  <p className="text-xs text-gray-500 truncate">{profile?.target_exam || 'UPSC Aspirant'}</p>
                 </div>
-              </DropdownMenuLabel>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 mb-2">
+              <DropdownMenuLabel className="text-xs text-gray-500 font-normal">Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/profile" className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  Profile Settings
+                  <User className="mr-2 h-4 w-4" /> Profile
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut} className="text-red-500 cursor-pointer">
+                <LogOut className="mr-2 h-4 w-4" /> Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </aside>
+
+      {/* ── Main Area ── */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+
+        {/* Mobile top bar */}
+        <header className="md:hidden flex items-center justify-between px-4 h-14 bg-white border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#FF6B00] flex items-center justify-center">
+              <Trophy className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="font-bold text-gray-900">Indicore</span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button>
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-[#FF6B00] text-white text-xs font-semibold">
+                    {profile ? getInitials(profile.full_name) : 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuLabel className="text-xs">{profile?.full_name}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
+              <DropdownMenuItem asChild>
+                <Link href="/profile" className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" /> Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut} className="text-red-500 cursor-pointer">
+                <LogOut className="mr-2 h-4 w-4" /> Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
+        {/* Page content - scrollable */}
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
           {children}
         </main>
+
+        {/* ── Mobile Bottom Navigation ── */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-bottom">
+          <div className="grid grid-cols-4 h-16">
+            {navigation.map(item => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="flex flex-col items-center justify-center gap-1 transition-colors"
+                >
+                  <item.icon className={`h-5 w-5 ${isActive ? 'text-[#FF6B00]' : 'text-gray-400'}`} />
+                  <span className={`text-[10px] font-medium ${isActive ? 'text-[#FF6B00]' : 'text-gray-400'}`}>
+                    {item.name}
+                  </span>
+                  {isActive && (
+                    <div className="absolute bottom-0 w-8 h-0.5 bg-[#FF6B00] rounded-full" />
+                  )}
+                </Link>
+              )
+            })}
+          </div>
+        </nav>
+
       </div>
     </div>
   )
