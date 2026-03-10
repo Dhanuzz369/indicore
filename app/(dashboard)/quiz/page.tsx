@@ -172,7 +172,8 @@ function QuizSetupContent() {
     }
   }
 
-  const getEmoji = (name: string) => {
+  const getEmoji = (name?: string) => {
+    if (!name) return '📚'
     const l = name.toLowerCase()
     if (l.includes('geo')) return '🌍'
     if (l.includes('polity')) return '⚖️'
