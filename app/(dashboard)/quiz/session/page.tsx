@@ -1,14 +1,13 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
 import { getCurrentUser } from '@/lib/appwrite/auth'
 import { saveAttempt, incrementStats } from '@/lib/appwrite/queries'
 import { OptionButton } from '@/components/quiz/OptionButton'
 import { ExplanationBox } from '@/components/quiz/ExplanationBox'
-import { QuizProgressBar } from '@/components/quiz/QuizProgressBar'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
@@ -52,22 +51,28 @@ export default function TestSessionPage() {
     }
   }, [questions.length, router])
 
-  // 2. Timer setup
+  // 2a. Start timer exactly once when questions load
   useEffect(() => {
     if (questions.length === 0 || isSubmitted) return
+    startTimer()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questions.length])
 
-    if (!startTime) {
-      startTimer()
-    }
+  // 2b. Tick every second using a ref to avoid stale closure
+  const startTimeRef = useRef<number | null>(null)
+  useEffect(() => {
+    startTimeRef.current = startTime
+  }, [startTime])
 
+  useEffect(() => {
+    if (questions.length === 0 || isSubmitted) return
     const interval = setInterval(() => {
-      if (startTime) {
-        setElapsed(Math.floor((Date.now() - startTime) / 1000))
+      if (startTimeRef.current) {
+        setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000))
       }
     }, 1000)
-
     return () => clearInterval(interval)
-  }, [questions.length, isSubmitted, startTime, startTimer, setElapsed])
+  }, [questions.length, isSubmitted, setElapsed])
 
   if (questions.length === 0) return null
 
@@ -203,11 +208,18 @@ export default function TestSessionPage() {
 
           {/* Progress bar in practice mode */}
           {!testMode && (
-            <QuizProgressBar
-              current={currentIndex + 1}
-              total={questions.length}
-              correctCount={correctCount}
-            />
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Question {currentIndex + 1} of {questions.length}</span>
+                <span className="text-green-600 font-medium">{correctCount} correct</span>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#FF6B00] rounded-full transition-all duration-500"
+                  style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+                />
+              </div>
+            </div>
           )}
 
           <div className="flex items-center gap-3">

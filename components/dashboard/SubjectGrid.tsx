@@ -38,7 +38,7 @@ export function SubjectGrid({ subjects }: SubjectGridProps) {
             />
 
             <div className="space-y-2">
-              <h3 className="font-semibold text-base">{subject.name}</h3>
+              <h3 className="font-semibold text-base">{subject.Name}</h3>
 
               <div className="flex items-center text-sm text-[#FF6B00] group-hover:translate-x-1 transition-transform">
                 <span>Practice</span>
