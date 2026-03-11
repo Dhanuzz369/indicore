@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Loader2, ChevronLeft, ChevronRight, Bookmark, PanelRight, X } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, Bookmark, PanelRight, X, House } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────────────
 // Question palette color logic for Full Length Test
@@ -320,9 +320,20 @@ export default function TestSessionPage() {
 
       {/* ─── TOP BAR ─── */}
       <header className="shrink-0 bg-white border-b shadow-sm z-40">
-        <div className="max-w-7xl mx-auto px-3 md:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-3 md:px-4 h-14 md:h-16 flex items-center gap-2">
+          {/* Home button (practice mode) */}
+          {!testMode && (
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 py-1.5 rounded-lg transition-colors shrink-0"
+              title="Return to Home"
+            >
+              <House className="h-4 w-4" />
+              <span className="hidden sm:inline text-xs font-medium">Home</span>
+            </button>
+          )}
           {/* Paper label */}
-          <div className="font-semibold text-gray-800 text-sm truncate max-w-[35%]">
+          <div className="flex-1 font-semibold text-gray-800 text-sm truncate">
             {paperLabel || (testMode ? 'Full Length Test' : 'Subject Practice')}
           </div>
           {/* Q counter */}
@@ -417,8 +428,8 @@ export default function TestSessionPage() {
                   <button
                     onClick={handleMarkForReviewAndNext}
                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 font-semibold text-sm transition-all ${isMarkedCurrent
-                        ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'
-                        : 'bg-white text-purple-600 border-purple-400 hover:bg-purple-50'
+                      ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'
+                      : 'bg-white text-purple-600 border-purple-400 hover:bg-purple-50'
                       }`}
                   >
                     <Bookmark className={`h-4 w-4 ${isMarkedCurrent ? 'fill-white' : ''}`} />
