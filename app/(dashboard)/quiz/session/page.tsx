@@ -19,7 +19,81 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Loader2 } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, Bookmark, PanelRight, X } from 'lucide-react'
+
+// ─────────────────────────────────────────────────────────────────
+// Question palette color logic for Full Length Test
+// Priority: marked-for-review > answered > visited-unanswered > not-visited
+// ─────────────────────────────────────────────────────────────────
+type PaletteStatus = 'not-visited' | 'answered' | 'visited-unanswered' | 'marked-review' | 'answered-marked'
+
+function getPaletteStatus(
+  questionId: string,
+  answers: Record<string, { selectedOption: string; isCorrect: boolean }>,
+  visited: Set<string>,
+  marked: Set<string>
+): PaletteStatus {
+  const isAnswered = !!answers[questionId]
+  const isMarked = marked.has(questionId)
+  const isVisited = visited.has(questionId)
+
+  if (isMarked && isAnswered) return 'answered-marked'
+  if (isMarked) return 'marked-review'
+  if (isAnswered) return 'answered'
+  if (isVisited) return 'visited-unanswered'
+  return 'not-visited'
+}
+
+function PaletteButton({
+  index,
+  questionId,
+  isCurrent,
+  answers,
+  visited,
+  marked,
+  onClick,
+}: {
+  index: number
+  questionId: string
+  isCurrent: boolean
+  answers: Record<string, { selectedOption: string; isCorrect: boolean }>
+  visited: Set<string>
+  marked: Set<string>
+  onClick: () => void
+}) {
+  const status = getPaletteStatus(questionId, answers, visited, marked)
+
+  const baseClass = 'h-9 w-9 flex items-center justify-center rounded-lg font-semibold text-xs transition-all relative'
+  const ringClass = isCurrent ? 'ring-2 ring-offset-1 ring-gray-700' : ''
+
+  let colorClass = ''
+  switch (status) {
+    case 'answered':
+      colorClass = 'bg-green-500 text-white'
+      break
+    case 'visited-unanswered':
+      colorClass = 'bg-red-100 text-red-700 border border-red-400'
+      break
+    case 'marked-review':
+      colorClass = 'bg-purple-500 text-white'
+      break
+    case 'answered-marked':
+      colorClass = 'bg-purple-500 text-white'
+      break
+    default: // not-visited
+      colorClass = 'bg-white text-gray-600 border border-gray-200 hover:border-gray-400'
+  }
+
+  return (
+    <button onClick={onClick} className={`${baseClass} ${colorClass} ${ringClass}`}>
+      {index + 1}
+      {/* Small dot indicator for answered-marked */}
+      {status === 'answered-marked' && (
+        <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
+      )}
+    </button>
+  )
+}
 
 export default function TestSessionPage() {
   const router = useRouter()
@@ -28,6 +102,8 @@ export default function TestSessionPage() {
     questions,
     currentIndex,
     answers,
+    visitedQuestions,
+    markedForReview,
     testMode,
     paperLabel,
     startTime,
@@ -38,38 +114,42 @@ export default function TestSessionPage() {
     startTimer,
     submitTest,
     submitAnswer,
-    nextQuestion
+    nextQuestion,
+    goToQuestion,
+    markVisited,
+    toggleMarkForReview,
   } = useQuizStore()
 
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  // Mobile palette drawer
+  const [showMobilePalette, setShowMobilePalette] = useState(false)
 
-  // 1. Redirect if no questions
+  // ── 1. Redirect if no questions ──
   useEffect(() => {
-    if (questions.length === 0) {
-      router.push('/quiz')
-    }
+    if (questions.length === 0) router.push('/quiz')
   }, [questions.length, router])
 
-  // 2a. Start timer exactly once when questions load
+  // ── 2a. Mark first question as visited on load ──
+  useEffect(() => {
+    if (questions.length > 0) markVisited(questions[0].$id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questions.length])
+
+  // ── 2b. Start timer once ──
   useEffect(() => {
     if (questions.length === 0 || isSubmitted) return
     startTimer()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions.length])
 
-  // 2b. Tick every second using a ref to avoid stale closure
+  // ── 2c. Tick using ref to prevent stale closure ──
   const startTimeRef = useRef<number | null>(null)
-  useEffect(() => {
-    startTimeRef.current = startTime
-  }, [startTime])
-
+  useEffect(() => { startTimeRef.current = startTime }, [startTime])
   useEffect(() => {
     if (questions.length === 0 || isSubmitted) return
     const interval = setInterval(() => {
-      if (startTimeRef.current) {
-        setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000))
-      }
+      if (startTimeRef.current) setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000))
     }, 1000)
     return () => clearInterval(interval)
   }, [questions.length, isSubmitted, setElapsed])
@@ -80,280 +160,369 @@ export default function TestSessionPage() {
   const currentAnswer = answers[currentQuestion.$id]
   const answeredCount = Object.keys(answers).length
   const total = questions.length
-  const unanswered = total - answeredCount
+  const isMarkedCurrent = markedForReview.has(currentQuestion.$id)
   const isLastQuestion = currentIndex === total - 1
-
-  // Calculate correct count for progress bar (only relevant in practice mode usually)
-  const correctCount = Object.values(answers).filter((a) => a.isCorrect).length
-
-  // Format time
+  const correctCount = Object.values(answers).filter(a => a.isCorrect).length
   const mins = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0')
   const secs = (elapsedSeconds % 60).toString().padStart(2, '0')
 
-  // Handle option click (diverges based on testMode)
+  // Counts for summary
+  const visitedUnanswered = Array.from(visitedQuestions).filter(
+    id => !answers[id] && !markedForReview.has(id)
+  ).length
+  const markedCount = markedForReview.size
+
+  // ── Option click ──
   const handleOptionClick = async (optionKey: 'A' | 'B' | 'C' | 'D') => {
     if (testMode) {
       if (isSubmitted) return
       submitAnswer(currentQuestion.$id, optionKey, currentQuestion.correct_option)
     } else {
-      // PRACTICE MODE
       if (isAnswered) return
       const isCorrect = optionKey === currentQuestion.correct_option
       submitAnswer(currentQuestion.$id, optionKey, currentQuestion.correct_option)
-
-      // Save to database immediately in practice mode
       try {
         const user = await getCurrentUser()
         if (user) {
-          await saveAttempt({
-            user_id: user.$id,
-            question_id: currentQuestion.$id,
-            selected_option: optionKey,
-            is_correct: isCorrect,
-          })
+          await saveAttempt({ user_id: user.$id, question_id: currentQuestion.$id, selected_option: optionKey, is_correct: isCorrect })
           await incrementStats(user.$id, isCorrect)
         }
-      } catch (error) {
-        console.error('Failed to save attempt:', error)
-      }
+      } catch (e) { console.error('Failed to save attempt:', e) }
     }
   }
 
-  // Handle final submit (only for test mode)
-  const handleConfirmSubmit = async () => {
-    setShowSubmitDialog(false)
-    setIsSaving(true)
-    submitTest()
-
-    try {
-      const user = await getCurrentUser()
-      if (user) {
-        // Save all answers sequentially
-        for (const [qId, ans] of Object.entries(answers)) {
-          await saveAttempt({
-            user_id: user.$id,
-            question_id: qId,
-            selected_option: ans.selectedOption,
-            is_correct: ans.isCorrect,
-          })
-          await incrementStats(user.$id, ans.isCorrect)
-        }
-      }
-      router.push('/results')
-    } catch (e) {
-      console.error('Failed to save attempts:', e)
-      router.push('/results')
+  // ── Navigate: Save & Next (test mode) ──
+  const handleSaveAndNext = () => {
+    if (currentIndex < total - 1) {
+      nextQuestion()  // also marks next as visited in store
     }
   }
 
-  const handleNextInPractice = () => {
-    if (isLastQuestion) {
-      router.push('/results')
-    } else {
+  // ── Navigate: Mark for Review & Next ──
+  const handleMarkForReviewAndNext = () => {
+    toggleMarkForReview(currentQuestion.$id)
+    if (currentIndex < total - 1) {
       nextQuestion()
     }
   }
 
-  const getOptionState = (optionKey: 'A' | 'B' | 'C' | 'D') => {
-    const selectedOption = currentAnswer?.selectedOption
-    const correctOption = currentQuestion.correct_option
+  // ── Navigate: Previous ──
+  const handlePrev = () => {
+    if (currentIndex > 0) goToQuestion(currentIndex - 1)
+  }
 
+  // ── Submit (test mode) ──
+  const handleConfirmSubmit = async () => {
+    setShowSubmitDialog(false)
+    setIsSaving(true)
+    submitTest()
+    try {
+      const user = await getCurrentUser()
+      if (user) {
+        for (const [qId, ans] of Object.entries(answers)) {
+          await saveAttempt({ user_id: user.$id, question_id: qId, selected_option: ans.selectedOption, is_correct: ans.isCorrect })
+          await incrementStats(user.$id, ans.isCorrect)
+        }
+      }
+    } catch (e) { console.error('Failed to save attempts:', e) }
+    router.push('/results')
+  }
+
+  // ── Practice: Next ──
+  const handleNextInPractice = () => {
+    if (isLastQuestion) router.push('/results')
+    else nextQuestion()
+  }
+
+  // ── Option display state ──
+  const getOptionState = (optionKey: 'A' | 'B' | 'C' | 'D') => {
+    const sel = currentAnswer?.selectedOption
+    const correct = currentQuestion.correct_option
     if (testMode) {
       if (isSubmitted) {
-        if (optionKey === selectedOption && optionKey === correctOption) return 'correct'
-        if (optionKey === selectedOption && optionKey !== correctOption) return 'incorrect'
-        if (optionKey === correctOption && selectedOption !== correctOption) return 'revealed'
-        return 'default'
-      } else {
-        // Not submitted yet
-        if (optionKey === selectedOption) return 'selected'
+        if (optionKey === sel && optionKey === correct) return 'correct'
+        if (optionKey === sel && optionKey !== correct) return 'incorrect'
+        if (optionKey === correct && sel !== correct) return 'revealed'
         return 'default'
       }
+      return optionKey === sel ? 'selected' : 'default'
     } else {
-      // PRACTICE MODE
       if (!isAnswered) return 'default'
-      if (optionKey === selectedOption && optionKey === correctOption) return 'correct'
-      if (optionKey === selectedOption && optionKey !== correctOption) return 'incorrect'
-      if (optionKey === correctOption && selectedOption !== correctOption) return 'revealed'
+      if (optionKey === sel && optionKey === correct) return 'correct'
+      if (optionKey === sel && optionKey !== correct) return 'incorrect'
+      if (optionKey === correct && sel !== correct) return 'revealed'
       return 'default'
     }
   }
 
+  // ── Shared palette render ──
+  const PaletteContent = () => (
+    <div className="space-y-4">
+      {/* Legend */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
+        <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-green-500 shrink-0" />Answered</div>
+        <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-red-100 border border-red-400 shrink-0" />Visited, Not Answered</div>
+        <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-purple-500 shrink-0" />Marked for Review</div>
+        <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-white border border-gray-300 shrink-0" />Not Visited</div>
+      </div>
+      {/* Note for answered+marked */}
+      <p className="text-[11px] text-gray-400">Purple with green dot = Answered & Marked for Review</p>
+
+      {/* Question Grid */}
+      <div className="grid grid-cols-5 gap-2">
+        {questions.map((q, idx) => (
+          <PaletteButton
+            key={q.$id}
+            index={idx}
+            questionId={q.$id}
+            isCurrent={idx === currentIndex}
+            answers={answers}
+            visited={visitedQuestions}
+            marked={markedForReview}
+            onClick={() => { goToQuestion(idx); setShowMobilePalette(false) }}
+          />
+        ))}
+      </div>
+
+      {/* Summary */}
+      <div className="border-t pt-3 grid grid-cols-2 gap-2 text-xs">
+        <div className="bg-green-50 rounded-lg p-2 text-center">
+          <p className="font-bold text-green-700 text-base">{answeredCount}</p>
+          <p className="text-green-600">Answered</p>
+        </div>
+        <div className="bg-red-50 rounded-lg p-2 text-center">
+          <p className="font-bold text-red-700 text-base">{visitedUnanswered}</p>
+          <p className="text-red-600">Not Answered</p>
+        </div>
+        <div className="bg-purple-50 rounded-lg p-2 text-center">
+          <p className="font-bold text-purple-700 text-base">{markedCount}</p>
+          <p className="text-purple-600">For Review</p>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-2 text-center">
+          <p className="font-bold text-gray-700 text-base">{total - answeredCount - visitedUnanswered - markedCount}</p>
+          <p className="text-gray-500">Not Visited</p>
+        </div>
+      </div>
+
+      {/* Submit button inside palette */}
+      <button
+        onClick={() => { setShowMobilePalette(false); setShowSubmitDialog(true) }}
+        disabled={answeredCount === 0 || isSubmitted || isSaving}
+        className="w-full bg-[#FF6B00] hover:bg-[#FF8C00] text-white py-2.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit Test'}
+      </button>
+    </div>
+  )
+
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* TOP NAVIGATION BAR - fixed, never scrolls */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="font-semibold text-gray-800 line-clamp-1 max-w-[40%]">
+
+      {/* ─── TOP BAR ─── */}
+      <header className="shrink-0 bg-white border-b shadow-sm z-40">
+        <div className="max-w-7xl mx-auto px-3 md:px-4 h-14 md:h-16 flex items-center justify-between gap-2">
+          {/* Paper label */}
+          <div className="font-semibold text-gray-800 text-sm truncate max-w-[35%]">
             {paperLabel || (testMode ? 'Full Length Test' : 'Subject Practice')}
           </div>
-          <div className="font-medium text-gray-500">
+          {/* Q counter */}
+          <div className="text-sm font-medium text-gray-500 shrink-0">
             Q {currentIndex + 1} / {total}
           </div>
-          <div className="font-mono font-medium text-[#FF6B00]">
+          {/* Timer */}
+          <div className="font-mono font-bold text-[#FF6B00] shrink-0 text-sm md:text-base">
             ⏱ {mins}:{secs}
           </div>
+          {/* Mobile palette toggle (test mode only) */}
+          {testMode && (
+            <button
+              onClick={() => setShowMobilePalette(true)}
+              className="md:hidden flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-700 transition-colors shrink-0"
+            >
+              <PanelRight className="h-4 w-4" />
+              <span className="hidden xs:inline">Panel</span>
+            </button>
+          )}
         </div>
       </header>
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* MAIN CONTENT AREA - independently scrollable */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      <div className={`flex-1 max-w-7xl mx-auto w-full flex flex-col md:flex-row relative overflow-y-auto`}>
+      {/* ─── MAIN AREA ─── */}
+      <div className="flex-1 flex overflow-hidden">
 
-        {/* Left: Question Area */}
-        <div className="flex-1 w-full max-w-3xl mx-auto p-4 md:p-6 space-y-6 pb-24">
+        {/* ─── QUESTION AREA (scrollable) ─── */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto p-4 md:p-6 space-y-5 pb-32">
 
-          {/* Progress bar in practice mode */}
-          {!testMode && (
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Question {currentIndex + 1} of {questions.length}</span>
-                <span className="text-green-600 font-medium">{correctCount} correct</span>
+            {/* Practice mode progress bar */}
+            {!testMode && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Question {currentIndex + 1} of {total}</span>
+                  <span className="text-green-600 font-semibold">{correctCount} correct</span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#FF6B00] rounded-full transition-all duration-500"
+                    style={{ width: `${((currentIndex + 1) / total) * 100}%` }} />
+                </div>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#FF6B00] rounded-full transition-all duration-500"
-                  style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+            )}
+
+            {/* Question number + mark tag */}
+            <div className="flex items-center justify-between">
+              <span className="bg-[#FF6B00] text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
+                Q.{currentIndex + 1}
+              </span>
+              {testMode && isMarkedCurrent && (
+                <span className="flex items-center gap-1 text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-full">
+                  <Bookmark className="h-3 w-3 fill-purple-500" />
+                  Marked for Review
+                </span>
+              )}
+            </div>
+
+            {/* Question text */}
+            <div className="text-base md:text-lg leading-relaxed font-medium text-gray-900 bg-white p-5 md:p-6 rounded-xl border border-gray-100 shadow-sm whitespace-pre-wrap">
+              {currentQuestion.question_text}
+            </div>
+
+            {/* Options */}
+            <div className="space-y-3">
+              {(['A', 'B', 'C', 'D'] as const).map(key => (
+                <OptionButton
+                  key={key}
+                  optionKey={key}
+                  text={currentQuestion[`option_${key.toLowerCase()}` as keyof typeof currentQuestion] as string}
+                  state={getOptionState(key)}
+                  onClick={() => handleOptionClick(key)}
+                  disabled={testMode ? isSubmitted : isAnswered}
                 />
-              </div>
+              ))}
             </div>
-          )}
 
-          <div className="flex items-center gap-3">
-            <span className="bg-[#FF6B00] text-white px-3 py-1 rounded-md font-bold shadow-sm">
-              Q.{currentIndex + 1}
-            </span>
-          </div>
-
-          <div className="text-lg leading-relaxed font-medium text-gray-900 bg-white p-6 rounded-xl border shadow-sm whitespace-pre-wrap">
-            {currentQuestion.question_text}
-          </div>
-
-          <div className="space-y-3">
-            {(['A', 'B', 'C', 'D'] as const).map(key => (
-              <OptionButton
-                key={key}
-                optionKey={key}
-                text={currentQuestion[`option_${key.toLowerCase()}` as keyof typeof currentQuestion] as string}
-                state={getOptionState(key)}
-                onClick={() => handleOptionClick(key)}
-                disabled={testMode ? isSubmitted : isAnswered}
+            {/* Explanation (practice mode after answering, or test mode after submit) */}
+            {(testMode ? isSubmitted : isAnswered) && (
+              <ExplanationBox
+                explanation={currentQuestion.explanation}
+                correctOption={currentQuestion.correct_option}
+                onNext={!testMode ? handleNextInPractice : () => { }}
+                isLastQuestion={isLastQuestion}
               />
-            ))}
+            )}
+
+            {/* ─── TEST MODE: Action buttons ─── */}
+            {testMode && !isSubmitted && (
+              <div className="space-y-3 pt-4 border-t border-gray-100">
+                {/* Row 1: Mark for Review + Save & Next */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleMarkForReviewAndNext}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 font-semibold text-sm transition-all ${isMarkedCurrent
+                        ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'
+                        : 'bg-white text-purple-600 border-purple-400 hover:bg-purple-50'
+                      }`}
+                  >
+                    <Bookmark className={`h-4 w-4 ${isMarkedCurrent ? 'fill-white' : ''}`} />
+                    {isMarkedCurrent ? 'Unmark & Next' : 'Mark for Review & Next'}
+                  </button>
+                </div>
+
+                {/* Row 2: Previous + Save & Next */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    disabled={currentIndex === 0}
+                    onClick={handlePrev}
+                    className="gap-1 font-semibold"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Previous
+                  </Button>
+                  <Button
+                    onClick={handleSaveAndNext}
+                    disabled={currentIndex === total - 1}
+                    className="flex-1 bg-gray-800 hover:bg-gray-900 text-white gap-1 font-semibold"
+                  >
+                    Save & Next <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
-
-          {/* Explanation */}
-          {(testMode ? isSubmitted : isAnswered) && (
-            <ExplanationBox
-              explanation={currentQuestion.explanation}
-              correctOption={currentQuestion.correct_option}
-              onNext={!testMode ? handleNextInPractice : () => { }}
-              isLastQuestion={isLastQuestion}
-            />
-          )}
-
-          {/* Navigation Buttons (Test Mode) */}
-          {testMode && (
-            <div className="flex justify-between pt-6 border-t mt-8">
-              <Button
-                variant="outline"
-                disabled={currentIndex === 0}
-                onClick={() => useQuizStore.setState({ currentIndex: currentIndex - 1 })}
-              >
-                &larr; Previous
-              </Button>
-              <Button
-                variant="outline"
-                disabled={currentIndex === total - 1}
-                onClick={() => useQuizStore.setState({ currentIndex: currentIndex + 1 })}
-              >
-                Next &rarr;
-              </Button>
-            </div>
-          )}
         </div>
 
-        {/* Right: Navigation Grid (Test Mode Only) */}
+        {/* ─── RIGHT PANEL: Question Palette (desktop, test mode only) ─── */}
         {testMode && (
-          <div className="hidden md:block w-72 border-l bg-white p-6 shrink-0 relative">
-            <div className="sticky top-24">
-              <h3 className="font-bold text-gray-800 mb-4">Questions</h3>
-              <div className="grid grid-cols-5 gap-2">
-                {questions.map((q, idx) => {
-                  const qAns = answers[q.$id];
-                  const isCurrent = idx === currentIndex;
-                  const isAnswered = !!qAns;
-
-                  let btnClass = "h-10 w-10 flex items-center justify-center rounded-md font-medium text-sm transition-colors ";
-
-                  if (isCurrent) {
-                    btnClass += "ring-2 ring-offset-1 ring-[#FF6B00] ";
-                  }
-
-                  if (isAnswered) {
-                    btnClass += "bg-green-100 text-green-800 border-green-200 border cursor-pointer";
-                  } else {
-                    btnClass += "bg-white border text-gray-600 hover:bg-gray-50 cursor-pointer";
-                  }
-
-                  return (
-                    <button
-                      key={q.$id}
-                      onClick={() => useQuizStore.setState({ currentIndex: idx })}
-                      className={btnClass}
-                    >
-                      {idx + 1}
-                    </button>
-                  )
-                })}
-              </div>
+          <aside className="hidden md:flex w-72 bg-white border-l border-gray-100 shrink-0 overflow-y-auto">
+            <div className="p-5 w-full space-y-4">
+              <h3 className="font-bold text-gray-800 text-sm">Question Palette</h3>
+              <PaletteContent />
             </div>
-          </div>
+          </aside>
         )}
       </div>
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* BOTTOM FIXED BAR (Test Mode Only) */}
-      {/* ───────────────────────────────────────────────────────────── */}
+      {/* ─── BOTTOM BAR (test mode, desktop) ─── */}
       {testMode && (
-        <div className="sticky bottom-0 bg-white border-t px-4 py-4 md:px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="text-green-600 font-semibold">
-              {answeredCount}/{total} Answered
+        <div className="shrink-0 bg-white border-t px-4 py-3 z-40 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-green-600 font-semibold">{answeredCount} Answered</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-red-500 font-semibold">{visitedUnanswered} Not Answered</span>
+              {markedCount > 0 && (
+                <>
+                  <span className="text-gray-300">|</span>
+                  <span className="text-purple-600 font-semibold">{markedCount} For Review</span>
+                </>
+              )}
             </div>
-
-            <Button
-              className="bg-[#FF6B00] hover:bg-[#FF8C00] text-white px-8"
+            <button
+              className="bg-[#FF6B00] hover:bg-[#FF8C00] text-white px-6 py-2 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 flex items-center gap-2 shrink-0"
               disabled={answeredCount === 0 || isSubmitted || isSaving}
               onClick={() => setShowSubmitDialog(true)}
             >
-              {isSaving ? <Loader2 className="animate-spin h-5 w-5" /> : 'Submit Test'}
-            </Button>
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit Test'}
+            </button>
           </div>
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* SUBMIT CONFIRMATION DIALOG */}
-      {/* ───────────────────────────────────────────────────────────── */}
+      {/* ─── MOBILE PALETTE DRAWER (test mode) ─── */}
+      {testMode && showMobilePalette && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMobilePalette(false)} />
+          {/* Drawer from right */}
+          <div className="relative ml-auto w-80 max-w-[90vw] h-full bg-white overflow-y-auto animate-in slide-in-from-right-4 duration-200">
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-gray-800">Question Palette</h3>
+                <button onClick={() => setShowMobilePalette(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+              <PaletteContent />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── SUBMIT DIALOG ─── */}
       {testMode && (
         <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Submit Test?</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have answered {answeredCount} out of {total} questions.<br />
-                {unanswered > 0 && <span><strong>{unanswered} questions are unanswered.</strong><br /></span>}
-                Are you sure you want to submit? You cannot change your answers after submitting.
+              <AlertDialogDescription className="space-y-2">
+                <span className="block">You have answered <strong>{answeredCount}</strong> out of <strong>{total}</strong> questions.</span>
+                {visitedUnanswered > 0 && <span className="block text-red-600 font-semibold">{visitedUnanswered} questions visited but not answered.</span>}
+                {markedCount > 0 && <span className="block text-purple-600 font-semibold">{markedCount} question(s) marked for review.</span>}
+                <span className="block text-gray-500 text-sm">You cannot change answers after submitting.</span>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Review Answers</AlertDialogCancel>
               <AlertDialogAction
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.preventDefault(); handleConfirmSubmit(); }}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.preventDefault(); handleConfirmSubmit() }}
                 className="bg-[#FF6B00] hover:bg-[#FF8C00]"
               >
                 Submit Test

@@ -9,11 +9,12 @@ interface AnswerRecord {
 interface QuizStore {
   questions: Question[]
   currentIndex: number
-  answers: Record<string, AnswerRecord>  // questionId → answer
+  answers: Record<string, AnswerRecord>   // questionId → answer
+  visitedQuestions: Set<string>            // questionIds that were navigated to
+  markedForReview: Set<string>             // questionIds marked for review
   isAnswered: boolean
   sessionId: string
 
-  // New fields for Full Length Test Mode
   testMode: boolean
   paperLabel: string
   startTime: number | null
@@ -27,18 +28,22 @@ interface QuizStore {
   resetQuiz: () => void
   getScore: () => { correct: number; wrong: number; total: number; percentage: number }
 
-  // New actions
   setTestMode: (val: boolean) => void
   setPaperLabel: (label: string) => void
   startTimer: () => void
   setElapsed: (seconds: number) => void
   submitTest: () => void
+  goToQuestion: (index: number) => void
+  toggleMarkForReview: (questionId: string) => void
+  markVisited: (questionId: string) => void
 }
 
 export const useQuizStore = create<QuizStore>((set, get) => ({
   questions: [],
   currentIndex: 0,
   answers: {},
+  visitedQuestions: new Set<string>(),
+  markedForReview: new Set<string>(),
   isAnswered: false,
   sessionId: '',
 
@@ -49,7 +54,14 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   isSubmitted: false,
 
   setQuestions: (questions) =>
-    set({ questions, currentIndex: 0, answers: {}, isAnswered: false }),
+    set({
+      questions,
+      currentIndex: 0,
+      answers: {},
+      visitedQuestions: new Set<string>(),
+      markedForReview: new Set<string>(),
+      isAnswered: false,
+    }),
 
   submitAnswer: (questionId, selected, correct) => {
     const isCorrect = selected === correct
@@ -58,38 +70,78 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
         ...state.answers,
         [questionId]: { selectedOption: selected, isCorrect },
       },
-      isAnswered: state.testMode ? state.isSubmitted : true, // Only true instantly if not in test mode, or if submitted
+      isAnswered: state.testMode ? state.isSubmitted : true,
     }))
   },
 
   nextQuestion: () =>
-    set((state) => ({
-      currentIndex: Math.min(state.currentIndex + 1, state.questions.length - 1),
-      isAnswered: state.testMode ? state.isSubmitted : false,
-    })),
+    set((state) => {
+      const nextIndex = Math.min(state.currentIndex + 1, state.questions.length - 1)
+      const nextQId = state.questions[nextIndex]?.$id
+      const newVisited = new Set(state.visitedQuestions)
+      if (nextQId) newVisited.add(nextQId)
+      return {
+        currentIndex: nextIndex,
+        isAnswered: state.testMode ? state.isSubmitted : false,
+        visitedQuestions: newVisited,
+      }
+    }),
+
+  goToQuestion: (index: number) =>
+    set((state) => {
+      const qId = state.questions[index]?.$id
+      const newVisited = new Set(state.visitedQuestions)
+      if (qId) newVisited.add(qId)
+      return {
+        currentIndex: index,
+        visitedQuestions: newVisited,
+      }
+    }),
+
+  markVisited: (questionId: string) =>
+    set((state) => {
+      const newVisited = new Set(state.visitedQuestions)
+      newVisited.add(questionId)
+      return { visitedQuestions: newVisited }
+    }),
+
+  toggleMarkForReview: (questionId: string) =>
+    set((state) => {
+      const newMarked = new Set(state.markedForReview)
+      if (newMarked.has(questionId)) {
+        newMarked.delete(questionId)
+      } else {
+        newMarked.add(questionId)
+      }
+      return { markedForReview: newMarked }
+    }),
 
   reset: () => set({
     questions: [],
     currentIndex: 0,
     answers: {},
+    visitedQuestions: new Set<string>(),
+    markedForReview: new Set<string>(),
     isAnswered: false,
     testMode: false,
     paperLabel: '',
     startTime: null,
     elapsedSeconds: 0,
-    isSubmitted: false
+    isSubmitted: false,
   }),
 
   resetQuiz: () => set({
     questions: [],
     currentIndex: 0,
     answers: {},
+    visitedQuestions: new Set<string>(),
+    markedForReview: new Set<string>(),
     isAnswered: false,
     testMode: false,
     paperLabel: '',
     startTime: null,
     elapsedSeconds: 0,
-    isSubmitted: false
+    isSubmitted: false,
   }),
 
   getScore: () => {
@@ -109,5 +161,5 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   setPaperLabel: (label: string) => set({ paperLabel: label }),
   startTimer: () => set({ startTime: Date.now() }),
   setElapsed: (seconds: number) => set({ elapsedSeconds: seconds }),
-  submitTest: () => set((state) => ({ isSubmitted: true, isAnswered: true }))
+  submitTest: () => set(() => ({ isSubmitted: true, isAnswered: true })),
 }))
