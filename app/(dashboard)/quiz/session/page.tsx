@@ -130,7 +130,6 @@ export default function TestSessionPage() {
   const [isSaving, setIsSaving] = useState(false)
   // Mobile palette drawer
   const [showMobilePalette, setShowMobilePalette] = useState(false)
-  const [disabledOptions, setDisabledOptions] = useState<Set<string>>(new Set())
   const [showAreYouSureDialog, setShowAreYouSureDialog] = useState(false)
   const [pendingOption, setPendingOption] = useState<'A'|'B'|'C'|'D'|null>(null)
   const [isGuess, setIsGuess] = useState(false)
@@ -186,14 +185,12 @@ export default function TestSessionPage() {
   useEffect(() => {
     if (currentQuestion) {
       startTimerForQuestion(currentQuestion.$id)
-      setDisabledOptions(new Set())
       setIsGuess(false)
     }
   }, [currentIndex, currentQuestion, startTimerForQuestion])
 
   // ── Option click ──
   const handleOptionClick = (optionKey: 'A' | 'B' | 'C' | 'D') => {
-    if (disabledOptions.has(optionKey)) return
     setPendingOption(optionKey)
     if (testMode) {
       setShowAreYouSureDialog(true)
@@ -209,7 +206,7 @@ export default function TestSessionPage() {
     stopTimerForQuestion(currentQuestion.$id)
     const timeTaken = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
     const usedAreYouSure = testMode
-    submitAnswer(currentQuestion.$id, pendingOption, currentQuestion.correct_option, timeTaken, disabledOptions.size > 0, isGuess, usedAreYouSure)
+    submitAnswer(currentQuestion.$id, pendingOption, currentQuestion.correct_option, timeTaken, false, isGuess, usedAreYouSure)
     setPendingOption(null)
     if (!testMode) {
       try {
@@ -221,7 +218,7 @@ export default function TestSessionPage() {
             selected_option: pendingOption, 
             is_correct: pendingOption === currentQuestion.correct_option,
             time_taken_seconds: timeTaken,
-            used_5050: disabledOptions.size > 0,
+            used_5050: false,
             used_guess: isGuess,
             used_areyousure: usedAreYouSure,
             is_guess: isGuess
@@ -229,17 +226,17 @@ export default function TestSessionPage() {
           await incrementStats(user.$id, pendingOption === currentQuestion.correct_option)
         }
       } catch (e) { console.error('Failed to save attempt:', e) }
+      // Navigate
+      if (isLastQuestion) {
+        router.push('/results')
+      } else {
+        nextQuestion()
+      }
     }
   }
 
   // ── Button handlers ──
   const handle5050 = () => {
-    if (disabledOptions.size > 0) return
-    const options = ['A', 'B', 'C', 'D'].filter(o => !disabledOptions.has(o))
-    const correct = currentQuestion.correct_option
-    const wrongs = options.filter(o => o !== correct)
-    const toDisable = wrongs.sort(() => Math.random() - 0.5).slice(0, 2)
-    setDisabledOptions(new Set([...disabledOptions, ...toDisable]))
     incrementButtonUsage('used5050')
   }
 
@@ -472,15 +469,15 @@ export default function TestSessionPage() {
                   text={currentQuestion[`option_${key.toLowerCase()}` as keyof typeof currentQuestion] as string}
                   state={getOptionState(key)}
                   onClick={() => handleOptionClick(key)}
-                  disabled={testMode ? isSubmitted || disabledOptions.has(key) : isAnswered || disabledOptions.has(key)}
+                  disabled={testMode ? isSubmitted : isAnswered}
                 />
               ))}
             </div>
 
             {/* Buttons */}
-            {!isAnswered && !isSubmitted && (
+            {testMode && !isAnswered && !isSubmitted && (
               <div className="flex gap-2 flex-wrap">
-                <Button variant="outline" onClick={handle5050} disabled={disabledOptions.size > 0}>
+                <Button variant="outline" onClick={handle5050}>
                   50:50
                 </Button>
                 <Button variant="outline" onClick={handleGuess} disabled={isGuess}>
@@ -531,6 +528,9 @@ export default function TestSessionPage() {
                   >
                     <ChevronLeft className="h-4 w-4" /> Previous
                   </Button>
+                  <Button variant="outline" onClick={handle5050} className="rounded-full h-8 w-8 p-0 text-xs font-bold">50</Button>
+                  <Button variant="outline" onClick={handleGuess} disabled={isGuess} className="rounded-full h-8 w-8 p-0 text-xs font-bold">G</Button>
+                  <Button variant="outline" onClick={() => setShowAreYouSureDialog(true)} disabled={!pendingOption} className="rounded-full h-8 w-8 p-0 text-xs font-bold">?</Button>
                   <Button
                     onClick={handleSaveAndNext}
                     disabled={currentIndex === total - 1}

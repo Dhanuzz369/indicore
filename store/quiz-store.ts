@@ -94,7 +94,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
         ...state.answers,
         [questionId]: { selectedOption: selected, isCorrect, timeTaken, used5050, isGuess, usedAreYouSure },
       },
-      isAnswered: state.testMode ? state.isSubmitted : true,
+      isAnswered: false,
     }))
   },
 
