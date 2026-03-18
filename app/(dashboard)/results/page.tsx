@@ -7,6 +7,11 @@ import { useQuizStore } from '@/store/quiz-store'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, XCircle, ChevronDown, ChevronUp, Trophy, Target, BookOpen, Clock, RefreshCw, Home } from 'lucide-react'
 import type { Question } from '@/types'
+import { Bar } from 'react-chartjs-2'
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js'
+import { generateTestAnalytics } from '@/lib/analytics/engine'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 // ─── Score helpers ───────────────────────────────────────────
 function getScoreThreshold(pct: number) {
@@ -53,6 +58,20 @@ export default function ResultsPage() {
 
   const threshold = getScoreThreshold(score.percentage)
   const skipped = questions.length - score.total
+
+  const attempts = Object.entries(answers).map(([qId, ans]) => ({
+    $id: '',
+    user_id: '',
+    question_id: qId,
+    selected_option: ans.selectedOption,
+    is_correct: ans.isCorrect,
+    time_taken_seconds: ans.timeTaken,
+    used_5050: ans.used5050,
+    used_guess: ans.isGuess,
+    used_areyousure: ans.usedAreYouSure,
+    is_guess: ans.isGuess
+  }))
+  const analytics = generateTestAnalytics({ questions, attempts, totalTestTime: elapsedSeconds })
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
@@ -145,6 +164,19 @@ export default function ResultsPage() {
                 />
               </div>
             </div>
+            {/* Time bar */}
+            <div>
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Time Taken</span>
+                <span className="font-semibold text-gray-700">{formatTime(analytics.overallTime.actualTime)} / {formatTime(analytics.overallTime.targetTime)}</span>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-blue-500 transition-all duration-700"
+                  style={{ width: `${Math.min(analytics.overallTime.actualTime / analytics.overallTime.targetTime * 100, 100)}%` }}
+                />
+              </div>
+            </div>
             {/* Negative marking estimate (UPSC style: -0.66 per wrong) */}
             <div className="flex items-center justify-between bg-gray-50 rounded-xl p-3 text-xs">
               <div>
@@ -160,6 +192,73 @@ export default function ResultsPage() {
             </div>
           </div>
         </div>
+
+        {/* ── Subject Performance Chart ── */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-3">Subject Performance</h3>
+          <Bar
+            data={{
+              labels: analytics.subjectStats.map(s => s.subject),
+              datasets: [{
+                label: 'Accuracy %',
+                data: analytics.subjectStats.map(s => s.accuracy),
+                backgroundColor: analytics.subjectStats.map(s => s.accuracy < 50 ? 'rgba(255, 99, 132, 0.6)' : 'rgba(75, 192, 192, 0.6)'),
+              }]
+            }}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+                title: { display: false }
+              },
+              scales: {
+                y: { beginAtZero: true, max: 100 }
+              }
+            }}
+          />
+        </div>
+
+        {/* ── Button Usage Summary ── */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-3">Button Usage Summary</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>50:50</span>
+              <span>{analytics.buttonUsageStats.total5050} used, {analytics.buttonUsageStats.correct5050} correct ({analytics.buttonUsageStats.total5050 > 0 ? Math.round(analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050 * 100) : 0}% success)</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Guess</span>
+              <span>{analytics.buttonUsageStats.totalGuess} used, {analytics.buttonUsageStats.correctGuess} correct ({analytics.buttonUsageStats.totalGuess > 0 ? Math.round(analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess * 100) : 0}% success)</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Are You Sure?</span>
+              <span>{analytics.buttonUsageStats.totalAreYouSure} used, {analytics.buttonUsageStats.correctAreYouSure} correct ({analytics.buttonUsageStats.totalAreYouSure > 0 ? Math.round(analytics.buttonUsageStats.correctAreYouSure / analytics.buttonUsageStats.totalAreYouSure * 100) : 0}% success)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Timing Breakdown ── */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-3">Timing Breakdown</h3>
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+            {analytics.timingStats.map((t, i) => (
+              <div key={i} className="flex justify-between text-sm">
+                <span className="truncate flex-1 mr-2">{t.questionText.slice(0, 50)}...</span>
+                <span className={t.timeTaken > t.targetTime * 1.5 ? 'text-red-500 font-semibold' : 'text-gray-700'}>{t.timeTaken}s / {t.targetTime}s</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Suggestions ── */}
+        {analytics.suggestions.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <h3 className="text-sm font-bold text-gray-800 mb-3">Recommended Areas for Improvement</h3>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              {analytics.suggestions.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+          </div>
+        )}
 
         {/* ── Question Review ── */}
         <div>

@@ -39,6 +39,10 @@ export interface QuizAttempt {
   selected_option: string
   is_correct: boolean
   time_taken_seconds?: number
+  used_5050?: boolean
+  used_guess?: boolean
+  used_areyousure?: boolean
+  is_guess?: boolean
 }
 
 export interface UserStats {

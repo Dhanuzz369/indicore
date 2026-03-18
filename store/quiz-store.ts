@@ -4,6 +4,10 @@ import { Question } from '@/types'
 interface AnswerRecord {
   selectedOption: string
   isCorrect: boolean
+  timeTaken: number
+  used5050: boolean
+  isGuess: boolean
+  usedAreYouSure: boolean
 }
 
 interface QuizStore {
@@ -21,8 +25,15 @@ interface QuizStore {
   elapsedSeconds: number
   isSubmitted: boolean
 
+  timers: Record<string, number> // Object to track start times per question
+  buttonStats: {
+    areYouSure: number
+    used5050: number
+    guessed: number
+  }
+
   setQuestions: (questions: Question[]) => void
-  submitAnswer: (questionId: string, selected: string, correct: string) => void
+  submitAnswer: (questionId: string, selected: string, correct: string, timeTaken: number, used5050: boolean, isGuess: boolean, usedAreYouSure: boolean) => void
   nextQuestion: () => void
   reset: () => void
   resetQuiz: () => void
@@ -36,6 +47,12 @@ interface QuizStore {
   goToQuestion: (index: number) => void
   toggleMarkForReview: (questionId: string) => void
   markVisited: (questionId: string) => void
+
+  // New actions
+  startTimerForQuestion: (questionId: string) => void
+  stopTimerForQuestion: (questionId: string) => void
+  getTimeForQuestion: (questionId: string) => number
+  incrementButtonUsage: (type: 'areYouSure' | 'used5050' | 'guessed') => void
 }
 
 export const useQuizStore = create<QuizStore>((set, get) => ({
@@ -53,6 +70,13 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   elapsedSeconds: 0,
   isSubmitted: false,
 
+  timers: {},
+  buttonStats: {
+    areYouSure: 0,
+    used5050: 0,
+    guessed: 0,
+  },
+
   setQuestions: (questions) =>
     set({
       questions,
@@ -63,12 +87,12 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       isAnswered: false,
     }),
 
-  submitAnswer: (questionId, selected, correct) => {
+  submitAnswer: (questionId, selected, correct, timeTaken, used5050, isGuess, usedAreYouSure) => {
     const isCorrect = selected === correct
     set((state) => ({
       answers: {
         ...state.answers,
-        [questionId]: { selectedOption: selected, isCorrect },
+        [questionId]: { selectedOption: selected, isCorrect, timeTaken, used5050, isGuess, usedAreYouSure },
       },
       isAnswered: state.testMode ? state.isSubmitted : true,
     }))
@@ -128,6 +152,12 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     startTime: null,
     elapsedSeconds: 0,
     isSubmitted: false,
+    timers: {},
+    buttonStats: {
+      areYouSure: 0,
+      used5050: 0,
+      guessed: 0,
+    },
   }),
 
   resetQuiz: () => set({
@@ -142,6 +172,12 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     startTime: null,
     elapsedSeconds: 0,
     isSubmitted: false,
+    timers: {},
+    buttonStats: {
+      areYouSure: 0,
+      used5050: 0,
+      guessed: 0,
+    },
   }),
 
   getScore: () => {
@@ -162,4 +198,38 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   startTimer: () => set({ startTime: Date.now() }),
   setElapsed: (seconds: number) => set({ elapsedSeconds: seconds }),
   submitTest: () => set(() => ({ isSubmitted: true, isAnswered: true })),
+
+  startTimerForQuestion: (questionId: string) =>
+    set((state) => ({
+      timers: {
+        ...state.timers,
+        [questionId]: Date.now(),
+      },
+    })),
+
+  stopTimerForQuestion: (questionId: string) =>
+    set((state) => {
+      const startTime = state.timers[questionId]
+      if (!startTime) return state
+      const elapsed = Date.now() - startTime
+      return {
+        timers: {
+          ...state.timers,
+          [questionId]: elapsed,
+        },
+      }
+    }),
+
+  getTimeForQuestion: (questionId: string) => {
+    const { timers } = get()
+    return timers[questionId] || 0
+  },
+
+  incrementButtonUsage: (type: 'areYouSure' | 'used5050' | 'guessed') =>
+    set((state) => ({
+      buttonStats: {
+        ...state.buttonStats,
+        [type]: state.buttonStats[type] + 1,
+      },
+    })),
 }))
