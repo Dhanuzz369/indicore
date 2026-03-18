@@ -132,6 +132,7 @@ export default function TestSessionPage() {
   const [showMobilePalette, setShowMobilePalette] = useState(false)
   const [used5050, setUsed5050] = useState(false)
   const [usedGuess, setUsedGuess] = useState(false)
+  const [guessToast, setGuessToast] = useState('')
 
   // ── 1. Redirect if no questions ──
   useEffect(() => {
@@ -498,22 +499,49 @@ export default function TestSessionPage() {
                   </button>
                 </div>
 
-                {/* Row 2: Previous + Save & Next */}
-                <div className="flex gap-2">
+                {/* Row 2: Previous + 50:50 + Guess + Save & Next */}
+                <div className="flex gap-2 items-center">
                   <Button
                     variant="outline"
                     disabled={currentIndex === 0}
                     onClick={handlePrev}
-                    className="gap-1 font-semibold"
+                    className="gap-1 font-semibold text-sm py-2 px-3"
                   >
-                    <ChevronLeft className="h-4 w-4" /> Previous
+                    <ChevronLeft className="h-4 w-4" /> Prev
                   </Button>
-                  <Button variant="outline" onClick={handle5050} className="rounded-full h-8 w-8 p-0 text-xs font-bold">50</Button>
-                  <Button variant="outline" onClick={handleGuess} disabled={usedGuess} className="rounded-full h-8 w-8 p-0 text-xs font-bold">G</Button>
+                  
+                  {/* 50:50 Button - larger and more clickable */}
+                  <button
+                    onClick={handle5050}
+                    disabled={used5050}
+                    className={`flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-semibold text-sm transition-all ${
+                      used5050
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
+                        : 'bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-300 hover:border-purple-500'
+                    }`}
+                    title="Remove 2 wrong options"
+                  >
+                    <span>50:50</span>
+                  </button>
+                  
+                  {/* Guess Button - larger and more clickable */}
+                  <button
+                    onClick={handleGuess}
+                    disabled={usedGuess}
+                    className={`flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-semibold text-sm transition-all ${
+                      usedGuess
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
+                        : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700 border border-yellow-300 hover:border-yellow-500'
+                    }`}
+                    title="Mark as guess for analytics"
+                  >
+                    <span>Guess</span>
+                  </button>
+                  
                   <Button
                     onClick={handleSaveAndNext}
                     disabled={currentIndex === total - 1}
-                    className="flex-1 bg-gray-800 hover:bg-gray-900 text-white gap-1 font-semibold"
+                    className="flex-1 bg-gray-800 hover:bg-gray-900 text-white gap-1 font-semibold py-2"
                   >
                     Save & Next <ChevronRight className="h-4 w-4" />
                   </Button>
