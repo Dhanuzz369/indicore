@@ -130,9 +130,8 @@ export default function TestSessionPage() {
   const [isSaving, setIsSaving] = useState(false)
   // Mobile palette drawer
   const [showMobilePalette, setShowMobilePalette] = useState(false)
-  const [showAreYouSureDialog, setShowAreYouSureDialog] = useState(false)
-  const [pendingOption, setPendingOption] = useState<'A'|'B'|'C'|'D'|null>(null)
-  const [isGuess, setIsGuess] = useState(false)
+  const [used5050, setUsed5050] = useState(false)
+  const [usedGuess, setUsedGuess] = useState(false)
 
   // ── 1. Redirect if no questions ──
   useEffect(() => {
@@ -185,29 +184,14 @@ export default function TestSessionPage() {
   useEffect(() => {
     if (currentQuestion) {
       startTimerForQuestion(currentQuestion.$id)
-      setIsGuess(false)
     }
   }, [currentIndex, currentQuestion, startTimerForQuestion])
 
   // ── Option click ──
-  const handleOptionClick = (optionKey: 'A' | 'B' | 'C' | 'D') => {
-    setPendingOption(optionKey)
-    if (testMode) {
-      setShowAreYouSureDialog(true)
-    } else {
-      handleConfirmOption()
-    }
-  }
-
-  // ── Confirm option ──
-  const handleConfirmOption = async () => {
-    if (!pendingOption) return
-    setShowAreYouSureDialog(false)
+  const handleOptionClick = async (optionKey: 'A' | 'B' | 'C' | 'D') => {
     stopTimerForQuestion(currentQuestion.$id)
     const timeTaken = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
-    const usedAreYouSure = testMode
-    submitAnswer(currentQuestion.$id, pendingOption, currentQuestion.correct_option, timeTaken, false, isGuess, usedAreYouSure)
-    setPendingOption(null)
+    submitAnswer(currentQuestion.$id, optionKey, currentQuestion.correct_option, timeTaken, used5050, usedGuess, testMode)
     if (!testMode) {
       try {
         const user = await getCurrentUser()
@@ -215,15 +199,15 @@ export default function TestSessionPage() {
           await saveAttempt({ 
             user_id: user.$id, 
             question_id: currentQuestion.$id, 
-            selected_option: pendingOption, 
-            is_correct: pendingOption === currentQuestion.correct_option,
+            selected_option: optionKey, 
+            is_correct: optionKey === currentQuestion.correct_option,
             time_taken_seconds: timeTaken,
-            used_5050: false,
-            used_guess: isGuess,
-            used_areyousure: usedAreYouSure,
-            is_guess: isGuess
+            used_5050: used5050,
+            used_guess: usedGuess,
+            used_areyousure: testMode,
+            is_guess: usedGuess
           })
-          await incrementStats(user.$id, pendingOption === currentQuestion.correct_option)
+          await incrementStats(user.$id, optionKey === currentQuestion.correct_option)
         }
       } catch (e) { console.error('Failed to save attempt:', e) }
       // Navigate
@@ -237,11 +221,12 @@ export default function TestSessionPage() {
 
   // ── Button handlers ──
   const handle5050 = () => {
+    setUsed5050(true)
     incrementButtonUsage('used5050')
   }
 
   const handleGuess = () => {
-    setIsGuess(true)
+    setUsedGuess(true)
     incrementButtonUsage('guessed')
   }
 
@@ -480,14 +465,9 @@ export default function TestSessionPage() {
                 <Button variant="outline" onClick={handle5050}>
                   50:50
                 </Button>
-                <Button variant="outline" onClick={handleGuess} disabled={isGuess}>
+                <Button variant="outline" onClick={handleGuess} disabled={usedGuess}>
                   Guess
                 </Button>
-                {testMode && (
-                  <Button variant="outline" onClick={() => setShowAreYouSureDialog(true)} disabled={!pendingOption}>
-                    Are You Sure?
-                  </Button>
-                )}
               </div>
             )}
 
@@ -529,8 +509,7 @@ export default function TestSessionPage() {
                     <ChevronLeft className="h-4 w-4" /> Previous
                   </Button>
                   <Button variant="outline" onClick={handle5050} className="rounded-full h-8 w-8 p-0 text-xs font-bold">50</Button>
-                  <Button variant="outline" onClick={handleGuess} disabled={isGuess} className="rounded-full h-8 w-8 p-0 text-xs font-bold">G</Button>
-                  <Button variant="outline" onClick={() => setShowAreYouSureDialog(true)} disabled={!pendingOption} className="rounded-full h-8 w-8 p-0 text-xs font-bold">?</Button>
+                  <Button variant="outline" onClick={handleGuess} disabled={usedGuess} className="rounded-full h-8 w-8 p-0 text-xs font-bold">G</Button>
                   <Button
                     onClick={handleSaveAndNext}
                     disabled={currentIndex === total - 1}
@@ -626,24 +605,6 @@ export default function TestSessionPage() {
           </AlertDialogContent>
         </AlertDialog>
       )}
-
-      {/* ─── ARE YOU SURE DIALOG ─── */}
-      <AlertDialog open={showAreYouSureDialog} onOpenChange={setShowAreYouSureDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You selected option {pendingOption}. Confirm to submit.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingOption(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmOption}>
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
     </div>
   )

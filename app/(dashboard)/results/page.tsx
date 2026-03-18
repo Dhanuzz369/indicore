@@ -4,8 +4,7 @@ export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
-import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle, ChevronDown, Trophy, BookOpen, Clock, RefreshCw, Home } from 'lucide-react'
+import { CheckCircle, XCircle, ChevronDown, Trophy, BookOpen, Clock, RefreshCw, Home, TrendingUp, AlertCircle, Lightbulb } from 'lucide-react'
 import type { Question } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 
@@ -50,28 +49,28 @@ function SubjectPerformanceCard({
   
   // Determine color based on accuracy
   const getAccuracyColor = (acc: number) => {
-    if (acc >= 80) return 'text-green-500'
-    if (acc >= 60) return 'text-blue-500'
-    if (acc >= 40) return 'text-amber-500'
-    return 'text-red-500'
+    if (acc >= 80) return 'text-emerald-400'
+    if (acc >= 60) return 'text-blue-400'
+    if (acc >= 40) return 'text-amber-400'
+    return 'text-red-400'
   }
 
   return (
-    <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+    <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center justify-between flex-1">
-          <h3 className="text-lg font-bold text-white">{subject}</h3>
+          <h3 className="text-lg font-bold text-gray-900">{subject}</h3>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-gray-400 text-sm">{correct}/{total}</p>
+              <p className="text-gray-600 text-sm font-medium">{correct}/{total}</p>
             </div>
             <div className={`font-bold text-lg ${getAccuracyColor(accuracy)}`}>
               {accuracy}%
             </div>
             <button 
               onClick={() => setIsExpanded(!isExpanded)}
-              className={`text-gray-400 hover:text-gray-200 transition-transform ${isExpanded ? '' : 'transform rotate-180'}`}
+              className={`text-gray-400 hover:text-gray-600 transition-transform ${isExpanded ? '' : 'transform rotate-180'}`}
             >
               <ChevronDown className="h-5 w-5" />
             </button>
@@ -79,7 +78,7 @@ function SubjectPerformanceCard({
         </div>
       </div>
 
-      {/* Areas to revisit */}
+      {/* Expanded content */}
       {isExpanded && (
         <div className="space-y-4">
           {/* Question grid */}
@@ -90,9 +89,9 @@ function SubjectPerformanceCard({
               const isSkipped = !answer
               
               // Determine button color
-              let buttonColor = 'bg-gray-700 text-gray-400 border-gray-600'
-              if (isCorrect) buttonColor = 'bg-green-600 text-white border-green-500'
-              else if (!isSkipped) buttonColor = 'bg-red-600 text-white border-red-500'
+              let buttonColor = 'bg-gray-100 text-gray-600 border-gray-300'
+              if (isCorrect) buttonColor = 'bg-emerald-100 text-emerald-700 border-emerald-300'
+              else if (!isSkipped) buttonColor = 'bg-red-100 text-red-700 border-red-300'
               
               return (
                 <button
@@ -112,7 +111,7 @@ function SubjectPerformanceCard({
             return answer && !answer.isCorrect
           }) && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-gray-400 uppercase">Areas to revisit</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase">Areas to revisit</p>
               <div className="flex flex-wrap gap-2">
                 {subjectQuestions
                   .filter(q => {
@@ -121,10 +120,9 @@ function SubjectPerformanceCard({
                   })
                   .slice(0, 3)
                   .map(q => {
-                    // Extract topic from question or use placeholder
                     const topic = q.tags?.[0] || 'General Knowledge'
                     return (
-                      <div key={q.$id} className="px-3 py-1 rounded-full bg-yellow-900 text-yellow-300 text-xs font-semibold border border-yellow-700">
+                      <div key={q.$id} className="px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-semibold border border-orange-200">
                         {topic}
                       </div>
                     )
@@ -147,7 +145,7 @@ export default function ResultsPage() {
   // ─── No data state ───────────────────────────────────────────
   if (questions.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh] p-6">
+      <div className="flex items-center justify-center min-h-[80vh] p-6 bg-gray-50">
         <div className="text-center space-y-4 max-w-xs">
           <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
             <BookOpen className="h-10 w-10 text-gray-400" />
@@ -195,8 +193,15 @@ export default function ResultsPage() {
   const expandedQuestion = expandedQuestionId ? questions.find(q => q.$id === expandedQuestionId) : null
   const expandedAnswer = expandedQuestion ? answers[expandedQuestion.$id] : null
 
+  // Calculate average time per question
+  const avgTimePerQuestion = Math.round(elapsedSeconds / score.total) || 0
+
+  // Identify weak areas
+  const weakAreas = analytics.subjectStats.filter(s => s.accuracy < 50)
+  const strongAreas = analytics.subjectStats.filter(s => s.accuracy >= 80)
+
   return (
-    <div className="min-h-screen bg-gray-950 pb-24 md:pb-8">
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
 
       {/* ── Hero Score Card ── */}
       <div className={`bg-gradient-to-br ${threshold.color} text-white`}>
@@ -246,32 +251,142 @@ export default function ResultsPage() {
 
         {/* ── Quick Stats ── */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-gray-900 rounded-2xl p-4 text-center shadow-sm border border-gray-800">
-            <div className="w-8 h-8 rounded-xl bg-green-900 flex items-center justify-center mx-auto mb-2">
-              <CheckCircle className="h-4 w-4 text-green-400" />
+          <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-200">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-2">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
             </div>
-            <p className="text-xl font-black text-white">{score.correct}</p>
-            <p className="text-[11px] text-gray-400 font-medium">Correct</p>
+            <p className="text-xl font-black text-gray-900">{score.correct}</p>
+            <p className="text-[11px] text-gray-500 font-medium">Correct</p>
           </div>
-          <div className="bg-gray-900 rounded-2xl p-4 text-center shadow-sm border border-gray-800">
-            <div className="w-8 h-8 rounded-xl bg-red-900 flex items-center justify-center mx-auto mb-2">
-              <XCircle className="h-4 w-4 text-red-400" />
+          <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-200">
+            <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center mx-auto mb-2">
+              <XCircle className="h-4 w-4 text-red-500" />
             </div>
-            <p className="text-xl font-black text-white">{score.wrong}</p>
-            <p className="text-[11px] text-gray-400 font-medium">Wrong</p>
+            <p className="text-xl font-black text-gray-900">{score.wrong}</p>
+            <p className="text-[11px] text-gray-500 font-medium">Wrong</p>
           </div>
-          <div className="bg-gray-900 rounded-2xl p-4 text-center shadow-sm border border-gray-800">
-            <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center mx-auto mb-2">
+          <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-200">
+            <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-2">
               <Trophy className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="text-xl font-black text-white">{skipped}</p>
-            <p className="text-[11px] text-gray-400 font-medium">Skipped</p>
+            <p className="text-xl font-black text-gray-900">{skipped}</p>
+            <p className="text-[11px] text-gray-500 font-medium">Skipped</p>
           </div>
         </div>
 
+        {/* ── Key Insights ── */}
+        <div className="space-y-3">
+          {/* Strong Areas */}
+          {strongAreas.length > 0 && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <TrendingUp className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-emerald-900 mb-1">Strong Areas</h3>
+                  <p className="text-sm text-emerald-700">You're performing excellently in <span className="font-semibold">{strongAreas.map(s => s.subject).join(', ')}</span>. Keep up the momentum!</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Weak Areas */}
+          {weakAreas.length > 0 && (
+            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-orange-900 mb-1">Areas Needing Attention</h3>
+                  <p className="text-sm text-orange-700">Focus on <span className="font-semibold">{weakAreas.map(s => s.subject).join(', ')}</span> to improve your score. Revisit the concepts and practice more questions.</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Performance Metrics ── */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-4">
+          <h3 className="text-sm font-bold text-gray-800">Performance Metrics</h3>
+          
+          {/* Accuracy bar */}
+          <div>
+            <div className="flex justify-between text-xs text-gray-600 mb-2">
+              <span>Accuracy</span>
+              <span className="font-semibold text-gray-900">{score.correct}/{questions.length}</span>
+            </div>
+            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full bg-gradient-to-r ${threshold.color} transition-all duration-700`}
+                style={{ width: `${score.percentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Time efficiency */}
+          <div>
+            <div className="flex justify-between text-xs text-gray-600 mb-2">
+              <span>Time Efficiency</span>
+              <span className="font-semibold text-gray-900">{avgTimePerQuestion}s avg/question</span>
+            </div>
+            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-blue-500 transition-all duration-700"
+                style={{ width: `${Math.min((avgTimePerQuestion / 120) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* UPSC Score Estimate */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-200">
+            <p className="text-xs font-semibold text-blue-700 mb-1">UPSC Score Estimate</p>
+            <div className="flex items-baseline justify-between">
+              <p className="text-xs text-blue-600">+2 per correct, -0.66 per wrong</p>
+              <p className="text-xl font-black text-blue-900">{(score.correct * 2 - score.wrong * 0.66).toFixed(2)} / {questions.length * 2}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Button Usage Analytics ── */}
+        {(analytics.buttonUsageStats.total5050 > 0 || analytics.buttonUsageStats.totalGuess > 0) && (
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+            <h3 className="text-sm font-bold text-gray-800 mb-4">Lifeline Usage Analysis</h3>
+            <div className="space-y-3">
+              {analytics.buttonUsageStats.total5050 > 0 && (
+                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm font-semibold text-purple-900">50:50 Lifeline</span>
+                    <span className="text-xs font-bold text-purple-700 bg-purple-100 px-2 py-1 rounded">{analytics.buttonUsageStats.correct5050}/{analytics.buttonUsageStats.total5050}</span>
+                  </div>
+                  <div className="w-full h-2 bg-purple-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-purple-500"
+                      style={{ width: `${(analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-purple-700 mt-2">{Math.round((analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) * 100)}% success rate</p>
+                </div>
+              )}
+              {analytics.buttonUsageStats.totalGuess > 0 && (
+                <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm font-semibold text-yellow-900">Guess Button</span>
+                    <span className="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">{analytics.buttonUsageStats.correctGuess}/{analytics.buttonUsageStats.totalGuess}</span>
+                  </div>
+                  <div className="w-full h-2 bg-yellow-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-yellow-500"
+                      style={{ width: `${(analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-yellow-700 mt-2">{Math.round((analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) * 100)}% success rate</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── Subject-wise Performance ── */}
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-white">Subject-wise Performance</h2>
+          <h2 className="text-lg font-bold text-gray-900">Subject-wise Performance</h2>
           {subjectGroups.map(([subject, subjectQuestions]) => {
             const subjectCorrect = subjectQuestions.filter(q => answers[q.$id]?.isCorrect).length
             const subjectTotal = subjectQuestions.length
@@ -292,22 +407,22 @@ export default function ResultsPage() {
           })}
         </div>
 
-        {/* ── Question Detail Modal/Expanded View ── */}
+        {/* ── Question Detail View ── */}
         {expandedQuestion && (
-          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Question {questions.findIndex(q => q.$id === expandedQuestion.$id) + 1}</h3>
+              <h3 className="text-lg font-bold text-gray-900">Question {questions.findIndex(q => q.$id === expandedQuestion.$id) + 1}</h3>
               <button 
                 onClick={() => setExpandedQuestionId(null)}
-                className="text-gray-400 hover:text-gray-200 text-2xl"
+                className="text-gray-400 hover:text-gray-600 text-2xl"
               >
                 ×
               </button>
             </div>
 
             {/* Question text */}
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-gray-100 leading-relaxed whitespace-pre-wrap">
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                 {expandedQuestion.question_text}
               </p>
             </div>
@@ -319,9 +434,9 @@ export default function ResultsPage() {
                 const isSelected = expandedAnswer?.selectedOption === key
                 const isCorrectOpt = expandedQuestion.correct_option === key
                 
-                let optionClass = 'bg-gray-800 border-gray-700 text-gray-300'
-                if (isCorrectOpt) optionClass = 'bg-green-900 border-green-700 text-green-100'
-                else if (isSelected && !isCorrectOpt) optionClass = 'bg-red-900 border-red-700 text-red-100'
+                let optionClass = 'bg-gray-50 border-gray-200 text-gray-700'
+                if (isCorrectOpt) optionClass = 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                else if (isSelected && !isCorrectOpt) optionClass = 'bg-red-50 border-red-300 text-red-900'
                 
                 return (
                   <div
@@ -330,8 +445,8 @@ export default function ResultsPage() {
                   >
                     <span className="font-bold shrink-0">{key}.</span>
                     <span className="flex-1 whitespace-pre-wrap">{optionText}</span>
-                    {isCorrectOpt && <CheckCircle className="h-4 w-4 text-green-400 shrink-0 mt-0.5" />}
-                    {isSelected && !isCorrectOpt && <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />}
+                    {isCorrectOpt && <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
+                    {isSelected && !isCorrectOpt && <XCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />}
                   </div>
                 )
               })}
@@ -339,43 +454,66 @@ export default function ResultsPage() {
 
             {/* Explanation */}
             {expandedQuestion.explanation && (
-              <div className="bg-blue-900 border border-blue-700 rounded-xl p-3">
-                <p className="text-[11px] font-bold text-blue-300 uppercase tracking-wider mb-2">Explanation</p>
-                <p className="text-sm text-blue-100 leading-relaxed whitespace-pre-wrap">{expandedQuestion.explanation}</p>
-              </div>
-            )}
-
-            {/* Time taken */}
-            {expandedAnswer?.timeTaken && (
-              <div className="bg-gray-800 rounded-xl p-3 flex items-center justify-between">
-                <span className="text-gray-300 text-sm">Time Taken</span>
-                <span className="text-white font-semibold">{expandedAnswer.timeTaken}s</span>
-              </div>
-            )}
-
-            {/* Button usage */}
-            {(expandedAnswer?.used5050 || expandedAnswer?.isGuess || expandedAnswer?.usedAreYouSure) && (
-              <div className="bg-gray-800 rounded-xl p-3 space-y-1">
-                <p className="text-gray-300 text-sm font-semibold">Buttons Used</p>
-                <div className="flex flex-wrap gap-2">
-                  {expandedAnswer?.used5050 && <span className="text-xs bg-purple-900 text-purple-300 px-2 py-1 rounded">50:50</span>}
-                  {expandedAnswer?.isGuess && <span className="text-xs bg-yellow-900 text-yellow-300 px-2 py-1 rounded">Guess</span>}
-                  {expandedAnswer?.usedAreYouSure && <span className="text-xs bg-blue-900 text-blue-300 px-2 py-1 rounded">Are You Sure?</span>}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start gap-2 mb-2">
+                  <Lightbulb className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Explanation</p>
                 </div>
+                <p className="text-sm text-blue-900 leading-relaxed whitespace-pre-wrap">{expandedQuestion.explanation}</p>
+              </div>
+            )}
+
+            {/* Additional Info */}
+            {expandedAnswer && (
+              <div className="grid grid-cols-2 gap-3">
+                {expandedAnswer?.timeTaken && (
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                    <p className="text-xs text-gray-600 font-medium mb-1">Time Taken</p>
+                    <p className="text-lg font-bold text-gray-900">{expandedAnswer.timeTaken}s</p>
+                  </div>
+                )}
+                {expandedAnswer?.isCorrect && (
+                  <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+                    <p className="text-xs text-emerald-600 font-medium mb-1">Status</p>
+                    <p className="text-lg font-bold text-emerald-900">✓ Correct</p>
+                  </div>
+                )}
+                {!expandedAnswer?.isCorrect && (
+                  <div className="bg-red-50 rounded-xl p-3 border border-red-200">
+                    <p className="text-xs text-red-600 font-medium mb-1">Status</p>
+                    <p className="text-lg font-bold text-red-900">✗ Incorrect</p>
+                  </div>
+                )}
+                {(expandedAnswer?.used5050 || expandedAnswer?.isGuess) && (
+                  <div className="bg-purple-50 rounded-xl p-3 border border-purple-200">
+                    <p className="text-xs text-purple-600 font-medium mb-1">Lifelines Used</p>
+                    <div className="flex flex-wrap gap-1">
+                      {expandedAnswer?.used5050 && <span className="text-xs bg-purple-200 text-purple-900 px-2 py-1 rounded font-semibold">50:50</span>}
+                      {expandedAnswer?.isGuess && <span className="text-xs bg-yellow-200 text-yellow-900 px-2 py-1 rounded font-semibold">Guess</span>}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
 
-        {/* ── Suggestions ── */}
-        {analytics.suggestions.length > 0 && (
-          <div className="bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-800">
-            <h3 className="text-sm font-bold text-white mb-3">Recommended Areas for Improvement</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
-              {analytics.suggestions.map((s, i) => <li key={i}>{s}</li>)}
-            </ul>
+        {/* ── Personalized Recommendations ── */}
+        <div className="bg-gradient-to-r from-[#FF6B00]/10 to-[#FF8C00]/10 border border-[#FF6B00]/30 rounded-2xl p-5">
+          <div className="flex items-start gap-3">
+            <Lightbulb className="h-6 w-6 text-[#FF6B00] shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-900 mb-2">Recommendations</h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                {score.percentage < 50 && <li>• Focus on understanding core concepts. Your current accuracy suggests conceptual gaps.</li>}
+                {score.percentage >= 50 && score.percentage < 70 && <li>• Practice more questions from weak areas to improve your accuracy from {score.percentage}% to 70%+.</li>}
+                {avgTimePerQuestion > 120 && <li>• Work on time management. Your average {avgTimePerQuestion}s per question is above optimal.</li>}
+                {strongAreas.length > 0 && <li>• Excellent work in {strongAreas[0].subject}! Apply similar strategies to other subjects.</li>}
+                {weakAreas.length > 0 && <li>• Dedicate 30% more study time to {weakAreas[0].subject} before your next attempt.</li>}
+              </ul>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* ── Action Buttons ── */}
         <div className="flex gap-3 pt-2">
@@ -387,7 +525,7 @@ export default function ResultsPage() {
           </button>
           <button
             onClick={() => router.push('/dashboard')}
-            className="flex-1 bg-gray-900 border border-gray-700 text-gray-300 hover:bg-gray-800 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+            className="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
           >
             <Home className="h-4 w-4" /> Home
           </button>
