@@ -30,6 +30,7 @@ export interface Question {
   difficulty: 'easy' | 'medium' | 'hard'
   tags: string[]
   is_active: boolean
+  expected_time_seconds?: number
 }
 
 export interface QuizAttempt {

@@ -59,7 +59,7 @@ export function generateTestAnalytics({
       // If buttons are used and correct, count them
       if (attempt.is_guess) buttonUsageStats.correctGuess++
       if (attempt.used_5050) buttonUsageStats.correct5050++
-      if (attempt.used_areyousure) buttonUsageStats.correctAreyousure++
+      if (attempt.used_areyousure) buttonUsageStats.correctAreYouSure++
     }
 
     // Timing and poorly managed questions analytics
