@@ -5,13 +5,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle, ChevronDown, ChevronUp, Trophy, Target, BookOpen, Clock, RefreshCw, Home } from 'lucide-react'
+import { CheckCircle, XCircle, ChevronDown, Trophy, BookOpen, Clock, RefreshCw, Home } from 'lucide-react'
 import type { Question } from '@/types'
-import { Bar } from 'react-chartjs-2'
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 // ─── Score helpers ───────────────────────────────────────────
 function getScoreThreshold(pct: number) {
@@ -29,11 +25,124 @@ function formatTime(secs: number) {
   return `${m}m ${s}s`
 }
 
+// Subject performance card with collapsible question grid
+function SubjectPerformanceCard({ 
+  subject, 
+  correct, 
+  total, 
+  accuracy, 
+  questions,
+  answers,
+  onQuestionClick
+}: {
+  subject: string
+  correct: number
+  total: number
+  accuracy: number
+  questions: Question[]
+  answers: Record<string, any>
+  onQuestionClick: (questionId: string) => void
+}) {
+  const [isExpanded, setIsExpanded] = useState(true)
+  
+  // Get questions for this subject
+  const subjectQuestions = questions.filter(q => q.subject_id === subject)
+  
+  // Determine color based on accuracy
+  const getAccuracyColor = (acc: number) => {
+    if (acc >= 80) return 'text-green-500'
+    if (acc >= 60) return 'text-blue-500'
+    if (acc >= 40) return 'text-amber-500'
+    return 'text-red-500'
+  }
+
+  return (
+    <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between flex-1">
+          <h3 className="text-lg font-bold text-white">{subject}</h3>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-gray-400 text-sm">{correct}/{total}</p>
+            </div>
+            <div className={`font-bold text-lg ${getAccuracyColor(accuracy)}`}>
+              {accuracy}%
+            </div>
+            <button 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={`text-gray-400 hover:text-gray-200 transition-transform ${isExpanded ? '' : 'transform rotate-180'}`}
+            >
+              <ChevronDown className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Areas to revisit */}
+      {isExpanded && (
+        <div className="space-y-4">
+          {/* Question grid */}
+          <div className="flex flex-wrap gap-2">
+            {subjectQuestions.map((q, idx) => {
+              const answer = answers[q.$id]
+              const isCorrect = answer?.isCorrect
+              const isSkipped = !answer
+              
+              // Determine button color
+              let buttonColor = 'bg-gray-700 text-gray-400 border-gray-600'
+              if (isCorrect) buttonColor = 'bg-green-600 text-white border-green-500'
+              else if (!isSkipped) buttonColor = 'bg-red-600 text-white border-red-500'
+              
+              return (
+                <button
+                  key={q.$id}
+                  onClick={() => onQuestionClick(q.$id)}
+                  className={`h-9 w-9 flex items-center justify-center rounded-lg font-semibold text-xs border transition-all hover:shadow-md ${buttonColor}`}
+                >
+                  {idx + 1}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Areas to revisit section */}
+          {subjectQuestions.some(q => {
+            const answer = answers[q.$id]
+            return answer && !answer.isCorrect
+          }) && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase">Areas to revisit</p>
+              <div className="flex flex-wrap gap-2">
+                {subjectQuestions
+                  .filter(q => {
+                    const answer = answers[q.$id]
+                    return answer && !answer.isCorrect
+                  })
+                  .slice(0, 3)
+                  .map(q => {
+                    // Extract topic from question or use placeholder
+                    const topic = q.tags?.[0] || 'General Knowledge'
+                    return (
+                      <div key={q.$id} className="px-3 py-1 rounded-full bg-yellow-900 text-yellow-300 text-xs font-semibold border border-yellow-700">
+                        {topic}
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ResultsPage() {
   const router = useRouter()
   const { questions, answers, getScore, reset, paperLabel, elapsedSeconds } = useQuizStore()
   const score = getScore()
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+  const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null)
 
   // ─── No data state ───────────────────────────────────────────
   if (questions.length === 0) {
@@ -73,12 +182,25 @@ export default function ResultsPage() {
   }))
   const analytics = generateTestAnalytics({ questions, attempts, totalTestTime: elapsedSeconds })
 
+  // Group questions by subject
+  const subjectGroups = Array.from(
+    questions.reduce((map, q) => {
+      if (!map.has(q.subject_id)) map.set(q.subject_id, [])
+      map.get(q.subject_id)!.push(q)
+      return map
+    }, new Map<string, Question[]>())
+  )
+
+  // Get expanded question details
+  const expandedQuestion = expandedQuestionId ? questions.find(q => q.$id === expandedQuestionId) : null
+  const expandedAnswer = expandedQuestion ? answers[expandedQuestion.$id] : null
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
+    <div className="min-h-screen bg-gray-950 pb-24 md:pb-8">
 
       {/* ── Hero Score Card ── */}
       <div className={`bg-gradient-to-br ${threshold.color} text-white`}>
-        <div className="max-w-2xl mx-auto px-5 pt-8 pb-10">
+        <div className="max-w-4xl mx-auto px-5 pt-8 pb-10">
 
           {/* Paper label */}
           {paperLabel && (
@@ -120,228 +242,140 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 -mt-4 space-y-5">
+      <div className="max-w-4xl mx-auto px-4 -mt-4 space-y-5">
 
         {/* ── Quick Stats ── */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
-            <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center mx-auto mb-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
+          <div className="bg-gray-900 rounded-2xl p-4 text-center shadow-sm border border-gray-800">
+            <div className="w-8 h-8 rounded-xl bg-green-900 flex items-center justify-center mx-auto mb-2">
+              <CheckCircle className="h-4 w-4 text-green-400" />
             </div>
-            <p className="text-xl font-black text-gray-900">{score.correct}</p>
+            <p className="text-xl font-black text-white">{score.correct}</p>
             <p className="text-[11px] text-gray-400 font-medium">Correct</p>
           </div>
-          <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
-            <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center mx-auto mb-2">
-              <XCircle className="h-4 w-4 text-red-500" />
+          <div className="bg-gray-900 rounded-2xl p-4 text-center shadow-sm border border-gray-800">
+            <div className="w-8 h-8 rounded-xl bg-red-900 flex items-center justify-center mx-auto mb-2">
+              <XCircle className="h-4 w-4 text-red-400" />
             </div>
-            <p className="text-xl font-black text-gray-900">{score.wrong}</p>
+            <p className="text-xl font-black text-white">{score.wrong}</p>
             <p className="text-[11px] text-gray-400 font-medium">Wrong</p>
           </div>
-          <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
-            <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center mx-auto mb-2">
-              <Target className="h-4 w-4 text-gray-400" />
+          <div className="bg-gray-900 rounded-2xl p-4 text-center shadow-sm border border-gray-800">
+            <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center mx-auto mb-2">
+              <Trophy className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="text-xl font-black text-gray-900">{skipped}</p>
+            <p className="text-xl font-black text-white">{skipped}</p>
             <p className="text-[11px] text-gray-400 font-medium">Skipped</p>
           </div>
         </div>
 
-        {/* ── Performance Insight ── */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h3 className="text-sm font-bold text-gray-800 mb-3">Performance Breakdown</h3>
-          <div className="space-y-2.5">
-            {/* Accuracy bar */}
-            <div>
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>Score</span>
-                <span className="font-semibold text-gray-700">{score.correct}/{questions.length}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full bg-gradient-to-r ${threshold.color} transition-all duration-700`}
-                  style={{ width: `${score.percentage}%` }}
-                />
-              </div>
-            </div>
-            {/* Time bar */}
-            <div>
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>Time Taken</span>
-                <span className="font-semibold text-gray-700">{formatTime(analytics.overallTime.actualTime)} / {formatTime(analytics.overallTime.targetTime)}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-blue-500 transition-all duration-700"
-                  style={{ width: `${Math.min(analytics.overallTime.actualTime / analytics.overallTime.targetTime * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-            {/* Negative marking estimate (UPSC style: -0.66 per wrong) */}
-            <div className="flex items-center justify-between bg-gray-50 rounded-xl p-3 text-xs">
-              <div>
-                <p className="text-gray-500">UPSC Marks estimate</p>
-                <p className="text-gray-400 text-[10px]">+2 correct / −0.66 wrong</p>
-              </div>
-              <div className="text-right">
-                <p className="font-black text-base text-gray-900">
-                  {(score.correct * 2 - score.wrong * 0.66).toFixed(2)}
-                </p>
-                <p className="text-gray-400 text-[10px]">out of {questions.length * 2}</p>
-              </div>
-            </div>
-          </div>
+        {/* ── Subject-wise Performance ── */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-white">Subject-wise Performance</h2>
+          {subjectGroups.map(([subject, subjectQuestions]) => {
+            const subjectCorrect = subjectQuestions.filter(q => answers[q.$id]?.isCorrect).length
+            const subjectTotal = subjectQuestions.length
+            const subjectAccuracy = subjectTotal > 0 ? Math.round((subjectCorrect / subjectTotal) * 100) : 0
+            
+            return (
+              <SubjectPerformanceCard
+                key={subject}
+                subject={subject}
+                correct={subjectCorrect}
+                total={subjectTotal}
+                accuracy={subjectAccuracy}
+                questions={subjectQuestions}
+                answers={answers}
+                onQuestionClick={setExpandedQuestionId}
+              />
+            )
+          })}
         </div>
 
-        {/* ── Subject Performance Chart ── */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h3 className="text-sm font-bold text-gray-800 mb-3">Subject Performance</h3>
-          <Bar
-            data={{
-              labels: analytics.subjectStats.map(s => s.subject),
-              datasets: [{
-                label: 'Accuracy %',
-                data: analytics.subjectStats.map(s => s.accuracy),
-                backgroundColor: analytics.subjectStats.map(s => s.accuracy < 50 ? 'rgba(255, 99, 132, 0.6)' : 'rgba(75, 192, 192, 0.6)'),
-              }]
-            }}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: { display: false },
-                title: { display: false }
-              },
-              scales: {
-                y: { beginAtZero: true, max: 100 }
-              }
-            }}
-          />
-        </div>
+        {/* ── Question Detail Modal/Expanded View ── */}
+        {expandedQuestion && (
+          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Question {questions.findIndex(q => q.$id === expandedQuestion.$id) + 1}</h3>
+              <button 
+                onClick={() => setExpandedQuestionId(null)}
+                className="text-gray-400 hover:text-gray-200 text-2xl"
+              >
+                ×
+              </button>
+            </div>
 
-        {/* ── Button Usage Summary ── */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h3 className="text-sm font-bold text-gray-800 mb-3">Button Usage Summary</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>50:50</span>
-              <span>{analytics.buttonUsageStats.total5050} used, {analytics.buttonUsageStats.correct5050} correct ({analytics.buttonUsageStats.total5050 > 0 ? Math.round(analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050 * 100) : 0}% success)</span>
+            {/* Question text */}
+            <div className="bg-gray-800 rounded-xl p-4">
+              <p className="text-gray-100 leading-relaxed whitespace-pre-wrap">
+                {expandedQuestion.question_text}
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span>Guess</span>
-              <span>{analytics.buttonUsageStats.totalGuess} used, {analytics.buttonUsageStats.correctGuess} correct ({analytics.buttonUsageStats.totalGuess > 0 ? Math.round(analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess * 100) : 0}% success)</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Are You Sure?</span>
-              <span>{analytics.buttonUsageStats.totalAreYouSure} used, {analytics.buttonUsageStats.correctAreYouSure} correct ({analytics.buttonUsageStats.totalAreYouSure > 0 ? Math.round(analytics.buttonUsageStats.correctAreYouSure / analytics.buttonUsageStats.totalAreYouSure * 100) : 0}% success)</span>
-            </div>
-          </div>
-        </div>
 
-        {/* ── Timing Breakdown ── */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h3 className="text-sm font-bold text-gray-800 mb-3">Timing Breakdown</h3>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {analytics.timingStats.map((t, i) => (
-              <div key={i} className="flex justify-between text-sm">
-                <span className="truncate flex-1 mr-2">{t.questionText.slice(0, 50)}...</span>
-                <span className={t.timeTaken > t.targetTime * 1.5 ? 'text-red-500 font-semibold' : 'text-gray-700'}>{t.timeTaken}s / {t.targetTime}s</span>
+            {/* Options */}
+            <div className="space-y-2">
+              {(['A', 'B', 'C', 'D'] as const).map(key => {
+                const optionText = expandedQuestion[`option_${key.toLowerCase()}` as keyof Question] as string
+                const isSelected = expandedAnswer?.selectedOption === key
+                const isCorrectOpt = expandedQuestion.correct_option === key
+                
+                let optionClass = 'bg-gray-800 border-gray-700 text-gray-300'
+                if (isCorrectOpt) optionClass = 'bg-green-900 border-green-700 text-green-100'
+                else if (isSelected && !isCorrectOpt) optionClass = 'bg-red-900 border-red-700 text-red-100'
+                
+                return (
+                  <div
+                    key={key}
+                    className={`p-3 rounded-xl border text-sm flex items-start gap-2 ${optionClass}`}
+                  >
+                    <span className="font-bold shrink-0">{key}.</span>
+                    <span className="flex-1 whitespace-pre-wrap">{optionText}</span>
+                    {isCorrectOpt && <CheckCircle className="h-4 w-4 text-green-400 shrink-0 mt-0.5" />}
+                    {isSelected && !isCorrectOpt && <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Explanation */}
+            {expandedQuestion.explanation && (
+              <div className="bg-blue-900 border border-blue-700 rounded-xl p-3">
+                <p className="text-[11px] font-bold text-blue-300 uppercase tracking-wider mb-2">Explanation</p>
+                <p className="text-sm text-blue-100 leading-relaxed whitespace-pre-wrap">{expandedQuestion.explanation}</p>
               </div>
-            ))}
+            )}
+
+            {/* Time taken */}
+            {expandedAnswer?.timeTaken && (
+              <div className="bg-gray-800 rounded-xl p-3 flex items-center justify-between">
+                <span className="text-gray-300 text-sm">Time Taken</span>
+                <span className="text-white font-semibold">{expandedAnswer.timeTaken}s</span>
+              </div>
+            )}
+
+            {/* Button usage */}
+            {(expandedAnswer?.used5050 || expandedAnswer?.isGuess || expandedAnswer?.usedAreYouSure) && (
+              <div className="bg-gray-800 rounded-xl p-3 space-y-1">
+                <p className="text-gray-300 text-sm font-semibold">Buttons Used</p>
+                <div className="flex flex-wrap gap-2">
+                  {expandedAnswer?.used5050 && <span className="text-xs bg-purple-900 text-purple-300 px-2 py-1 rounded">50:50</span>}
+                  {expandedAnswer?.isGuess && <span className="text-xs bg-yellow-900 text-yellow-300 px-2 py-1 rounded">Guess</span>}
+                  {expandedAnswer?.usedAreYouSure && <span className="text-xs bg-blue-900 text-blue-300 px-2 py-1 rounded">Are You Sure?</span>}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* ── Suggestions ── */}
         {analytics.suggestions.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Recommended Areas for Improvement</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm">
+          <div className="bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-800">
+            <h3 className="text-sm font-bold text-white mb-3">Recommended Areas for Improvement</h3>
+            <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
               {analytics.suggestions.map((s, i) => <li key={i}>{s}</li>)}
             </ul>
           </div>
         )}
-
-        {/* ── Question Review ── */}
-        <div>
-          <h2 className="text-base font-bold text-gray-900 mb-3">Question Review</h2>
-          <div className="space-y-2">
-            {questions.map((question, index) => {
-              const answer = answers[question.$id]
-              const isCorrect = answer?.isCorrect ?? false
-              const isSkipped = !answer
-              const isExpanded = expandedIndex === index
-
-              return (
-                <div
-                  key={question.$id}
-                  className={`bg-white rounded-2xl border-l-4 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${isSkipped ? 'border-l-gray-300' : isCorrect ? 'border-l-green-500' : 'border-l-red-500'
-                    }`}
-                  onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                >
-                  {/* Collapsed */}
-                  <div className="p-4 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <span className={`shrink-0 text-[10px] font-black px-2 py-1 rounded-lg ${isSkipped ? 'bg-gray-100 text-gray-400' : isCorrect ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
-                        }`}>
-                        Q{index + 1}
-                      </span>
-                      <p className="text-sm text-gray-700 font-medium truncate">
-                        {question.question_text.slice(0, 80)}{question.question_text.length > 80 ? '…' : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {isSkipped ? (
-                        <span className="text-[10px] text-gray-400 font-medium">Skipped</span>
-                      ) : isCorrect ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
-                      )}
-                      {isExpanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-                    </div>
-                  </div>
-
-                  {/* Expanded */}
-                  {isExpanded && (
-                    <div className="px-4 pb-4 pt-0 border-t border-gray-50 space-y-3">
-                      <p className="text-sm text-gray-800 font-medium leading-relaxed whitespace-pre-wrap pt-3">
-                        {question.question_text}
-                      </p>
-                      <div className="space-y-1.5">
-                        {(['A', 'B', 'C', 'D'] as const).map(key => {
-                          const optionText = question[`option_${key.toLowerCase()}` as keyof Question] as string
-                          const isSelected = answer?.selectedOption === key
-                          const isCorrectOpt = question.correct_option === key
-                          return (
-                            <div
-                              key={key}
-                              className={`p-3 rounded-xl border text-sm flex items-start gap-2 ${isCorrectOpt
-                                  ? 'bg-green-50 border-green-300 text-green-800'
-                                  : isSelected && !isCorrectOpt
-                                    ? 'bg-red-50 border-red-300 text-red-800'
-                                    : 'bg-gray-50 border-gray-200 text-gray-700'
-                                }`}
-                            >
-                              <span className="font-bold shrink-0">{key}.</span>
-                              <span className="flex-1 whitespace-pre-wrap">{optionText}</span>
-                              {isCorrectOpt && <CheckCircle className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />}
-                              {isSelected && !isCorrectOpt && <XCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />}
-                            </div>
-                          )
-                        })}
-                      </div>
-                      {question.explanation && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                          <p className="text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-1">Explanation</p>
-                          <p className="text-sm text-blue-800 leading-relaxed whitespace-pre-wrap">{question.explanation}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
 
         {/* ── Action Buttons ── */}
         <div className="flex gap-3 pt-2">
@@ -353,7 +387,7 @@ export default function ResultsPage() {
           </button>
           <button
             onClick={() => router.push('/dashboard')}
-            className="flex-1 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+            className="flex-1 bg-gray-900 border border-gray-700 text-gray-300 hover:bg-gray-800 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
           >
             <Home className="h-4 w-4" /> Home
           </button>
