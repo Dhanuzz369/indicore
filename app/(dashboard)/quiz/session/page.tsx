@@ -131,9 +131,9 @@ export default function TestSessionPage() {
   const [isSaving, setIsSaving] = useState(false)
   // Mobile palette drawer
   const [showMobilePalette, setShowMobilePalette] = useState(false)
-  const [used5050, setUsed5050] = useState(false)
-  const [usedGuess, setUsedGuess] = useState(false)
-  const [guessToast, setGuessToast] = useState('')
+  
+  // Track confidence per question before they submit answer
+  const [confidenceMap, setConfidenceMap] = useState<Record<string, 'fifty_fifty' | 'guess'>>({})
 
   // ── 1. Redirect if no questions ──
   useEffect(() => {
@@ -193,7 +193,7 @@ export default function TestSessionPage() {
   const handleOptionClick = async (optionKey: 'A' | 'B' | 'C' | 'D') => {
     stopTimerForQuestion(currentQuestion.$id)
     const timeTaken = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
-    submitAnswer(currentQuestion.$id, optionKey, currentQuestion.correct_option, timeTaken, used5050, usedGuess, testMode)
+    submitAnswer(currentQuestion.$id, optionKey, currentQuestion.correct_option, timeTaken, confidenceMap[currentQuestion.$id] === 'fifty_fifty', confidenceMap[currentQuestion.$id] === 'guess', testMode)
     if (!testMode) {
       try {
         const user = await getCurrentUser()
@@ -204,11 +204,11 @@ export default function TestSessionPage() {
             selected_option: optionKey, 
             is_correct: optionKey === currentQuestion.correct_option,
             time_taken_seconds: timeTaken,
-            used_5050: used5050,
-            used_guess: usedGuess,
+            used_5050: confidenceMap[currentQuestion.$id] === 'fifty_fifty',
+            used_guess: confidenceMap[currentQuestion.$id] === 'guess',
             used_areyousure: testMode,
-            is_guess: usedGuess,
-            confidence_tag: answers[currentQuestion.$id]?.confidenceTag || (used5050 ? 'fifty_fifty' : usedGuess ? 'guess' : null),
+            is_guess: confidenceMap[currentQuestion.$id] === 'guess',
+            confidence_tag: answers[currentQuestion.$id]?.confidenceTag || confidenceMap[currentQuestion.$id] || null,
             selection_history: JSON.stringify({
               q_id: currentQuestion.$id,
               selections: answers[currentQuestion.$id]?.selectionHistory || [],
@@ -228,15 +228,14 @@ export default function TestSessionPage() {
     }
   }
 
-  // ── Button handlers ──
-  const handle5050 = () => {
-    setUsed5050(true)
-    incrementButtonUsage('used5050')
-  }
-
-  const handleGuess = () => {
-    setUsedGuess(true)
-    incrementButtonUsage('guessed')
+  // ── Confidence Handlers ──
+  const toggleConfidence = (tag: 'fifty_fifty' | 'guess') => {
+    setConfidenceMap(prev => ({
+      ...prev,
+      [currentQuestion.$id]: prev[currentQuestion.$id] === tag ? undefined : tag
+    }) as Record<string, 'fifty_fifty' | 'guess'>)
+    if (tag === 'fifty_fifty') incrementButtonUsage('used5050')
+    if (tag === 'guess') incrementButtonUsage('guessed')
   }
 
   // ── Navigate: Save & Next (test mode) ──
@@ -500,15 +499,34 @@ export default function TestSessionPage() {
               ))}
             </div>
 
-            {/* Buttons */}
-            {testMode && !isAnswered && !isSubmitted && (
-              <div className="flex gap-2 flex-wrap">
-                <Button variant="outline" onClick={handle5050}>
-                  50:50
-                </Button>
-                <Button variant="outline" onClick={handleGuess} disabled={usedGuess}>
-                  Guess
-                </Button>
+            {/* Centerpiece: Confidence Tracking (visible for every question) */}
+            {!isAnswered && !isSubmitted && (
+              <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-xl mt-4">
+                <p className="text-sm font-semibold text-gray-800 text-center mb-3">
+                  How confident are you about this question?
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={() => toggleConfidence('fifty_fifty')}
+                    className={`flex-1 max-w-[140px] py-2 px-3 rounded-lg font-semibold text-sm transition-all border ${
+                      confidenceMap[currentQuestion.$id] === 'fifty_fifty'
+                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                        : 'bg-white text-purple-700 border-purple-200 hover:border-purple-400 hover:bg-purple-50'
+                    }`}
+                  >
+                    50:50
+                  </button>
+                  <button
+                    onClick={() => toggleConfidence('guess')}
+                    className={`flex-1 max-w-[140px] py-2 px-3 rounded-lg font-semibold text-sm transition-all border ${
+                      confidenceMap[currentQuestion.$id] === 'guess'
+                        ? 'bg-yellow-500 text-white border-yellow-500 shadow-sm'
+                        : 'bg-white text-yellow-700 border-yellow-300 hover:border-yellow-400 hover:bg-yellow-50'
+                    }`}
+                  >
+                    It's a Guess
+                  </button>
+                </div>
               </div>
             )}
 
@@ -549,34 +567,6 @@ export default function TestSessionPage() {
                   >
                     <ChevronLeft className="h-4 w-4" /> Prev
                   </Button>
-                  
-                  {/* 50:50 Button - larger and more clickable */}
-                  <button
-                    onClick={handle5050}
-                    disabled={used5050}
-                    className={`flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-semibold text-sm transition-all ${
-                      used5050
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
-                        : 'bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-300 hover:border-purple-500'
-                    }`}
-                    title="Remove 2 wrong options"
-                  >
-                    <span>50:50</span>
-                  </button>
-                  
-                  {/* Guess Button - larger and more clickable */}
-                  <button
-                    onClick={handleGuess}
-                    disabled={usedGuess}
-                    className={`flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-semibold text-sm transition-all ${
-                      usedGuess
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
-                        : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700 border border-yellow-300 hover:border-yellow-500'
-                    }`}
-                    title="Mark as guess for analytics"
-                  >
-                    <span>Guess</span>
-                  </button>
                   
                   <Button
                     onClick={handleSaveAndNext}
