@@ -150,47 +150,40 @@ function SubjectPerformanceCard({
   const [isExpanded, setIsExpanded] = useState(true)
   const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null)
   
-  // Get questions for this subject
   const subjectQuestions = questions.filter(q => q.subject_id === subject)
   
-  // Determine color based on accuracy
   const getAccuracyColor = (acc: number) => {
-    if (acc >= 80) return 'text-emerald-400'
-    if (acc >= 60) return 'text-blue-400'
-    if (acc >= 40) return 'text-amber-400'
-    return 'text-red-400'
+    if (acc >= 80) return 'text-emerald-500'
+    if (acc >= 60) return 'text-blue-500'
+    if (acc >= 40) return 'text-orange-500'
+    return 'text-red-500'
   }
 
   const expandedQuestion = expandedQuestionId ? subjectQuestions.find(q => q.$id === expandedQuestionId) : null
   const expandedAnswer = expandedQuestion ? answers[expandedQuestion.$id] : null
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center justify-between flex-1">
-          <h3 className="text-lg font-bold text-gray-900">{subject}</h3>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-gray-600 text-sm font-medium">{correct}/{total}</p>
-            </div>
-            <div className={`font-bold text-lg ${getAccuracyColor(accuracy)}`}>
-              {accuracy}%
-            </div>
-            <button 
-              onClick={() => setIsExpanded(!isExpanded)}
-              className={`text-gray-400 hover:text-gray-600 transition-transform ${isExpanded ? '' : 'transform rotate-180'}`}
-            >
-              <ChevronDown className="h-5 w-5" />
-            </button>
+    <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm transition-all hover:shadow-md">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${accuracy >= 50 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+            {accuracy}%
+          </div>
+          <div>
+            <h3 className="text-base font-black text-gray-900 uppercase tracking-tight">{subject.replace(/_/g, ' ')}</h3>
+            <p className="text-xs text-gray-400 font-bold uppercase">{correct} / {total} Correct</p>
           </div>
         </div>
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-all ${isExpanded ? 'rotate-180' : ''}`}
+        >
+          <ChevronDown className="h-5 w-5" />
+        </button>
       </div>
 
-      {/* Expanded content */}
       {isExpanded && (
-        <div className="space-y-4">
-                 {/* Question grid grouped by sub-topic */}
+        <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="space-y-6">
             {Object.entries(
               subjectQuestions.reduce((acc, q) => {
@@ -200,24 +193,23 @@ function SubjectPerformanceCard({
                 return acc
               }, {} as Record<string, Question[]>)
             ).map(([topic, topicQuestions]) => (
-              <div key={topic} className="space-y-2">
-                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">{topic}</h4>
-                <div className="flex flex-wrap gap-2">
+              <div key={topic} className="space-y-3">
+                <h4 className="text-[10px] font-black text-gray-440 uppercase tracking-[0.2em] px-1">{topic}</h4>
+                <div className="flex flex-wrap gap-2.5">
                   {topicQuestions.map((q) => {
                     const answer = answers[q.$id]
                     const isCorrect = answer?.isCorrect
                     const isSkipped = !answer
                     
-                    // Determine button color
-                    let buttonColor = 'bg-gray-100 text-gray-600 border-gray-300'
-                    if (isCorrect) buttonColor = 'bg-emerald-100 text-emerald-700 border-emerald-300'
-                    else if (!isSkipped) buttonColor = 'bg-red-100 text-red-700 border-red-300'
+                    let statusColor = 'bg-gray-50 text-gray-400 border-gray-100'
+                    if (isCorrect) statusColor = 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm shadow-emerald-50'
+                    else if (!isSkipped) statusColor = 'bg-red-50 text-red-600 border-red-100 shadow-sm shadow-red-50'
                     
                     return (
                       <button
                         key={q.$id}
                         onClick={() => setExpandedQuestionId(prev => prev === q.$id ? null : q.$id)}
-                        className={`h-9 w-9 flex items-center justify-center rounded-lg font-semibold text-xs border transition-all hover:shadow-md ${buttonColor} ${expandedQuestionId === q.$id ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+                        className={`h-10 w-10 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${statusColor} ${expandedQuestionId === q.$id ? 'ring-2 ring-orange-500 ring-offset-4 scale-110' : ''}`}
                       >
                         {questions.findIndex(allQ => allQ.$id === q.$id) + 1}
                       </button>
@@ -228,34 +220,12 @@ function SubjectPerformanceCard({
             ))}
           </div>
 
-          {/* Areas to revisit section */}
-          {subjectQuestions.some(q => {
-            const answer = answers[q.$id]
-            return answer && !answer.isCorrect
-          }) && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase">Areas to revisit</p>
-              <div className="flex flex-wrap gap-2">
-                {Array.from(new Set(
-                  subjectQuestions
-                    .filter(q => {
-                      const answer = answers[q.$id]
-                      return answer && !answer.isCorrect
-                    })
-                    .map(q => q.subtopic || (q.tags && q.tags[0]))
-                ))
-                .filter((t): t is string => !!t)
-                .slice(0, 5)
-                .map(topic => (
-                  <div key={topic} className="px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-semibold border border-orange-200">
-                    {topic}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <QuestionDetailView expandedQuestion={expandedQuestion} expandedAnswer={expandedAnswer} questions={questions} onClose={() => setExpandedQuestionId(null)} />
+          <QuestionDetailView 
+            expandedQuestion={expandedQuestion} 
+            expandedAnswer={expandedAnswer} 
+            questions={questions} 
+            onClose={() => setExpandedQuestionId(null)} 
+          />
         </div>
       )}
     </div>
