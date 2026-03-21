@@ -198,7 +198,20 @@ export default function TestSessionPage() {
   const handleOptionClick = async (optionKey: 'A' | 'B' | 'C' | 'D') => {
     stopTimerForQuestion(currentQuestion.$id)
     const timeTaken = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
-    submitAnswer(currentQuestion.$id, optionKey, currentQuestion.correct_option, timeTaken, confidenceMap[currentQuestion.$id] === 'fifty_fifty', confidenceMap[currentQuestion.$id] === 'guess', testMode)
+    
+    const isSure = confidenceMap[currentQuestion.$id] === 'sure'
+    const is5050 = confidenceMap[currentQuestion.$id] === 'fifty_fifty'
+    const isGuess = confidenceMap[currentQuestion.$id] === 'guess'
+    
+    submitAnswer(
+      currentQuestion.$id, 
+      optionKey, 
+      currentQuestion.correct_option, 
+      timeTaken, 
+      is5050, 
+      isGuess, 
+      isSure
+    )
     if (!testMode) {
       try {
         const user = await getCurrentUser()
