@@ -27,7 +27,8 @@ interface QuizStore {
   elapsedSeconds: number
   isSubmitted: boolean
 
-  timers: Record<string, number> // Object to track start times per question
+  timers: Record<string, number> // Object to track accumulated time per question
+  activeStartTimes: Record<string, number> // Object to track current session start times
   buttonStats: {
     areYouSure: number
     used5050: number
@@ -73,6 +74,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   isSubmitted: false,
 
   timers: {},
+  activeStartTimes: {},
   buttonStats: {
     areYouSure: 0,
     used5050: 0,
@@ -175,6 +177,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     elapsedSeconds: 0,
     isSubmitted: false,
     timers: {},
+    activeStartTimes: {},
     buttonStats: {
       areYouSure: 0,
       used5050: 0,
@@ -195,6 +198,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     elapsedSeconds: 0,
     isSubmitted: false,
     timers: {},
+    activeStartTimes: {},
     buttonStats: {
       areYouSure: 0,
       used5050: 0,
@@ -223,28 +227,39 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
 
   startTimerForQuestion: (questionId: string) =>
     set((state) => ({
-      timers: {
-        ...state.timers,
+      activeStartTimes: {
+        ...state.activeStartTimes,
         [questionId]: Date.now(),
       },
     })),
 
   stopTimerForQuestion: (questionId: string) =>
     set((state) => {
-      const startTime = state.timers[questionId]
+      const startTime = state.activeStartTimes[questionId]
       if (!startTime) return state
-      const elapsed = Date.now() - startTime
+      
+      const sessionElapsed = Date.now() - startTime
+      const previousTotal = state.timers[questionId] || 0
+      
+      // Clean up start time so we don't double count if called again
+      const newActiveStarts = { ...state.activeStartTimes }
+      delete newActiveStarts[questionId]
+
       return {
+        activeStartTimes: newActiveStarts,
         timers: {
           ...state.timers,
-          [questionId]: elapsed,
+          [questionId]: previousTotal + sessionElapsed,
         },
       }
     }),
 
   getTimeForQuestion: (questionId: string) => {
-    const { timers } = get()
-    return timers[questionId] || 0
+    const { timers, activeStartTimes } = get()
+    const accumulated = timers[questionId] || 0
+    const currentStart = activeStartTimes[questionId]
+    const currentSession = currentStart ? (Date.now() - currentStart) : 0
+    return accumulated + currentSession
   },
 
   incrementButtonUsage: (type: 'areYouSure' | 'used5050' | 'guessed') =>

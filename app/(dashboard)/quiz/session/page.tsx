@@ -182,12 +182,17 @@ export default function TestSessionPage() {
   ).length
   const markedCount = markedForReview.size
 
-  // ── Start timer for question ──
+  // ── Start/Stop timer for question ──
   useEffect(() => {
-    if (currentQuestion) {
+    if (currentQuestion && !isSubmitted) {
       startTimerForQuestion(currentQuestion.$id)
     }
-  }, [currentIndex, currentQuestion, startTimerForQuestion])
+    return () => {
+      if (currentQuestion) {
+        stopTimerForQuestion(currentQuestion.$id)
+      }
+    }
+  }, [currentIndex, currentQuestion, startTimerForQuestion, stopTimerForQuestion, isSubmitted])
 
   // ── Option click ──
   const handleOptionClick = async (optionKey: 'A' | 'B' | 'C' | 'D') => {
@@ -267,12 +272,15 @@ export default function TestSessionPage() {
       const user = await getCurrentUser()
       if (user) {
         for (const [qId, ans] of Object.entries(answers)) {
+          // IMPORTANT: Capture the latest cumulative time for this question
+          const finalTimeTaken = Math.floor(getTimeForQuestion(qId) / 1000)
+          
           await saveAttempt({ 
             user_id: user.$id, 
             question_id: qId, 
             selected_option: ans.selectedOption, 
             is_correct: ans.isCorrect,
-            time_taken_seconds: ans.timeTaken,
+            time_taken_seconds: finalTimeTaken,
             used_5050: ans.used5050,
             used_guess: ans.isGuess,
             used_areyousure: ans.usedAreYouSure,
@@ -292,7 +300,8 @@ export default function TestSessionPage() {
         const attemptsToAnalyze = Object.entries(answers).map(([qId, ans]) => ({
              $id: '', user_id: user.$id, question_id: qId,
              selected_option: ans.selectedOption, is_correct: ans.isCorrect,
-             time_taken_seconds: ans.timeTaken, used_5050: ans.used5050,
+             time_taken_seconds: Math.floor(getTimeForQuestion(qId) / 1000), 
+             used_5050: ans.used5050,
              used_guess: ans.isGuess, used_areyousure: ans.usedAreYouSure,
              is_guess: ans.isGuess, confidence_tag: ans.confidenceTag || null,
              selection_history: JSON.stringify({ q_id: qId, selections: ans.selectionHistory || [], final_answer: ans.selectedOption, correct_answer: questions.find(q => q.$id === qId)?.correct_option })
