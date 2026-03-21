@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
 import { getCurrentUser } from '@/lib/appwrite/auth'
-import { saveAttempt, incrementStats } from '@/lib/appwrite/queries'
+import { saveAttempt, incrementStats, saveUserTestSummary } from '@/lib/appwrite/queries'
+import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { OptionButton } from '@/components/quiz/OptionButton'
 import { ExplanationBox } from '@/components/quiz/ExplanationBox'
 import { Button } from '@/components/ui/button'
@@ -206,7 +207,14 @@ export default function TestSessionPage() {
             used_5050: used5050,
             used_guess: usedGuess,
             used_areyousure: testMode,
-            is_guess: usedGuess
+            is_guess: usedGuess,
+            confidence_tag: answers[currentQuestion.$id]?.confidenceTag || (used5050 ? 'fifty_fifty' : usedGuess ? 'guess' : null),
+            selection_history: JSON.stringify({
+              q_id: currentQuestion.$id,
+              selections: answers[currentQuestion.$id]?.selectionHistory || [],
+              final_answer: optionKey,
+              correct_answer: currentQuestion.correct_option
+            })
           })
           await incrementStats(user.$id, optionKey === currentQuestion.correct_option)
         }
@@ -269,10 +277,42 @@ export default function TestSessionPage() {
             used_5050: ans.used5050,
             used_guess: ans.isGuess,
             used_areyousure: ans.usedAreYouSure,
-            is_guess: ans.isGuess
+            is_guess: ans.isGuess,
+            confidence_tag: ans.confidenceTag || null,
+            selection_history: JSON.stringify({
+              q_id: qId,
+              selections: ans.selectionHistory || [],
+              final_answer: ans.selectedOption,
+              correct_answer: questions.find(q => q.$id === qId)?.correct_option
+            })
           })
           await incrementStats(user.$id, ans.isCorrect)
         }
+
+        // Generate analytics and save user test summary
+        const attemptsToAnalyze = Object.entries(answers).map(([qId, ans]) => ({
+             $id: '', user_id: user.$id, question_id: qId,
+             selected_option: ans.selectedOption, is_correct: ans.isCorrect,
+             time_taken_seconds: ans.timeTaken, used_5050: ans.used5050,
+             used_guess: ans.isGuess, used_areyousure: ans.usedAreYouSure,
+             is_guess: ans.isGuess, confidence_tag: ans.confidenceTag || null,
+             selection_history: JSON.stringify({ q_id: qId, selections: ans.selectionHistory || [], final_answer: ans.selectedOption, correct_answer: questions.find(q => q.$id === qId)?.correct_option })
+        }))
+        const analytics = generateTestAnalytics({ questions, attempts: attemptsToAnalyze, totalTestTime: elapsedSeconds })
+        const totalCorrect = analytics.subjectStats.reduce((sum, s) => sum + s.correct, 0)
+        
+        await saveUserTestSummary({
+          user_id: user.$id,
+          test_id: `test_${Date.now()}`,
+          date: new Date().toISOString(),
+          total_score: (totalCorrect * 2) - ((questions.length - totalCorrect) * 0.66), 
+          subject_scores: JSON.stringify(analytics.subjectStats),
+          difficulty_scores: JSON.stringify(analytics.difficultyStats),
+          accuracy: questions.length ? Math.round((totalCorrect/questions.length)*100) : 0,
+          attempts_count: questions.length,
+          confidence_stats: JSON.stringify(analytics.confidenceStats)
+        })
+
       }
     } catch (e) { console.error('Failed to save attempts:', e) }
     router.push('/results')

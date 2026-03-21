@@ -28,6 +28,7 @@ export interface Question {
   correct_option: 'A' | 'B' | 'C' | 'D'
   explanation: string
   difficulty: 'easy' | 'medium' | 'hard'
+  subtopic?: string
   tags: string[]
   is_active: boolean
   expected_time_seconds?: number
@@ -44,6 +45,22 @@ export interface QuizAttempt {
   used_guess?: boolean
   used_areyousure?: boolean
   is_guess?: boolean
+  confidence_tag?: 'guess' | 'sure' | 'fifty_fifty' | null
+  selection_history?: string
+  revision_summary?: string
+}
+
+export interface UserTestSummary {
+  $id: string
+  user_id: string
+  test_id: string
+  date: string
+  total_score: number
+  subject_scores: string
+  difficulty_scores: string
+  accuracy: number
+  attempts_count: number
+  confidence_stats: string
 }
 
 export interface UserStats {

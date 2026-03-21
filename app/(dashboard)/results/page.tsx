@@ -384,6 +384,46 @@ export default function ResultsPage() {
           </div>
         )}
 
+        {/* ── Advanced Analytics ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           {/* Revision Summary */}
+           {(analytics.revisionSummary.totalRevised > 0) && (
+             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+               <h3 className="text-sm font-bold text-gray-800 mb-4">Revisions (Changed Answers)</h3>
+               <div className="space-y-2">
+                 <p className="text-sm text-gray-600">Total Revised: <span className="font-bold text-gray-900">{analytics.revisionSummary.totalRevised}</span></p>
+                 <p className="text-sm text-emerald-600 font-semibold">Wrong → Correct: {analytics.revisionSummary.changedWrongToCorrect}</p>
+                 <p className="text-sm text-red-600 font-semibold">Correct → Wrong: {analytics.revisionSummary.changedCorrectToWrong}</p>
+                 {analytics.revisionSummary.changedWrongToCorrect >= analytics.revisionSummary.changedCorrectToWrong ? (
+                   <p className="text-xs text-gray-500 mt-2">Good job! Reversing your decisions worked out.</p>
+                 ) : (
+                   <p className="text-xs text-gray-500 mt-2">Trust your first instinct more.</p>
+                 )}
+               </div>
+             </div>
+           )}
+
+           {/* Confidence Stats */}
+           {(analytics.confidenceStats.some(s => s.total > 0)) && (
+             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+               <h3 className="text-sm font-bold text-gray-800 mb-4">Confidence Breakdown</h3>
+               <div className="space-y-3">
+                 {analytics.confidenceStats.map(s => s.total > 0 && (
+                   <div key={s.tag} className="flex flex-col gap-1">
+                     <div className="flex justify-between items-center text-sm">
+                       <span className="capitalize font-semibold text-gray-700">{s.tag.replace('_', ' ')}</span>
+                       <span className="font-bold">{s.accuracy}% ({s.correct}/{s.total})</span>
+                     </div>
+                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                       <div className="h-full bg-[#FF6B00]" style={{ width: `${s.accuracy}%` }} />
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </div>
+           )}
+        </div>
+
         {/* ── Subject-wise Performance ── */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-gray-900">Subject-wise Performance</h2>

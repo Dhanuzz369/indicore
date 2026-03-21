@@ -12,6 +12,13 @@ interface AnalyticsResult {
     totalAreYouSure: number
     correctAreYouSure: number
   }
+  difficultyStats: { difficulty: string; correct: number; total: number; accuracy: number }[]
+  confidenceStats: { tag: string; correct: number; total: number; accuracy: number }[]
+  revisionSummary: {
+    totalRevised: number
+    changedCorrectToWrong: number
+    changedWrongToCorrect: number
+  }
   suggestions: string[]
 }
 
@@ -38,6 +45,14 @@ export function generateTestAnalytics({
     correct5050: 0,
     totalAreYouSure: 0,
     correctAreYouSure: 0,
+  }
+
+  const difficultyStatsMap = new Map<string, { correct: number; total: number }>()
+  const confidenceStatsMap = new Map<string, { correct: number; total: number }>()
+  const revisionSummary = {
+    totalRevised: 0,
+    changedCorrectToWrong: 0,
+    changedWrongToCorrect: 0,
   }
 
   // Iterate through attempts and calculate analytics
@@ -73,6 +88,37 @@ export function generateTestAnalytics({
     if (attempt.is_guess) buttonUsageStats.totalGuess++
     if (attempt.used_5050) buttonUsageStats.total5050++
     if (attempt.used_areyousure) buttonUsageStats.totalAreYouSure++
+
+    // Difficulty Stats
+    const diff = question.difficulty || 'medium'
+    if (!difficultyStatsMap.has(diff)) difficultyStatsMap.set(diff, { correct: 0, total: 0 })
+    const diffStat = difficultyStatsMap.get(diff)!
+    diffStat.total++
+    if (attempt.is_correct) diffStat.correct++
+
+    // Confidence Stats
+    const conf = attempt.confidence_tag || 'null'
+    if (!confidenceStatsMap.has(conf)) confidenceStatsMap.set(conf, { correct: 0, total: 0 })
+    const confStat = confidenceStatsMap.get(conf)!
+    confStat.total++
+    if (attempt.is_correct) confStat.correct++
+
+    // Revision Summary
+    if (attempt.selection_history) {
+      try {
+        const hist = JSON.parse(attempt.selection_history)
+        if (hist.selections && hist.selections.length > 1) {
+          revisionSummary.totalRevised++
+          const firstSelection = hist.selections[0].option
+          const lastSelection = hist.final_answer
+          const isFirstCorrect = firstSelection === hist.correct_answer
+          const isLastCorrect = lastSelection === hist.correct_answer
+
+          if (isFirstCorrect && !isLastCorrect) revisionSummary.changedCorrectToWrong++
+          if (!isFirstCorrect && isLastCorrect) revisionSummary.changedWrongToCorrect++
+        }
+      } catch (e) {}
+    }
   }
 
   // Process aggregated stats for recommendations
@@ -100,8 +146,21 @@ export function generateTestAnalytics({
       actualTime: totalTestTime,
     },
     subjectStats: subjectInsights,
-    timingStats,
     buttonUsageStats,
+    timingStats,
+    difficultyStats: Array.from(difficultyStatsMap.entries()).map(([k, v]) => ({
+      difficulty: k,
+      correct: v.correct,
+      total: v.total,
+      accuracy: Math.round((v.correct / v.total) * 100),
+    })),
+    confidenceStats: Array.from(confidenceStatsMap.entries()).map(([k, v]) => ({
+      tag: k,
+      correct: v.correct,
+      total: v.total,
+      accuracy: Math.round((v.correct / v.total) * 100),
+    })),
+    revisionSummary,
     suggestions,
   }
 }

@@ -8,6 +8,8 @@ interface AnswerRecord {
   used5050: boolean
   isGuess: boolean
   usedAreYouSure: boolean
+  confidenceTag?: 'guess' | 'sure' | 'fifty_fifty' | null
+  selectionHistory?: { option: string, timestamp: string }[]
 }
 
 interface QuizStore {
@@ -89,13 +91,32 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
 
   submitAnswer: (questionId, selected, correct, timeTaken, used5050, isGuess, usedAreYouSure) => {
     const isCorrect = selected === correct
-    set((state) => ({
-      answers: {
-        ...state.answers,
-        [questionId]: { selectedOption: selected, isCorrect, timeTaken, used5050, isGuess, usedAreYouSure },
-      },
-      isAnswered: false,
-    }))
+    set((state) => {
+      const existingAns = state.answers[questionId]
+      const newHistory = existingAns?.selectionHistory ? [...existingAns.selectionHistory] : []
+      newHistory.push({ option: selected, timestamp: new Date().toISOString() })
+      
+      let confidenceTag: 'guess' | 'sure' | 'fifty_fifty' | null = null
+      if (used5050 || existingAns?.used5050) confidenceTag = 'fifty_fifty'
+      else if (isGuess || existingAns?.isGuess) confidenceTag = 'guess'
+      
+      return {
+        answers: {
+          ...state.answers,
+          [questionId]: { 
+            selectedOption: selected, 
+            isCorrect, 
+            timeTaken, 
+            used5050: used5050 || existingAns?.used5050 || false, 
+            isGuess: isGuess || existingAns?.isGuess || false, 
+            usedAreYouSure: usedAreYouSure || existingAns?.usedAreYouSure || false,
+            confidenceTag,
+            selectionHistory: newHistory
+          },
+        },
+        isAnswered: false,
+      }
+    })
   },
 
   nextQuestion: () =>

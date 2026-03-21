@@ -73,6 +73,9 @@ export async function saveAttempt(data: {
   used_guess?: boolean
   used_areyousure?: boolean
   is_guess?: boolean
+  confidence_tag?: 'guess' | 'sure' | 'fifty_fifty' | null
+  selection_history?: string
+  revision_summary?: string
 }) {
   return await databases.createDocument(
     DATABASE_ID,
@@ -112,4 +115,32 @@ export async function incrementStats(userId: string, isCorrect: boolean) {
     total_correct: isCorrect ? stats.total_correct + 1 : stats.total_correct,
     total_wrong: !isCorrect ? stats.total_wrong + 1 : stats.total_wrong,
   })
+}
+
+// ─── USER TEST SUMMARY ──────────────────────────────
+export async function saveUserTestSummary(data: {
+  user_id: string
+  test_id: string
+  date: string
+  total_score: number
+  subject_scores: string
+  difficulty_scores: string
+  accuracy: number
+  attempts_count: number
+  confidence_stats: string
+}) {
+  return await databases.createDocument(
+    DATABASE_ID,
+    COLLECTIONS.USER_TEST_SUMMARY,
+    ID.unique(),
+    data
+  )
+}
+
+export async function getUserTestSummaries(userId: string) {
+  return await databases.listDocuments(DATABASE_ID, COLLECTIONS.USER_TEST_SUMMARY, [
+    Query.equal('user_id', userId),
+    Query.orderDesc('date'),
+    Query.limit(50),
+  ])
 }
