@@ -1,12 +1,19 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
-import { CheckCircle, XCircle, ChevronDown, Trophy, BookOpen, Clock, RefreshCw, Home, TrendingUp, AlertCircle, Lightbulb } from 'lucide-react'
+import { 
+  CheckCircle, XCircle, ChevronDown, Trophy, BookOpen, Clock, RefreshCw, Home, 
+  TrendingUp, AlertCircle, Lightbulb, Brain, Target, Zap
+} from 'lucide-react'
 import type { Question } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar 
+} from 'recharts'
 
 // ─── Score helpers ───────────────────────────────────────────
 function getScoreThreshold(pct: number) {
@@ -265,348 +272,264 @@ export default function ResultsPage() {
     return (
       <div className="flex items-center justify-center min-h-[80vh] p-6 bg-gray-50">
         <div className="text-center space-y-4 max-w-xs">
-          <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
+          <div className="w-20 h-20 rounded-full bg-gray-200/50 flex items-center justify-center mx-auto ring-8 ring-gray-100">
             <BookOpen className="h-10 w-10 text-gray-400" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900">No Quiz Data</h2>
-          <p className="text-gray-500 text-sm">Start a practice session to see your results here.</p>
+          <h2 className="text-xl font-bold text-gray-900">No Analysis Available</h2>
+          <p className="text-gray-500 text-sm">Complete a practice session to unlock the Analytical Engine.</p>
           <button
             onClick={() => router.push('/quiz')}
-            className="bg-[#FF6B00] text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-[#FF8C00] transition-colors"
+            className="bg-[#FF6B00] text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#FF8C00] transition-all shadow-xl shadow-orange-100"
           >
-            Start Practice →
+            Start Practice
           </button>
         </div>
       </div>
     )
   }
 
-  const threshold = getScoreThreshold(score.percentage)
-  const skipped = questions.length - score.total
-
-  const attempts = Object.entries(answers).map(([qId, ans]) => ({
-    $id: '',
-    user_id: '',
-    question_id: qId,
-    selected_option: ans.selectedOption,
-    is_correct: ans.isCorrect,
-    time_taken_seconds: ans.timeTaken,
-    used_5050: ans.used5050,
-    used_guess: ans.isGuess,
-    used_areyousure: ans.usedAreYouSure,
-    is_guess: ans.isGuess
-  }))
-  const analytics = generateTestAnalytics({ questions, attempts, totalTestTime: elapsedSeconds })
-
-  // Group questions by subject
-  const subjectGroups = Array.from(
-    questions.reduce((map, q) => {
-      if (!map.has(q.subject_id)) map.set(q.subject_id, [])
-      map.get(q.subject_id)!.push(q)
-      return map
-    }, new Map<string, Question[]>())
+  const analytics = useMemo(() => 
+    generateTestAnalytics({ 
+      questions, 
+      attempts: Object.entries(answers).map(([id, ans]) => ({ ...ans, question_id: id } as any)), 
+      totalTestTime: elapsedSeconds 
+    }),
+    [questions, answers, elapsedSeconds]
   )
 
+  const subjectChartData = analytics.subjectStats.map(s => ({
+    name: s.subject.charAt(0).toUpperCase() + s.subject.slice(1).toLowerCase().replace(/_/g, ' '),
+    accuracy: s.accuracy,
+    incorrect: 100 - s.accuracy
+  }))
 
+  const confidenceRadarData = [
+    { subject: '100% Sure', A: analytics.buttonUsageStats.totalAreYouSure ? Math.round((analytics.buttonUsageStats.correctAreYouSure / analytics.buttonUsageStats.totalAreYouSure) * 100) : 0 },
+    { subject: '50:50 Deduction', A: analytics.buttonUsageStats.total5050 ? Math.round((analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) * 100) : 0 },
+    { subject: 'Intuition/Guess', A: analytics.buttonUsageStats.totalGuess ? Math.round((analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) * 100) : 0 },
+  ]
 
-  // Calculate average time per question
-  const avgTimePerQuestion = Math.round(elapsedSeconds / score.total) || 0
-
-  // Identify weak areas
-  const weakAreas = analytics.subjectStats.filter(s => s.accuracy < 50)
-  const strongAreas = analytics.subjectStats.filter(s => s.accuracy >= 80)
+  const threshold = getScoreThreshold(score.percentage)
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
-
-      {/* ── Hero Score Card ── */}
-      <div className={`bg-gradient-to-br ${threshold.color} text-white`}>
-        <div className="max-w-4xl mx-auto px-5 pt-8 pb-10">
-
-          {/* Paper label */}
-          {paperLabel && (
-            <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-4 text-center">{paperLabel}</p>
-          )}
-
-          {/* Score ring */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="relative">
-              <svg className="w-36 h-36 -rotate-90" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="10" />
-                <circle
-                  cx="60" cy="60" r="52"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="10"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 52}`}
-                  strokeDashoffset={`${2 * Math.PI * 52 * (1 - score.percentage / 100)}`}
-                  className="transition-all duration-1000"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-black">{score.percentage}%</span>
-                <span className="text-white/70 text-[10px] font-medium">accuracy</span>
-              </div>
+    <div className="min-h-screen bg-[#F8F9FC] pb-24">
+      {/* Dynamic Glassmorphic Navbar */}
+      <div className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#FF6B00] p-2 rounded-xl shadow-lg shadow-orange-200">
+              <Brain className="h-5 w-5 text-white" />
             </div>
-
-            <h1 className="text-2xl font-bold mt-1">{threshold.label}</h1>
-            <p className="text-white/80 text-sm">{score.correct} correct out of {questions.length} questions</p>
-
-            {elapsedSeconds > 0 && (
-              <div className="flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-full text-sm mt-1">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{formatTime(elapsedSeconds)}</span>
-              </div>
-            )}
+            <div>
+              <h1 className="text-lg font-black text-gray-900 tracking-tight leading-none uppercase italic">Analytical Engine <span className="text-[#FF6B00]">PRO</span></h1>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">{paperLabel || 'Real-time Analysis'}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+             <button 
+              onClick={() => router.push('/dashboard')}
+              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
+             >
+                <Home className="h-4 w-4" /> Dashboard
+             </button>
+             <button 
+              onClick={() => { reset(); router.push('/quiz') }}
+              className="bg-white border border-gray-200 px-5 py-2.5 rounded-2xl text-sm font-black text-gray-900 hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm"
+             >
+                <RefreshCw className="h-4 w-4" /> Retake
+             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-4 space-y-5">
-
-        {/* ── Quick Stats ── */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-200">
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-2">
-              <CheckCircle className="h-4 w-4 text-emerald-500" />
-            </div>
-            <p className="text-xl font-black text-gray-900">{score.correct}</p>
-            <p className="text-[11px] text-gray-500 font-medium">Correct</p>
-          </div>
-          <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-200">
-            <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center mx-auto mb-2">
-              <XCircle className="h-4 w-4 text-red-500" />
-            </div>
-            <p className="text-xl font-black text-gray-900">{score.wrong}</p>
-            <p className="text-[11px] text-gray-500 font-medium">Wrong</p>
-          </div>
-          <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-200">
-            <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-2">
-              <Trophy className="h-4 w-4 text-gray-400" />
-            </div>
-            <p className="text-xl font-black text-gray-900">{skipped}</p>
-            <p className="text-[11px] text-gray-500 font-medium">Skipped</p>
-          </div>
-        </div>
-
-        {/* ── Key Insights ── */}
-        <div className="space-y-3">
-          {/* Strong Areas */}
-          {strongAreas.length > 0 && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-              <div className="flex items-start gap-3">
-                <TrendingUp className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h3 className="font-bold text-emerald-900 mb-1">Strong Areas</h3>
-                  <p className="text-sm text-emerald-700">You're performing excellently in <span className="font-semibold">{strongAreas.map(s => s.subject).join(', ')}</span>. Keep up the momentum!</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Weak Areas */}
-          {weakAreas.length > 0 && (
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h3 className="font-bold text-orange-900 mb-1">Areas Needing Attention</h3>
-                  <p className="text-sm text-orange-700">Focus on <span className="font-semibold">{weakAreas.map(s => s.subject).join(', ')}</span> to improve your score. Revisit the concepts and practice more questions.</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Performance Metrics ── */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-4">
-          <h3 className="text-sm font-bold text-gray-800">Performance Metrics</h3>
-          
-          {/* Accuracy bar */}
-          <div>
-            <div className="flex justify-between text-xs text-gray-600 mb-2">
-              <span>Accuracy</span>
-              <span className="font-semibold text-gray-900">{score.correct}/{questions.length}</span>
-            </div>
-            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full bg-gradient-to-r ${threshold.color} transition-all duration-700`}
-                style={{ width: `${score.percentage}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Time efficiency */}
-          <div>
-            <div className="flex justify-between text-xs text-gray-600 mb-2">
-              <span>Time Efficiency</span>
-              <span className="font-semibold text-gray-900">{avgTimePerQuestion}s avg/question</span>
-            </div>
-            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full bg-blue-500 transition-all duration-700"
-                style={{ width: `${Math.min((avgTimePerQuestion / 120) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          {/* UPSC Score Estimate */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-200">
-            <p className="text-xs font-semibold text-blue-700 mb-1">UPSC Score Estimate</p>
-            <div className="flex items-baseline justify-between">
-              <p className="text-xs text-blue-600">+2 per correct, -0.66 per wrong</p>
-              <p className="text-xl font-black text-blue-900">{(score.correct * 2 - score.wrong * 0.66).toFixed(2)} / {questions.length * 2}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Button Usage Analytics ── */}
-        {(analytics.buttonUsageStats.total5050 > 0 || analytics.buttonUsageStats.totalGuess > 0) && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-            <h3 className="text-sm font-bold text-gray-800 mb-4">Lifeline Usage Analysis</h3>
-            <div className="space-y-3">
-              {analytics.buttonUsageStats.total5050 > 0 && (
-                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-semibold text-purple-900">50:50 Lifeline</span>
-                    <span className="text-xs font-bold text-purple-700 bg-purple-100 px-2 py-1 rounded">{analytics.buttonUsageStats.correct5050}/{analytics.buttonUsageStats.total5050}</span>
-                  </div>
-                  <div className="w-full h-2 bg-purple-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500"
-                      style={{ width: `${(analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) * 100}%` }}
+      <main className="max-w-6xl mx-auto px-6 mt-8 space-y-8">
+        
+        {/* Top Tier Metrics: The "Control Room" Look */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-1 bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Target className="h-24 w-24 text-[#FF6B00]" />
+             </div>
+             <div className="relative z-10">
+                <div className="relative inline-flex items-center justify-center mb-4">
+                  <svg className="w-32 h-32 transform -rotate-90">
+                    <circle cx="64" cy="64" r="58" stroke="#F1F5F9" strokeWidth="8" fill="none" />
+                    <circle 
+                      cx="64" cy="64" r="58" stroke="#FF6B00" strokeWidth="10" 
+                      strokeDasharray={364} strokeDashoffset={364 - (364 * score.percentage / 100)}
+                      fill="none" strokeLinecap="round" className="transition-all duration-1000 ease-out"
                     />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-black text-gray-900">{score.percentage}%</span>
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Accuracy</span>
                   </div>
-                  <p className="text-xs text-purple-700 mt-2">{Math.round((analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) * 100)}% success rate</p>
                 </div>
-              )}
-              {analytics.buttonUsageStats.totalGuess > 0 && (
-                <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-semibold text-yellow-900">Guess Button</span>
-                    <span className="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded">{analytics.buttonUsageStats.correctGuess}/{analytics.buttonUsageStats.totalGuess}</span>
-                  </div>
-                  <div className="w-full h-2 bg-yellow-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-yellow-500"
-                      style={{ width: `${(analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) * 100}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-yellow-700 mt-2">{Math.round((analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) * 100)}% success rate</p>
+                <h2 className={`text-sm font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r ${threshold.color.includes('emerald') ? 'from-emerald-600 to-teal-500' : 'from-orange-600 to-red-500'}`}>
+                  {threshold.label}
+                </h2>
+             </div>
+          </div>
+
+          <div className="md:col-span-3 bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm flex flex-col">
+             <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="font-black text-gray-900 uppercase tracking-tight flex items-center gap-2 text-sm italic">
+                    <TrendingUp className="h-4 w-4 text-orange-500" /> Subject Proficiency Matrix
+                  </h3>
+                  <p className="text-xs text-gray-400 font-medium">Correlation between attempted subjects and hit-ratio</p>
                 </div>
-              )}
-            </div>
+             </div>
+             <div className="flex-1 h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={subjectChartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F1F5F9" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94A3B8'}} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94A3B8'}} unit="%" domain={[0, 100]} />
+                    <RechartsTooltip cursor={{fill: '#F8FAFC'}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '11px', fontWeight: 'bold' }} />
+                    <Bar dataKey="accuracy" fill="#FF6B00" radius={[8, 8, 8, 8]} barSize={45} />
+                  </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+        </div>
+
+        {/* Confidence Intelligence Layer */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm space-y-6">
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-indigo-600" />
+                 </div>
+                 <div>
+                    <h3 className="text-sm font-black text-gray-900 uppercase leading-none">Decision Confidence Map</h3>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Accuracy vs Internally Perceived Confidence</p>
+                 </div>
+              </div>
+
+              <div className="h-[280px] w-full mt-4">
+                 <ResponsiveContainer width="100%" height="100%">
+                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={confidenceRadarData}>
+                     <PolarGrid stroke="#F1F5F9" />
+                     <PolarAngleAxis dataKey="subject" tick={{fontSize: 10, fontWeight: 800, fill: '#475569'}} />
+                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                     <Radar name="Accuracy" dataKey="A" stroke="#FF6B00" fill="#FF6B00" fillOpacity={0.4} />
+                   </RadarChart>
+                 </ResponsiveContainer>
+              </div>
+           </div>
+
+           <div className="space-y-6">
+               {/* 100% Sure Analysis */}
+               <div className="bg-emerald-50/50 rounded-[2rem] p-6 border border-emerald-100/50 flex gap-4 items-start group hover:bg-emerald-50 transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                     <CheckCircle className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div className="flex-1">
+                     <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Mastery Level</span>
+                        <span className="text-xs font-black text-emerald-700">{analytics.buttonUsageStats.totalAreYouSure ? Math.round((analytics.buttonUsageStats.correctAreYouSure / analytics.buttonUsageStats.totalAreYouSure) * 100) : 0}% Accuracy</span>
+                     </div>
+                     <h4 className="font-bold text-gray-900 leading-tight">Sure-Answer Consistency</h4>
+                     <p className="text-xs text-gray-600 mt-2 leading-relaxed italic">
+                        {analytics.buttonUsageStats.totalAreYouSure === 0 ? "You haven't marked any answers as 'Sure'. Try marking them to track accuracy in your strong zones." : 
+                         (analytics.buttonUsageStats.correctAreYouSure / analytics.buttonUsageStats.totalAreYouSure) > 0.9 ? 
+                         "Excellent self-calibration! You know exactly what you know. This is critical for zero-risk scoring." :
+                         "Your 'Sure' accuracy is under 90%. This suggests 'Hidden Knowledge Gaps'—you think you are right, but nuances are tricking you."}
+                     </p>
+                  </div>
+               </div>
+
+               {/* Logical Deduction Analysis */}
+               <div className="bg-blue-50/50 rounded-[2rem] p-6 border border-blue-100/50 flex gap-4 items-start group hover:bg-blue-50 transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                     <Target className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                     <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Deduction Index</span>
+                        <span className="text-xs font-black text-blue-700">{analytics.buttonUsageStats.total5050 ? Math.round((analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) * 100) : 0}% Success</span>
+                     </div>
+                     <h4 className="font-bold text-gray-900 leading-tight">50:50 Logic Outcomes</h4>
+                     <p className="text-xs text-gray-600 mt-2 leading-relaxed italic">
+                        {analytics.buttonUsageStats.total5050 === 0 ? "Use the 50:50 tool when you narrow down to two options to analyze your elimination logic." : 
+                         (analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) > 0.6 ? 
+                         "Strong elimination skills! Your ability to navigate through complex options is better than average." :
+                         "Your deduction is failing at the final hurdle. You are identifying the wrong one between the final two choices."}
+                     </p>
+                  </div>
+               </div>
+
+               {/* Risk Management / Guess Analysis */}
+               <div className="bg-orange-50/50 rounded-[2rem] p-6 border border-orange-100/50 flex gap-4 items-start group hover:bg-orange-50 transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                     <AlertCircle className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                     <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-black text-orange-700 uppercase tracking-widest">Risk Quotient</span>
+                        <span className="text-xs font-black text-orange-700">{analytics.buttonUsageStats.totalGuess ? Math.round((analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) * 100) : 0}% Hit Rate</span>
+                     </div>
+                     <h4 className="font-bold text-gray-900 leading-tight">Intuition Efficiency</h4>
+                     <p className="text-xs text-gray-600 mt-2 leading-relaxed italic">
+                        {analytics.buttonUsageStats.totalGuess === 0 ? "Zero guessing detected. You are playing a very safe game—typical for final-days revision." : 
+                         (analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) > 0.4 ? 
+                         "Educated guessing is working. Your subconscious intuition is high—but don't make it a habit." :
+                         "High blind guessing rate. This is dangerous for negative marking—focus on conceptual clarity to reduce guesses."}
+                     </p>
+                  </div>
+               </div>
+           </div>
+        </div>
+
+        {/* Drill-Down Section Header */}
+        <div className="pt-8 border-t border-gray-100">
+           <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight italic">Engine Drill-Down</h2>
+                <p className="text-xs text-gray-500 font-medium">Subject-wise subtopic segmentation and solution review</p>
+              </div>
+           </div>
+           
+           <div className="space-y-6">
+              {analytics.subjectStats.map((stat) => (
+                <SubjectPerformanceCard
+                  key={stat.subject}
+                  subject={stat.subject}
+                  correct={stat.correct}
+                  total={stat.total}
+                  accuracy={stat.accuracy}
+                  questions={questions}
+                  answers={answers}
+                />
+              ))}
+           </div>
+        </div>
+
+        {/* Global Strategy Suggestions */}
+        {analytics.suggestions.length > 0 && (
+          <div className="bg-gray-900 rounded-[3rem] p-10 text-white relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-10 opacity-10">
+                <Lightbulb className="h-40 w-40" />
+             </div>
+             <div className="relative z-10">
+                <h3 className="text-xl font-black uppercase tracking-widest mb-6 flex items-center gap-3">
+                  <Zap className="h-6 w-6 text-[#FF6B00]" /> Strategy Protocol
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                   {analytics.suggestions.map((s, idx) => (
+                      <div key={idx} className="flex gap-4">
+                         <span className="text-[#FF6B00] font-black italic">#{idx+1}</span>
+                         <p className="text-sm font-medium text-gray-300 leading-relaxed">{s}</p>
+                      </div>
+                   ))}
+                </div>
+             </div>
           </div>
         )}
 
-        {/* ── Advanced Analytics ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           {/* Revision Summary */}
-           {(analytics.revisionSummary.totalRevised > 0) && (
-             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-               <h3 className="text-sm font-bold text-gray-800 mb-4">Revisions (Changed Answers)</h3>
-               <div className="space-y-2">
-                 <p className="text-sm text-gray-600">Total Revised: <span className="font-bold text-gray-900">{analytics.revisionSummary.totalRevised}</span></p>
-                 <p className="text-sm text-emerald-600 font-semibold">Wrong → Correct: {analytics.revisionSummary.changedWrongToCorrect}</p>
-                 <p className="text-sm text-red-600 font-semibold">Correct → Wrong: {analytics.revisionSummary.changedCorrectToWrong}</p>
-                 {analytics.revisionSummary.changedWrongToCorrect >= analytics.revisionSummary.changedCorrectToWrong ? (
-                   <p className="text-xs text-gray-500 mt-2">Good job! Reversing your decisions worked out.</p>
-                 ) : (
-                   <p className="text-xs text-gray-500 mt-2">Trust your first instinct more.</p>
-                 )}
-               </div>
-             </div>
-           )}
-
-           {/* Confidence Stats */}
-           {(analytics.confidenceStats.some(s => s.total > 0)) && (
-             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-               <h3 className="text-sm font-bold text-gray-800 mb-4">Confidence Breakdown</h3>
-               <div className="space-y-3">
-                  {analytics.confidenceStats.map(s => s.total > 0 && (
-                    <div key={s.tag} className="flex flex-col gap-1 pb-2">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="capitalize font-semibold text-gray-700">{s.tag.replace('_', ' ')}</span>
-                        <span className="font-bold">{s.accuracy}% ({s.correct}/{s.total})</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-1">
-                        <div className="h-full bg-[#FF6B00]" style={{ width: `${s.accuracy}%` }} />
-                      </div>
-                      
-                      {s.tag === 'fifty_fifty' && s.accuracy <= 50 && <p className="text-xs text-orange-600 font-medium">Your 50:50 eliminations are frequently incorrect. Avoid narrow guesswork and revisit core concepts.</p>}
-                      {s.tag === 'fifty_fifty' && s.accuracy > 50 && <p className="text-xs text-emerald-600 font-medium">Good elimination skills! Your 50:50 choices are mostly correct.</p>}
-                      
-                      {s.tag === 'guess' && s.accuracy > 30 && <p className="text-xs text-emerald-600 font-medium">Your guesses are surprisingly accurate! But don't rely on luck permanently.</p>}
-                      {s.tag === 'guess' && s.accuracy <= 30 && <p className="text-xs text-red-600 font-medium">Your guesses were mostly wrong. A blind guess is dangerous for negative marking.</p>}
-
-                      {s.tag === 'sure' && s.accuracy >= 80 && <p className="text-xs text-emerald-600 font-medium">Great self-awareness! When you're 100% sure, you're usually right.</p>}
-                      {s.tag === 'sure' && s.accuracy < 80 && <p className="text-xs text-red-600 font-medium">Overconfidence alert! Many answers you were '100% Sure' about were actually incorrect. Double-check your logic.</p>}
-                    </div>
-                  ))}
-               </div>
-             </div>
-           )}
-        </div>
-
-        {/* ── Subject-wise Performance ── */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-gray-900">Subject-wise Performance</h2>
-          {subjectGroups.map(([subject, subjectQuestions]) => {
-            const subjectCorrect = subjectQuestions.filter(q => answers[q.$id]?.isCorrect).length
-            const subjectTotal = subjectQuestions.length
-            const subjectAccuracy = subjectTotal > 0 ? Math.round((subjectCorrect / subjectTotal) * 100) : 0
-            
-            return (
-              <SubjectPerformanceCard
-                key={subject}
-                subject={subject}
-                correct={subjectCorrect}
-                total={subjectTotal}
-                accuracy={subjectAccuracy}
-                questions={questions}
-                answers={answers}
-              />
-            )
-          })}
-        </div>
-
-
-
-        {/* ── Personalized Recommendations ── */}
-        <div className="bg-gradient-to-r from-[#FF6B00]/10 to-[#FF8C00]/10 border border-[#FF6B00]/30 rounded-2xl p-5">
-          <div className="flex items-start gap-3">
-            <Lightbulb className="h-6 w-6 text-[#FF6B00] shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-bold text-gray-900 mb-2">Recommendations</h3>
-              <ul className="space-y-2 text-sm text-gray-700">
-                {score.percentage < 50 && <li>• Focus on understanding core concepts. Your current accuracy suggests conceptual gaps.</li>}
-                {score.percentage >= 50 && score.percentage < 70 && <li>• Practice more questions from weak areas to improve your accuracy from {score.percentage}% to 70%+.</li>}
-                {avgTimePerQuestion > 120 && <li>• Work on time management. Your average {avgTimePerQuestion}s per question is above optimal.</li>}
-                {strongAreas.length > 0 && <li>• Excellent work in {strongAreas[0].subject}! Apply similar strategies to other subjects.</li>}
-                {weakAreas.length > 0 && <li>• Dedicate 30% more study time to {weakAreas[0].subject} before your next attempt.</li>}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Action Buttons ── */}
-        <div className="flex gap-3 pt-2">
-          <button
-            onClick={() => { reset(); router.push('/quiz') }}
-            className="flex-1 bg-[#FF6B00] hover:bg-[#FF8C00] text-white py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" /> Practice Again
-          </button>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
-          >
-            <Home className="h-4 w-4" /> Home
-          </button>
-        </div>
-
-      </div>
+      </main>
     </div>
   )
 }
+

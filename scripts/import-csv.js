@@ -367,7 +367,7 @@ async function importCSV(csvPath, examType, year) {
 // CLI
 const args = process.argv.slice(2)
 const csvFile = args[0]
-const examType = (args[1] || 'UPSC').toUpperCase()
+const examType = (args[1] || 'UPSC_PRE').toUpperCase()
 const year = parseInt(args[2]) || 2024
 
 if (!csvFile) {
