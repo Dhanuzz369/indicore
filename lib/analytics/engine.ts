@@ -22,13 +22,15 @@ interface AnalyticsResult {
   suggestions: string[]
 }
 
+type PartialAttempt = Omit<QuizAttempt, '$id' | 'user_id'> & { $id?: string; user_id?: string }
+
 export function generateTestAnalytics({
   questions,
   attempts,
   totalTestTime,
 }: {
   questions: Question[]
-  attempts: QuizAttempt[]
+  attempts: PartialAttempt[]
   totalTestTime: number
 }): AnalyticsResult {
   const subjectStats = new Map<string, { correct: number; total: number }>()
@@ -65,29 +67,36 @@ export function generateTestAnalytics({
     if (!subjectStats.has(subjectId)) {
       subjectStats.set(subjectId, { correct: 0, total: 0 })
     }
-
     const subjectStat = subjectStats.get(subjectId)!
     subjectStat.total += 1
-    if (attempt.is_correct) {
-      subjectStat.correct += 1
+    if (attempt.is_correct) subjectStat.correct += 1
 
-      // If buttons are used and correct, count them
-      if (attempt.is_guess) buttonUsageStats.correctGuess++
-      if (attempt.used_5050) buttonUsageStats.correct5050++
-      if (attempt.used_areyousure) buttonUsageStats.correctAreYouSure++
-    }
-
-    // Timing and poorly managed questions analytics
+    // Timing stats
     timingStats.push({
       questionText: question.question_text,
       timeTaken: attempt.time_taken_seconds || 0,
-      targetTime: question.expected_time_seconds || 120, // Default: 2 minutes
+      targetTime: question.expected_time_seconds || 120,
     })
 
-    // Button stats
-    if (attempt.is_guess) buttonUsageStats.totalGuess++
-    if (attempt.used_5050) buttonUsageStats.total5050++
-    if (attempt.used_areyousure) buttonUsageStats.totalAreYouSure++
+    // ── Confidence / Button Usage Stats ──
+    // Determine the confidence tag — prefer explicit confidence_tag, fallback to boolean flags
+    const confTag = attempt.confidence_tag 
+      || (attempt.is_guess ? 'guess' : null) 
+      || (attempt.used_5050 ? 'fifty_fifty' : null) 
+      || (attempt.used_areyousure ? 'sure' : null)
+
+    if (confTag === 'guess') {
+      buttonUsageStats.totalGuess++
+      if (attempt.is_correct) buttonUsageStats.correctGuess++
+    }
+    if (confTag === 'fifty_fifty' || attempt.used_5050) {
+      buttonUsageStats.total5050++
+      if (attempt.is_correct) buttonUsageStats.correct5050++
+    }
+    if (confTag === 'sure' || attempt.used_areyousure) {
+      buttonUsageStats.totalAreYouSure++
+      if (attempt.is_correct) buttonUsageStats.correctAreYouSure++
+    }
 
     // Difficulty Stats
     const diff = question.difficulty || 'medium'
@@ -96,10 +105,10 @@ export function generateTestAnalytics({
     diffStat.total++
     if (attempt.is_correct) diffStat.correct++
 
-    // Confidence Stats
-    const conf = attempt.confidence_tag || 'null'
-    if (!confidenceStatsMap.has(conf)) confidenceStatsMap.set(conf, { correct: 0, total: 0 })
-    const confStat = confidenceStatsMap.get(conf)!
+    // Confidence Stats (for breakdown table)
+    const confKey = confTag || 'unmarked'
+    if (!confidenceStatsMap.has(confKey)) confidenceStatsMap.set(confKey, { correct: 0, total: 0 })
+    const confStat = confidenceStatsMap.get(confKey)!
     confStat.total++
     if (attempt.is_correct) confStat.correct++
 
@@ -113,7 +122,6 @@ export function generateTestAnalytics({
           const lastSelection = hist.final_answer
           const isFirstCorrect = firstSelection === hist.correct_answer
           const isLastCorrect = lastSelection === hist.correct_answer
-
           if (isFirstCorrect && !isLastCorrect) revisionSummary.changedCorrectToWrong++
           if (!isFirstCorrect && isLastCorrect) revisionSummary.changedWrongToCorrect++
         }

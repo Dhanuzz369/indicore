@@ -121,19 +121,18 @@ export default function TestSessionPage() {
     toggleMarkForReview,
     timers,
     buttonStats,
+    confidenceMap,
     startTimerForQuestion,
     stopTimerForQuestion,
     getTimeForQuestion,
     incrementButtonUsage,
+    setConfidenceForQuestion,
   } = useQuizStore()
 
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   // Mobile palette drawer
   const [showMobilePalette, setShowMobilePalette] = useState(false)
-  
-  // Track confidence per question before they submit answer
-  const [confidenceMap, setConfidenceMap] = useState<Record<string, 'fifty_fifty' | 'guess' | 'sure'>>({})
 
   // ── 1. Redirect if no questions ──
   useEffect(() => {
@@ -246,14 +245,17 @@ export default function TestSessionPage() {
     }
   }
 
-  // ── Confidence Handlers ──
+  // ── Confidence Handlers — uses store so tags persist across navigation ──
   const toggleConfidence = (tag: 'fifty_fifty' | 'guess' | 'sure') => {
-    setConfidenceMap(prev => ({
-      ...prev,
-      [currentQuestion.$id]: prev[currentQuestion.$id] === tag ? undefined : tag
-    }) as Record<string, 'fifty_fifty' | 'guess' | 'sure'>)
-    if (tag === 'fifty_fifty') incrementButtonUsage('used5050')
-    if (tag === 'guess') incrementButtonUsage('guessed')
+    const current = confidenceMap[currentQuestion.$id]
+    const next = current === tag ? undefined : tag
+    setConfidenceForQuestion(currentQuestion.$id, next)
+    // Track usage counts in store (only on first activation, not toggle-off)
+    if (next !== undefined) {
+      if (tag === 'fifty_fifty') incrementButtonUsage('used5050')
+      if (tag === 'guess') incrementButtonUsage('guessed')
+      if (tag === 'sure') incrementButtonUsage('areYouSure')
+    }
   }
 
   // ── Navigate: Save & Next (test mode) ──
@@ -298,6 +300,7 @@ export default function TestSessionPage() {
             used_guess: ans.isGuess,
             used_areyousure: ans.usedAreYouSure,
             is_guess: ans.isGuess,
+            // Use confidenceTag from answer record (set at click time) — it already has the correct tag
             confidence_tag: ans.confidenceTag || null,
             selection_history: JSON.stringify({
               q_id: qId,

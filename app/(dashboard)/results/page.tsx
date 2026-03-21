@@ -261,7 +261,18 @@ export default function ResultsPage() {
   const analytics = useMemo(() => 
     generateTestAnalytics({ 
       questions, 
-      attempts: Object.entries(answers).map(([id, ans]) => ({ ...ans, question_id: id } as any)), 
+      attempts: Object.entries(answers).map(([id, ans]) => ({
+        question_id: id,
+        selected_option: ans.selectedOption,
+        is_correct: ans.isCorrect,
+        time_taken_seconds: ans.timeTaken,
+        used_5050: ans.used5050 || false,
+        used_guess: ans.isGuess || false,
+        used_areyousure: ans.usedAreYouSure || false,
+        is_guess: ans.isGuess || false,
+        confidence_tag: ans.confidenceTag || null,
+        selection_history: ans.selectionHistory ? JSON.stringify({ selections: ans.selectionHistory }) : undefined,
+      })),
       totalTestTime: elapsedSeconds 
     }),
     [questions, answers, elapsedSeconds]

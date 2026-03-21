@@ -27,8 +27,9 @@ interface QuizStore {
   elapsedSeconds: number
   isSubmitted: boolean
 
-  timers: Record<string, number> // Object to track accumulated time per question
-  activeStartTimes: Record<string, number> // Object to track current session start times
+  timers: Record<string, number>
+  activeStartTimes: Record<string, number>
+  confidenceMap: Record<string, 'fifty_fifty' | 'guess' | 'sure'>  // persisted per question
   buttonStats: {
     areYouSure: number
     used5050: number
@@ -55,6 +56,7 @@ interface QuizStore {
   startTimerForQuestion: (questionId: string) => void
   stopTimerForQuestion: (questionId: string) => void
   getTimeForQuestion: (questionId: string) => number
+  setConfidenceForQuestion: (questionId: string, tag: 'fifty_fifty' | 'guess' | 'sure' | undefined) => void
   incrementButtonUsage: (type: 'areYouSure' | 'used5050' | 'guessed') => void
 }
 
@@ -75,6 +77,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
 
   timers: {},
   activeStartTimes: {},
+  confidenceMap: {},
   buttonStats: {
     areYouSure: 0,
     used5050: 0,
@@ -178,6 +181,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     isSubmitted: false,
     timers: {},
     activeStartTimes: {},
+    confidenceMap: {},
     buttonStats: {
       areYouSure: 0,
       used5050: 0,
@@ -199,6 +203,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     isSubmitted: false,
     timers: {},
     activeStartTimes: {},
+    confidenceMap: {},
     buttonStats: {
       areYouSure: 0,
       used5050: 0,
@@ -269,4 +274,15 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
         [type]: state.buttonStats[type] + 1,
       },
     })),
+
+  setConfidenceForQuestion: (questionId: string, tag: 'fifty_fifty' | 'guess' | 'sure' | undefined) =>
+    set((state) => {
+      const newMap = { ...state.confidenceMap }
+      if (tag === undefined) {
+        delete newMap[questionId]
+      } else {
+        newMap[questionId] = tag
+      }
+      return { confidenceMap: newMap }
+    }),
 }))
