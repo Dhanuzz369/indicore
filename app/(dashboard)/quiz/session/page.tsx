@@ -133,7 +133,7 @@ export default function TestSessionPage() {
   const [showMobilePalette, setShowMobilePalette] = useState(false)
   
   // Track confidence per question before they submit answer
-  const [confidenceMap, setConfidenceMap] = useState<Record<string, 'fifty_fifty' | 'guess'>>({})
+  const [confidenceMap, setConfidenceMap] = useState<Record<string, 'fifty_fifty' | 'guess' | 'sure'>>({})
 
   // ── 1. Redirect if no questions ──
   useEffect(() => {
@@ -206,7 +206,7 @@ export default function TestSessionPage() {
             time_taken_seconds: timeTaken,
             used_5050: confidenceMap[currentQuestion.$id] === 'fifty_fifty',
             used_guess: confidenceMap[currentQuestion.$id] === 'guess',
-            used_areyousure: testMode,
+            used_areyousure: confidenceMap[currentQuestion.$id] === 'sure',
             is_guess: confidenceMap[currentQuestion.$id] === 'guess',
             confidence_tag: answers[currentQuestion.$id]?.confidenceTag || confidenceMap[currentQuestion.$id] || null,
             selection_history: JSON.stringify({
@@ -229,11 +229,11 @@ export default function TestSessionPage() {
   }
 
   // ── Confidence Handlers ──
-  const toggleConfidence = (tag: 'fifty_fifty' | 'guess') => {
+  const toggleConfidence = (tag: 'fifty_fifty' | 'guess' | 'sure') => {
     setConfidenceMap(prev => ({
       ...prev,
       [currentQuestion.$id]: prev[currentQuestion.$id] === tag ? undefined : tag
-    }) as Record<string, 'fifty_fifty' | 'guess'>)
+    }) as Record<string, 'fifty_fifty' | 'guess' | 'sure'>)
     if (tag === 'fifty_fifty') incrementButtonUsage('used5050')
     if (tag === 'guess') incrementButtonUsage('guessed')
   }
@@ -507,8 +507,18 @@ export default function TestSessionPage() {
                 </p>
                 <div className="flex gap-3 justify-center">
                   <button
+                    onClick={() => toggleConfidence('sure')}
+                    className={`flex-1 max-w-[120px] py-2 px-2 rounded-lg font-semibold text-xs md:text-sm transition-all border ${
+                      confidenceMap[currentQuestion.$id] === 'sure'
+                        ? 'bg-green-600 text-white border-green-600 shadow-sm'
+                        : 'bg-white text-green-700 border-green-200 hover:border-green-400 hover:bg-green-50'
+                    }`}
+                  >
+                    100% Sure
+                  </button>
+                  <button
                     onClick={() => toggleConfidence('fifty_fifty')}
-                    className={`flex-1 max-w-[140px] py-2 px-3 rounded-lg font-semibold text-sm transition-all border ${
+                    className={`flex-1 max-w-[120px] py-2 px-2 rounded-lg font-semibold text-xs md:text-sm transition-all border ${
                       confidenceMap[currentQuestion.$id] === 'fifty_fifty'
                         ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
                         : 'bg-white text-purple-700 border-purple-200 hover:border-purple-400 hover:bg-purple-50'
@@ -518,7 +528,7 @@ export default function TestSessionPage() {
                   </button>
                   <button
                     onClick={() => toggleConfidence('guess')}
-                    className={`flex-1 max-w-[140px] py-2 px-3 rounded-lg font-semibold text-sm transition-all border ${
+                    className={`flex-1 max-w-[120px] py-2 px-2 rounded-lg font-semibold text-xs md:text-sm transition-all border ${
                       confidenceMap[currentQuestion.$id] === 'guess'
                         ? 'bg-yellow-500 text-white border-yellow-500 shadow-sm'
                         : 'bg-white text-yellow-700 border-yellow-300 hover:border-yellow-400 hover:bg-yellow-50'

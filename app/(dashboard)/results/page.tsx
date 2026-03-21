@@ -24,6 +24,95 @@ function formatTime(secs: number) {
   return `${m}m ${s}s`
 }
 
+// Question Detail View Component
+function QuestionDetailView({ expandedQuestion, expandedAnswer, questions, onClose }: { expandedQuestion: any, expandedAnswer: any, questions: any[], onClose: () => void }) {
+  if (!expandedQuestion) return null
+  return (
+          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Question {questions.findIndex(q => q.$id === expandedQuestion.$id) + 1}</h3>
+              <button 
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Question text */}
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {expandedQuestion.question_text}
+              </p>
+            </div>
+
+            {/* Options */}
+            <div className="space-y-2">
+              {(['A', 'B', 'C', 'D'] as const).map(key => {
+                const optionText = expandedQuestion[`option_${key.toLowerCase()}` as keyof Question] as string
+                const isSelected = expandedAnswer?.selectedOption === key
+                const isCorrectOpt = expandedQuestion.correct_option === key
+                
+                let optionClass = 'bg-gray-50 border-gray-200 text-gray-700'
+                if (isCorrectOpt) optionClass = 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                else if (isSelected && !isCorrectOpt) optionClass = 'bg-red-50 border-red-300 text-red-900'
+                
+                return (
+                  <div
+                    key={key}
+                    className={`p-3 rounded-xl border text-sm flex items-start gap-2 ${optionClass}`}
+                  >
+                    <span className="font-bold shrink-0">{key}.</span>
+                    <span className="flex-1 whitespace-pre-wrap">{optionText}</span>
+                    {isCorrectOpt && <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
+                    {isSelected && !isCorrectOpt && <XCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Explanation */}
+            {expandedQuestion.explanation && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start gap-2 mb-2">
+                  <Lightbulb className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Explanation</p>
+                </div>
+                <p className="text-sm text-blue-900 leading-relaxed whitespace-pre-wrap">{expandedQuestion.explanation}</p>
+              </div>
+            )}
+
+            {/* Additional Info */}
+            {expandedAnswer && (
+              <div className="grid grid-cols-2 gap-3">
+                {expandedAnswer?.timeTaken && (
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                     <p className="text-xs text-gray-600 font-medium mb-1">Time Taken</p>
+                     <p className="text-lg font-bold text-gray-900">{expandedAnswer.timeTaken}s</p>
+                  </div>
+                )}
+                {expandedAnswer?.isCorrect !== undefined && (
+                  <div className={`${expandedAnswer.isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'} rounded-xl p-3 border`}>
+                     <p className={`text-xs ${expandedAnswer.isCorrect ? 'text-emerald-600' : 'text-red-600'} font-medium mb-1`}>Status</p>
+                     <p className={`text-lg font-bold ${expandedAnswer.isCorrect ? 'text-emerald-900' : 'text-red-900'}`}>
+                       {expandedAnswer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                     </p>
+                  </div>
+                )}
+                {expandedAnswer?.confidenceTag && (
+                  <div className="bg-purple-50 rounded-xl p-3 border border-purple-200">
+                     <p className="text-xs text-purple-600 font-medium mb-1">Confidence</p>
+                     <p className="text-sm font-bold text-purple-900 capitalize px-2 py-1 bg-purple-200 rounded inline-block">
+                       {expandedAnswer.confidenceTag.replace('_', ' ')}
+                     </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+  )
+}
+
 // Subject performance card with collapsible question grid
 function SubjectPerformanceCard({ 
   subject, 
@@ -31,8 +120,7 @@ function SubjectPerformanceCard({
   total, 
   accuracy, 
   questions,
-  answers,
-  onQuestionClick
+  answers
 }: {
   subject: string
   correct: number
@@ -40,9 +128,9 @@ function SubjectPerformanceCard({
   accuracy: number
   questions: Question[]
   answers: Record<string, any>
-  onQuestionClick: (questionId: string) => void
 }) {
   const [isExpanded, setIsExpanded] = useState(true)
+  const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null)
   
   // Get questions for this subject
   const subjectQuestions = questions.filter(q => q.subject_id === subject)
@@ -54,6 +142,9 @@ function SubjectPerformanceCard({
     if (acc >= 40) return 'text-amber-400'
     return 'text-red-400'
   }
+
+  const expandedQuestion = expandedQuestionId ? subjectQuestions.find(q => q.$id === expandedQuestionId) : null
+  const expandedAnswer = expandedQuestion ? answers[expandedQuestion.$id] : null
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
@@ -96,10 +187,10 @@ function SubjectPerformanceCard({
               return (
                 <button
                   key={q.$id}
-                  onClick={() => onQuestionClick(q.$id)}
-                  className={`h-9 w-9 flex items-center justify-center rounded-lg font-semibold text-xs border transition-all hover:shadow-md ${buttonColor}`}
+                  onClick={() => setExpandedQuestionId(prev => prev === q.$id ? null : q.$id)}
+                  className={`h-9 w-9 flex items-center justify-center rounded-lg font-semibold text-xs border transition-all hover:shadow-md ${buttonColor} ${expandedQuestionId === q.$id ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
                 >
-                  {idx + 1}
+                  {questions.findIndex(allQ => allQ.$id === q.$id) + 1}
                 </button>
               )
             })}
@@ -130,6 +221,8 @@ function SubjectPerformanceCard({
               </div>
             </div>
           )}
+
+          <QuestionDetailView expandedQuestion={expandedQuestion} expandedAnswer={expandedAnswer} questions={questions} onClose={() => setExpandedQuestionId(null)} />
         </div>
       )}
     </div>
@@ -140,7 +233,6 @@ export default function ResultsPage() {
   const router = useRouter()
   const { questions, answers, getScore, reset, paperLabel, elapsedSeconds } = useQuizStore()
   const score = getScore()
-  const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null)
 
   // ─── No data state ───────────────────────────────────────────
   if (questions.length === 0) {
@@ -189,9 +281,7 @@ export default function ResultsPage() {
     }, new Map<string, Question[]>())
   )
 
-  // Get expanded question details
-  const expandedQuestion = expandedQuestionId ? questions.find(q => q.$id === expandedQuestionId) : null
-  const expandedAnswer = expandedQuestion ? answers[expandedQuestion.$id] : null
+
 
   // Calculate average time per question
   const avgTimePerQuestion = Math.round(elapsedSeconds / score.total) || 0
@@ -408,17 +498,26 @@ export default function ResultsPage() {
              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
                <h3 className="text-sm font-bold text-gray-800 mb-4">Confidence Breakdown</h3>
                <div className="space-y-3">
-                 {analytics.confidenceStats.map(s => s.total > 0 && (
-                   <div key={s.tag} className="flex flex-col gap-1">
-                     <div className="flex justify-between items-center text-sm">
-                       <span className="capitalize font-semibold text-gray-700">{s.tag.replace('_', ' ')}</span>
-                       <span className="font-bold">{s.accuracy}% ({s.correct}/{s.total})</span>
-                     </div>
-                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                       <div className="h-full bg-[#FF6B00]" style={{ width: `${s.accuracy}%` }} />
-                     </div>
-                   </div>
-                 ))}
+                  {analytics.confidenceStats.map(s => s.total > 0 && (
+                    <div key={s.tag} className="flex flex-col gap-1 pb-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="capitalize font-semibold text-gray-700">{s.tag.replace('_', ' ')}</span>
+                        <span className="font-bold">{s.accuracy}% ({s.correct}/{s.total})</span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-1">
+                        <div className="h-full bg-[#FF6B00]" style={{ width: `${s.accuracy}%` }} />
+                      </div>
+                      
+                      {s.tag === 'fifty_fifty' && s.accuracy <= 50 && <p className="text-xs text-orange-600 font-medium">Your 50:50 eliminations are frequently incorrect. Avoid narrow guesswork and revisit core concepts.</p>}
+                      {s.tag === 'fifty_fifty' && s.accuracy > 50 && <p className="text-xs text-emerald-600 font-medium">Good elimination skills! Your 50:50 choices are mostly correct.</p>}
+                      
+                      {s.tag === 'guess' && s.accuracy > 30 && <p className="text-xs text-emerald-600 font-medium">Your guesses are surprisingly accurate! But don't rely on luck permanently.</p>}
+                      {s.tag === 'guess' && s.accuracy <= 30 && <p className="text-xs text-red-600 font-medium">Your guesses were mostly wrong. A blind guess is dangerous for negative marking.</p>}
+
+                      {s.tag === 'sure' && s.accuracy >= 80 && <p className="text-xs text-emerald-600 font-medium">Great self-awareness! When you're 100% sure, you're usually right.</p>}
+                      {s.tag === 'sure' && s.accuracy < 80 && <p className="text-xs text-red-600 font-medium">Overconfidence alert! Many answers you were '100% Sure' about were actually incorrect. Double-check your logic.</p>}
+                    </div>
+                  ))}
                </div>
              </div>
            )}
@@ -439,104 +538,14 @@ export default function ResultsPage() {
                 correct={subjectCorrect}
                 total={subjectTotal}
                 accuracy={subjectAccuracy}
-                questions={subjectQuestions}
+                questions={questions}
                 answers={answers}
-                onQuestionClick={setExpandedQuestionId}
               />
             )
           })}
         </div>
 
-        {/* ── Question Detail View ── */}
-        {expandedQuestion && (
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Question {questions.findIndex(q => q.$id === expandedQuestion.$id) + 1}</h3>
-              <button 
-                onClick={() => setExpandedQuestionId(null)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
-              >
-                ×
-              </button>
-            </div>
 
-            {/* Question text */}
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                {expandedQuestion.question_text}
-              </p>
-            </div>
-
-            {/* Options */}
-            <div className="space-y-2">
-              {(['A', 'B', 'C', 'D'] as const).map(key => {
-                const optionText = expandedQuestion[`option_${key.toLowerCase()}` as keyof Question] as string
-                const isSelected = expandedAnswer?.selectedOption === key
-                const isCorrectOpt = expandedQuestion.correct_option === key
-                
-                let optionClass = 'bg-gray-50 border-gray-200 text-gray-700'
-                if (isCorrectOpt) optionClass = 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                else if (isSelected && !isCorrectOpt) optionClass = 'bg-red-50 border-red-300 text-red-900'
-                
-                return (
-                  <div
-                    key={key}
-                    className={`p-3 rounded-xl border text-sm flex items-start gap-2 ${optionClass}`}
-                  >
-                    <span className="font-bold shrink-0">{key}.</span>
-                    <span className="flex-1 whitespace-pre-wrap">{optionText}</span>
-                    {isCorrectOpt && <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
-                    {isSelected && !isCorrectOpt && <XCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />}
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Explanation */}
-            {expandedQuestion.explanation && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-start gap-2 mb-2">
-                  <Lightbulb className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                  <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Explanation</p>
-                </div>
-                <p className="text-sm text-blue-900 leading-relaxed whitespace-pre-wrap">{expandedQuestion.explanation}</p>
-              </div>
-            )}
-
-            {/* Additional Info */}
-            {expandedAnswer && (
-              <div className="grid grid-cols-2 gap-3">
-                {expandedAnswer?.timeTaken && (
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                    <p className="text-xs text-gray-600 font-medium mb-1">Time Taken</p>
-                    <p className="text-lg font-bold text-gray-900">{expandedAnswer.timeTaken}s</p>
-                  </div>
-                )}
-                {expandedAnswer?.isCorrect && (
-                  <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
-                    <p className="text-xs text-emerald-600 font-medium mb-1">Status</p>
-                    <p className="text-lg font-bold text-emerald-900">✓ Correct</p>
-                  </div>
-                )}
-                {!expandedAnswer?.isCorrect && (
-                  <div className="bg-red-50 rounded-xl p-3 border border-red-200">
-                    <p className="text-xs text-red-600 font-medium mb-1">Status</p>
-                    <p className="text-lg font-bold text-red-900">✗ Incorrect</p>
-                  </div>
-                )}
-                {(expandedAnswer?.used5050 || expandedAnswer?.isGuess) && (
-                  <div className="bg-purple-50 rounded-xl p-3 border border-purple-200">
-                    <p className="text-xs text-purple-600 font-medium mb-1">Lifelines Used</p>
-                    <div className="flex flex-wrap gap-1">
-                      {expandedAnswer?.used5050 && <span className="text-xs bg-purple-200 text-purple-900 px-2 py-1 rounded font-semibold">50:50</span>}
-                      {expandedAnswer?.isGuess && <span className="text-xs bg-yellow-200 text-yellow-900 px-2 py-1 rounded font-semibold">Guess</span>}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* ── Personalized Recommendations ── */}
         <div className="bg-gradient-to-r from-[#FF6B00]/10 to-[#FF8C00]/10 border border-[#FF6B00]/30 rounded-2xl p-5">

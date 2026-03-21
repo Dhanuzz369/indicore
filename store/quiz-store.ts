@@ -99,6 +99,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       let confidenceTag: 'guess' | 'sure' | 'fifty_fifty' | null = null
       if (used5050 || existingAns?.used5050) confidenceTag = 'fifty_fifty'
       else if (isGuess || existingAns?.isGuess) confidenceTag = 'guess'
+      else if (usedAreYouSure || existingAns?.usedAreYouSure) confidenceTag = 'sure'
       
       return {
         answers: {
