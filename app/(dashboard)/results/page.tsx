@@ -82,6 +82,17 @@ function QuestionDetailView({ expandedQuestion, expandedAnswer, questions, onClo
               </div>
             )}
 
+            {/* Subtopic */}
+            {(expandedQuestion.subtopic || (expandedQuestion.tags && expandedQuestion.tags[0])) && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                <div className="flex items-start gap-2 mb-2">
+                  <BookOpen className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold text-orange-700 uppercase tracking-wider">Sub-Topic</p>
+                </div>
+                <p className="text-sm text-orange-900 font-semibold">{expandedQuestion.subtopic || expandedQuestion.tags[0]}</p>
+              </div>
+            )}
+
             {/* Additional Info */}
             {expandedAnswer && (
               <div className="grid grid-cols-2 gap-3">
@@ -172,28 +183,42 @@ function SubjectPerformanceCard({
       {/* Expanded content */}
       {isExpanded && (
         <div className="space-y-4">
-          {/* Question grid */}
-          <div className="flex flex-wrap gap-2">
-            {subjectQuestions.map((q, idx) => {
-              const answer = answers[q.$id]
-              const isCorrect = answer?.isCorrect
-              const isSkipped = !answer
-              
-              // Determine button color
-              let buttonColor = 'bg-gray-100 text-gray-600 border-gray-300'
-              if (isCorrect) buttonColor = 'bg-emerald-100 text-emerald-700 border-emerald-300'
-              else if (!isSkipped) buttonColor = 'bg-red-100 text-red-700 border-red-300'
-              
-              return (
-                <button
-                  key={q.$id}
-                  onClick={() => setExpandedQuestionId(prev => prev === q.$id ? null : q.$id)}
-                  className={`h-9 w-9 flex items-center justify-center rounded-lg font-semibold text-xs border transition-all hover:shadow-md ${buttonColor} ${expandedQuestionId === q.$id ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
-                >
-                  {questions.findIndex(allQ => allQ.$id === q.$id) + 1}
-                </button>
-              )
-            })}
+                 {/* Question grid grouped by sub-topic */}
+          <div className="space-y-6">
+            {Object.entries(
+              subjectQuestions.reduce((acc, q) => {
+                const subtopic = q.subtopic || (q.tags && q.tags[0]) || 'General'
+                if (!acc[subtopic]) acc[subtopic] = []
+                acc[subtopic].push(q)
+                return acc
+              }, {} as Record<string, Question[]>)
+            ).map(([topic, topicQuestions]) => (
+              <div key={topic} className="space-y-2">
+                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">{topic}</h4>
+                <div className="flex flex-wrap gap-2">
+                  {topicQuestions.map((q) => {
+                    const answer = answers[q.$id]
+                    const isCorrect = answer?.isCorrect
+                    const isSkipped = !answer
+                    
+                    // Determine button color
+                    let buttonColor = 'bg-gray-100 text-gray-600 border-gray-300'
+                    if (isCorrect) buttonColor = 'bg-emerald-100 text-emerald-700 border-emerald-300'
+                    else if (!isSkipped) buttonColor = 'bg-red-100 text-red-700 border-red-300'
+                    
+                    return (
+                      <button
+                        key={q.$id}
+                        onClick={() => setExpandedQuestionId(prev => prev === q.$id ? null : q.$id)}
+                        className={`h-9 w-9 flex items-center justify-center rounded-lg font-semibold text-xs border transition-all hover:shadow-md ${buttonColor} ${expandedQuestionId === q.$id ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+                      >
+                        {questions.findIndex(allQ => allQ.$id === q.$id) + 1}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Areas to revisit section */}
@@ -204,20 +229,21 @@ function SubjectPerformanceCard({
             <div className="space-y-2">
               <p className="text-xs font-semibold text-gray-500 uppercase">Areas to revisit</p>
               <div className="flex flex-wrap gap-2">
-                {subjectQuestions
-                  .filter(q => {
-                    const answer = answers[q.$id]
-                    return answer && !answer.isCorrect
-                  })
-                  .slice(0, 3)
-                  .map(q => {
-                    const topic = q.tags?.[0] || 'General Knowledge'
-                    return (
-                      <div key={q.$id} className="px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-semibold border border-orange-200">
-                        {topic}
-                      </div>
-                    )
-                  })}
+                {Array.from(new Set(
+                  subjectQuestions
+                    .filter(q => {
+                      const answer = answers[q.$id]
+                      return answer && !answer.isCorrect
+                    })
+                    .map(q => q.subtopic || (q.tags && q.tags[0]))
+                ))
+                .filter((t): t is string => !!t)
+                .slice(0, 5)
+                .map(topic => (
+                  <div key={topic} className="px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-semibold border border-orange-200">
+                    {topic}
+                  </div>
+                ))}
               </div>
             </div>
           )}

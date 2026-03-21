@@ -270,6 +270,7 @@ async function importCSV(csvPath, examType, year) {
         const answerRaw = (row[3] || '').trim()
         const explanation = (row[4] || '').trim()
         const subjectRaw = (row[5] || '').trim()
+        const subtopicRaw = (row[6] || '').trim()
 
         if (!questionText || questionText.length < 15) {
             skipped++
@@ -315,6 +316,8 @@ async function importCSV(csvPath, examType, year) {
                 correct_option: correctOption,
                 explanation: explanation.slice(0, 3000),
                 difficulty: difficulty,
+                subtopic: subtopicRaw.slice(0, 250),
+                tags: subtopicRaw ? [subtopicRaw.slice(0, 50)] : [],
                 is_active: true,
             })
 
