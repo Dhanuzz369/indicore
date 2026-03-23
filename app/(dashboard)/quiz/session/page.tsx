@@ -172,8 +172,18 @@ export default function TestSessionPage() {
   const isMarkedCurrent = markedForReview.has(currentQuestion.$id)
   const isLastQuestion = currentIndex === total - 1
   const correctCount = Object.values(answers).filter(a => a.isCorrect).length
-  const mins = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0')
-  const secs = (elapsedSeconds % 60).toString().padStart(2, '0')
+  let timerDisplay = ''
+  if (testMode) {
+    const totalSeconds = 3 * 60 * 60 // 3 hours
+    const timeLeft = Math.max(totalSeconds - elapsedSeconds, 0)
+    const mTotal = Math.floor(timeLeft / 60).toString().padStart(2, '0')
+    const s = (timeLeft % 60).toString().padStart(2, '0')
+    timerDisplay = `${mTotal}:${s}`
+  } else {
+    const m = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0')
+    const s = (elapsedSeconds % 60).toString().padStart(2, '0')
+    timerDisplay = `${m}:${s}`
+  }
 
   // Counts for summary
   const visitedUnanswered = Array.from(visitedQuestions).filter(
@@ -195,10 +205,10 @@ export default function TestSessionPage() {
 
   // ── Option click ──
   const handleOptionClick = async (optionKey: 'A' | 'B' | 'C' | 'D') => {
-    // In test mode, prevent re-answering if already answered (before submit)
-    if (testMode && currentAnswer) return
+    // In practice mode, prevent re-answering once they have answered
+    if (!testMode && isAnswered) return
     
-    stopTimerForQuestion(currentQuestion.$id)
+    // We don't stop the timer here. The useEffect cleanup handles it when navigating away!
     const timeTaken = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
     
     // Capture confidence BEFORE submitAnswer (which overwrites answers)
@@ -471,8 +481,10 @@ export default function TestSessionPage() {
             Q {currentIndex + 1} / {total}
           </div>
           {/* Timer */}
-          <div className="font-mono font-bold text-[#FF6B00] shrink-0 text-sm md:text-base">
-            ⏱ {mins}:{secs}
+          <div className="font-mono font-black shrink-0 text-sm md:text-base flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white shadow-sm">
+            <span className={testMode ? 'text-red-500' : 'text-[#FF6B00]'}>⏱</span>
+            <span className={testMode ? 'text-red-600' : 'text-[#FF6B00]'}>{timerDisplay}</span>
+            {testMode && <span className="text-[10px] uppercase font-bold tracking-widest ml-0.5 text-red-500 bg-red-50 px-1.5 py-0.5 rounded">Left</span>}
           </div>
           {/* Mobile palette toggle (test mode only) */}
           {testMode && (
