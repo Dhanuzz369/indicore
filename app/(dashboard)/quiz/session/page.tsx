@@ -607,40 +607,51 @@ export default function TestSessionPage() {
 
             {/* ─── TEST MODE: Action buttons ─── */}
             {testMode && !isSubmitted && (
-              <div className="space-y-3 pt-4 border-t border-gray-100">
-                {/* Row 1: Mark for Review + Save & Next */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleMarkForReviewAndNext}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 font-semibold text-sm transition-all ${isMarkedCurrent
-                      ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'
-                      : 'bg-white text-purple-600 border-purple-400 hover:bg-purple-50'
-                      }`}
-                  >
-                    <Bookmark className={`h-4 w-4 ${isMarkedCurrent ? 'fill-white' : ''}`} />
-                    {isMarkedCurrent ? 'Unmark & Next' : 'Mark for Review & Next'}
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 pt-4 border-t border-gray-100 mt-4">
+                <Button
+                  variant="outline"
+                  disabled={currentIndex === 0}
+                  onClick={handlePrev}
+                  className="px-2 md:px-3 text-xs md:text-sm font-semibold shrink-0"
+                >
+                  <ChevronLeft className="h-4 w-4 md:mr-1" />
+                  <span className="hidden md:inline">Prev</span>
+                </Button>
 
-                {/* Row 2: Previous + 50:50 + Guess + Save & Next */}
-                <div className="flex gap-2 items-center">
-                  <Button
-                    variant="outline"
-                    disabled={currentIndex === 0}
-                    onClick={handlePrev}
-                    className="gap-1 font-semibold text-sm py-2 px-3"
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Prev
-                  </Button>
-                  
-                  <Button
-                    onClick={handleSaveAndNext}
-                    disabled={currentIndex === total - 1}
-                    className="flex-1 bg-gray-800 hover:bg-gray-900 text-white gap-1 font-semibold py-2"
-                  >
-                    Save & Next <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                <button
+                  onClick={handleMarkForReviewAndNext}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 md:px-3 rounded-lg border-2 font-bold text-[11px] md:text-sm transition-all ${isMarkedCurrent
+                    ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'
+                    : 'bg-white text-purple-600 border-purple-300 hover:bg-purple-50 hover:border-purple-400'
+                    }`}
+                >
+                  <Bookmark className={`h-3 w-3 md:h-4 md:w-4 shrink-0 ${isMarkedCurrent ? 'fill-white' : ''}`} />
+                  <span className="hidden lg:inline">{isMarkedCurrent ? 'Unmark & Next' : 'Review & Next'}</span>
+                  <span className="lg:hidden">{isMarkedCurrent ? 'Unmark' : 'Review'}</span>
+                </button>
+
+                <Button
+                  onClick={handleSaveAndNext}
+                  className="flex-1 bg-gray-800 hover:bg-gray-900 text-white gap-1.5 font-bold text-[11px] md:text-sm py-2 px-2 md:px-3 rounded-lg"
+                >
+                  <span className="hidden lg:inline">Save & Next</span>
+                  <span className="lg:hidden">Save</span>
+                  <ChevronRight className="h-3 w-3 md:h-4 md:w-4 shrink-0" />
+                </Button>
+
+                <button
+                  onClick={() => setShowSubmitDialog(true)}
+                  className="flex-1 bg-[#FF6B00] hover:bg-[#FF8C00] text-white flex items-center justify-center gap-1.5 font-bold text-[11px] md:text-sm py-2 px-2 md:px-3 rounded-lg transition-colors"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin shrink-0" />
+                  ) : (
+                    <>
+                      <span className="hidden lg:inline">Submit Test</span>
+                      <span className="lg:hidden">Submit</span>
+                    </>
+                  )}
+                </button>
               </div>
             )}
           </div>

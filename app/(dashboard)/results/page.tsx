@@ -145,26 +145,7 @@ export default function ResultsPage() {
   const { questions, answers, confidenceMap, getScore, reset, paperLabel, elapsedSeconds } = useQuizStore()
   const score = getScore()
 
-  // ─── No data state ───────────────────────────────────────────
-  if (questions.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh] p-6 bg-gray-50">
-        <div className="text-center space-y-4 max-w-xs">
-          <div className="w-20 h-20 rounded-full bg-gray-200/50 flex items-center justify-center mx-auto ring-8 ring-gray-100">
-            <BookOpen className="h-10 w-10 text-gray-400" />
-          </div>
-          <h2 className="text-xl font-bold text-gray-900">No Analysis Available</h2>
-          <p className="text-gray-500 text-sm">Complete a practice session to unlock the Analytical Engine.</p>
-          <button
-            onClick={() => router.push('/quiz')}
-            className="bg-[#FF6B00] text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#FF8C00] transition-all shadow-xl shadow-orange-100"
-          >
-            Start Practice
-          </button>
-        </div>
-      </div>
-    )
-  }
+
 
   const analytics = useMemo(() => 
     generateTestAnalytics({ 
@@ -218,6 +199,27 @@ export default function ResultsPage() {
 
   const handleQuestionClick = (index: number) => {
     router.push(`/results/review?q=${index}`)
+  }
+
+  // ─── No data state ───────────────────────────────────────────
+  if (questions.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh] p-6 bg-gray-50">
+        <div className="text-center space-y-4 max-w-xs">
+          <div className="w-20 h-20 rounded-full bg-gray-200/50 flex items-center justify-center mx-auto ring-8 ring-gray-100">
+            <BookOpen className="h-10 w-10 text-gray-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">No Analysis Available</h2>
+          <p className="text-gray-500 text-sm">Complete a practice session to unlock the Analytical Engine.</p>
+          <button
+            onClick={() => router.push('/quiz')}
+            className="bg-[#FF6B00] text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#FF8C00] transition-all shadow-xl shadow-orange-100"
+          >
+            Start Practice
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
