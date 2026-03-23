@@ -195,12 +195,20 @@ export default function TestSessionPage() {
 
   // ── Option click ──
   const handleOptionClick = async (optionKey: 'A' | 'B' | 'C' | 'D') => {
+    // In test mode, prevent re-answering if already answered (before submit)
+    if (testMode && currentAnswer) return
+    
     stopTimerForQuestion(currentQuestion.$id)
     const timeTaken = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
     
-    const isSure = confidenceMap[currentQuestion.$id] === 'sure'
-    const is5050 = confidenceMap[currentQuestion.$id] === 'fifty_fifty'
-    const isGuess = confidenceMap[currentQuestion.$id] === 'guess'
+    // Capture confidence BEFORE submitAnswer (which overwrites answers)
+    const currentConfidence = confidenceMap[currentQuestion.$id]
+    const isSure = currentConfidence === 'sure'
+    const is5050 = currentConfidence === 'fifty_fifty'
+    const isGuess = currentConfidence === 'guess'
+    // Derive tag from current confidence state
+    const confidenceTag: 'sure' | 'fifty_fifty' | 'guess' | null = 
+      isSure ? 'sure' : is5050 ? 'fifty_fifty' : isGuess ? 'guess' : null
     
     submitAnswer(
       currentQuestion.$id, 
@@ -221,14 +229,14 @@ export default function TestSessionPage() {
             selected_option: optionKey, 
             is_correct: optionKey === currentQuestion.correct_option,
             time_taken_seconds: timeTaken,
-            used_5050: confidenceMap[currentQuestion.$id] === 'fifty_fifty',
-            used_guess: confidenceMap[currentQuestion.$id] === 'guess',
-            used_areyousure: confidenceMap[currentQuestion.$id] === 'sure',
-            is_guess: confidenceMap[currentQuestion.$id] === 'guess',
-            confidence_tag: answers[currentQuestion.$id]?.confidenceTag || confidenceMap[currentQuestion.$id] || null,
+            used_5050: is5050,
+            used_guess: isGuess,
+            used_areyousure: isSure,
+            is_guess: isGuess,
+            confidence_tag: confidenceTag,
             selection_history: JSON.stringify({
               q_id: currentQuestion.$id,
-              selections: answers[currentQuestion.$id]?.selectionHistory || [],
+              selections: [],
               final_answer: optionKey,
               correct_answer: currentQuestion.correct_option
             })
@@ -286,9 +294,14 @@ export default function TestSessionPage() {
     try {
       const user = await getCurrentUser()
       if (user) {
+        // Get snapshot of confidenceMap at submit time (this is the real source of truth)
+        const { confidenceMap: finalConfidenceMap } = useQuizStore.getState()
+
         for (const [qId, ans] of Object.entries(answers)) {
-          // IMPORTANT: Capture the latest cumulative time for this question
           const finalTimeTaken = Math.floor(getTimeForQuestion(qId) / 1000)
+          // Use confidenceMap as final source of truth, fallback to stored answer tag
+          const finalConfTag: 'sure' | 'fifty_fifty' | 'guess' | null = 
+            finalConfidenceMap[qId] || ans.confidenceTag || null
           
           await saveAttempt({ 
             user_id: user.$id, 
@@ -296,12 +309,11 @@ export default function TestSessionPage() {
             selected_option: ans.selectedOption, 
             is_correct: ans.isCorrect,
             time_taken_seconds: finalTimeTaken,
-            used_5050: ans.used5050,
-            used_guess: ans.isGuess,
-            used_areyousure: ans.usedAreYouSure,
-            is_guess: ans.isGuess,
-            // Use confidenceTag from answer record (set at click time) — it already has the correct tag
-            confidence_tag: ans.confidenceTag || null,
+            used_5050: finalConfTag === 'fifty_fifty',
+            used_guess: finalConfTag === 'guess',
+            used_areyousure: finalConfTag === 'sure',
+            is_guess: finalConfTag === 'guess',
+            confidence_tag: finalConfTag,
             selection_history: JSON.stringify({
               q_id: qId,
               selections: ans.selectionHistory || [],
@@ -312,16 +324,20 @@ export default function TestSessionPage() {
           await incrementStats(user.$id, ans.isCorrect)
         }
 
-        // Generate analytics and save user test summary
-        const attemptsToAnalyze = Object.entries(answers).map(([qId, ans]) => ({
-             $id: '', user_id: user.$id, question_id: qId,
-             selected_option: ans.selectedOption, is_correct: ans.isCorrect,
-             time_taken_seconds: Math.floor(getTimeForQuestion(qId) / 1000), 
-             used_5050: ans.used5050,
-             used_guess: ans.isGuess, used_areyousure: ans.usedAreYouSure,
-             is_guess: ans.isGuess, confidence_tag: ans.confidenceTag || null,
-             selection_history: JSON.stringify({ q_id: qId, selections: ans.selectionHistory || [], final_answer: ans.selectedOption, correct_answer: questions.find(q => q.$id === qId)?.correct_option })
-        }))
+        // Generate analytics using the final confidence map
+        const { confidenceMap: cm } = useQuizStore.getState()
+        const attemptsToAnalyze = Object.entries(answers).map(([qId, ans]) => {
+          const finalTag: 'sure' | 'fifty_fifty' | 'guess' | null = cm[qId] || ans.confidenceTag || null
+          return {
+            $id: '', user_id: user.$id, question_id: qId,
+            selected_option: ans.selectedOption, is_correct: ans.isCorrect,
+            time_taken_seconds: Math.floor(getTimeForQuestion(qId) / 1000), 
+            used_5050: finalTag === 'fifty_fifty',
+            used_guess: finalTag === 'guess', used_areyousure: finalTag === 'sure',
+            is_guess: finalTag === 'guess', confidence_tag: finalTag,
+            selection_history: JSON.stringify({ q_id: qId, selections: ans.selectionHistory || [], final_answer: ans.selectedOption, correct_answer: questions.find(q => q.$id === qId)?.correct_option })
+          }
+        })
         const analytics = generateTestAnalytics({ questions, attempts: attemptsToAnalyze, totalTestTime: elapsedSeconds })
         const totalCorrect = analytics.subjectStats.reduce((sum, s) => sum + s.correct, 0)
         
@@ -524,11 +540,13 @@ export default function TestSessionPage() {
               ))}
             </div>
 
-            {/* Centerpiece: Confidence Tracking (visible for every question) */}
-            {!isAnswered && !isSubmitted && (
+            {/* Confidence Tracking — shown AFTER option is selected, and only when test is not yet submitted */}
+            {(testMode ? (!!currentAnswer && !isSubmitted) : (!isAnswered)) && (
               <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-xl mt-4">
                 <p className="text-sm font-semibold text-gray-800 text-center mb-3">
-                  How confident are you about this question?
+                  {testMode && currentAnswer
+                    ? 'How confident were you about this answer?'
+                    : 'How confident are you about this question?'}
                 </p>
                 <div className="flex gap-3 justify-center">
                   <button

@@ -12,7 +12,7 @@ import type { Question } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar 
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar 
 } from 'recharts'
 
 // ─── Score helpers ───────────────────────────────────────────
@@ -24,121 +24,30 @@ function getScoreThreshold(pct: number) {
   return { label: 'Needs More Work! 🔥', color: 'from-red-500 to-red-600', ring: 'text-red-400' }
 }
 
-function formatTime(secs: number) {
-  const m = Math.floor(secs / 60)
-  const s = secs % 60
-  if (m === 0) return `${s}s`
-  return `${m}m ${s}s`
+// Confidence tag label
+function confLabel(tag: string | null | undefined) {
+  if (tag === 'sure') return '100% Sure'
+  if (tag === 'fifty_fifty') return '50:50'
+  if (tag === 'guess') return "It's a Guess"
+  return 'Not Tagged'
 }
 
-// Question Detail View Component
-function QuestionDetailView({ expandedQuestion, expandedAnswer, questions, onClose }: { expandedQuestion: any, expandedAnswer: any, questions: any[], onClose: () => void }) {
-  if (!expandedQuestion) return null
-  return (
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Question {questions.findIndex(q => q.$id === expandedQuestion.$id) + 1}</h3>
-              <button 
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Question text */}
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                {expandedQuestion.question_text}
-              </p>
-            </div>
-
-            {/* Options */}
-            <div className="space-y-2">
-              {(['A', 'B', 'C', 'D'] as const).map(key => {
-                const optionText = expandedQuestion[`option_${key.toLowerCase()}` as keyof Question] as string
-                const isSelected = expandedAnswer?.selectedOption === key
-                const isCorrectOpt = expandedQuestion.correct_option === key
-                
-                let optionClass = 'bg-gray-50 border-gray-200 text-gray-700'
-                if (isCorrectOpt) optionClass = 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                else if (isSelected && !isCorrectOpt) optionClass = 'bg-red-50 border-red-300 text-red-900'
-                
-                return (
-                  <div
-                    key={key}
-                    className={`p-3 rounded-xl border text-sm flex items-start gap-2 ${optionClass}`}
-                  >
-                    <span className="font-bold shrink-0">{key}.</span>
-                    <span className="flex-1 whitespace-pre-wrap">{optionText}</span>
-                    {isCorrectOpt && <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
-                    {isSelected && !isCorrectOpt && <XCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />}
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Explanation */}
-            {expandedQuestion.explanation && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-start gap-2 mb-2">
-                  <Lightbulb className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                  <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Explanation</p>
-                </div>
-                <p className="text-sm text-blue-900 leading-relaxed whitespace-pre-wrap">{expandedQuestion.explanation}</p>
-              </div>
-            )}
-
-            {/* Subtopic */}
-            {(expandedQuestion.subtopic || (expandedQuestion.tags && expandedQuestion.tags[0])) && (
-              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-                <div className="flex items-start gap-2 mb-2">
-                  <BookOpen className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
-                  <p className="text-xs font-bold text-orange-700 uppercase tracking-wider">Sub-Topic</p>
-                </div>
-                <p className="text-sm text-orange-900 font-semibold">{expandedQuestion.subtopic || expandedQuestion.tags[0]}</p>
-              </div>
-            )}
-
-            {/* Additional Info */}
-            {expandedAnswer && (
-              <div className="grid grid-cols-2 gap-3">
-                {expandedAnswer?.timeTaken && (
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                     <p className="text-xs text-gray-600 font-medium mb-1">Time Taken</p>
-                     <p className="text-lg font-bold text-gray-900">{expandedAnswer.timeTaken}s</p>
-                  </div>
-                )}
-                {expandedAnswer?.isCorrect !== undefined && (
-                  <div className={`${expandedAnswer.isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'} rounded-xl p-3 border`}>
-                     <p className={`text-xs ${expandedAnswer.isCorrect ? 'text-emerald-600' : 'text-red-600'} font-medium mb-1`}>Status</p>
-                     <p className={`text-lg font-bold ${expandedAnswer.isCorrect ? 'text-emerald-900' : 'text-red-900'}`}>
-                       {expandedAnswer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                     </p>
-                  </div>
-                )}
-                {expandedAnswer?.confidenceTag && (
-                  <div className="bg-purple-50 rounded-xl p-3 border border-purple-200">
-                     <p className="text-xs text-purple-600 font-medium mb-1">Confidence</p>
-                     <p className="text-sm font-bold text-purple-900 capitalize px-2 py-1 bg-purple-200 rounded inline-block">
-                       {expandedAnswer.confidenceTag.replace('_', ' ')}
-                     </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-  )
+function confColor(tag: string | null | undefined) {
+  if (tag === 'sure') return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+  if (tag === 'fifty_fifty') return 'bg-purple-100 text-purple-700 border-purple-200'
+  if (tag === 'guess') return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+  return 'bg-gray-100 text-gray-500 border-gray-200'
 }
 
-// Subject performance card with collapsible question grid
+// Subject performance card — collapsed by default, flat question list (no subtopics)
 function SubjectPerformanceCard({ 
   subject, 
   correct, 
   total, 
   accuracy, 
   questions,
-  answers
+  answers,
+  onQuestionClick
 }: {
   subject: string
   correct: number
@@ -146,27 +55,21 @@ function SubjectPerformanceCard({
   accuracy: number
   questions: Question[]
   answers: Record<string, any>
+  onQuestionClick: (questionIndex: number) => void
 }) {
-  const [isExpanded, setIsExpanded] = useState(true)
-  const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null)
-  
-  const subjectQuestions = questions.filter(q => q.subject_id === subject)
-  
-  const getAccuracyColor = (acc: number) => {
-    if (acc >= 80) return 'text-emerald-500'
-    if (acc >= 60) return 'text-blue-500'
-    if (acc >= 40) return 'text-orange-500'
-    return 'text-red-500'
-  }
+  const [isExpanded, setIsExpanded] = useState(false) // collapsed by default
 
-  const expandedQuestion = expandedQuestionId ? subjectQuestions.find(q => q.$id === expandedQuestionId) : null
-  const expandedAnswer = expandedQuestion ? answers[expandedQuestion.$id] : null
+  const subjectQuestions = questions.filter(q => q.subject_id === subject)
 
   return (
-    <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-center justify-between">
+    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
+      {/* Header — always visible */}
+      <div 
+        className="flex items-center justify-between p-6 md:p-8 cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${accuracy >= 50 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm ${accuracy >= 50 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
             {accuracy}%
           </div>
           <div>
@@ -174,58 +77,63 @@ function SubjectPerformanceCard({
             <p className="text-xs text-gray-400 font-bold uppercase">{correct} / {total} Correct</p>
           </div>
         </div>
-        <button 
-          onClick={() => setIsExpanded(!isExpanded)}
-          className={`w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-all ${isExpanded ? 'rotate-180' : ''}`}
-        >
-          <ChevronDown className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:inline text-xs text-gray-400 font-medium">
+            {isExpanded ? 'Hide questions' : 'Show questions'}
+          </span>
+          <div className={`w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-all ${isExpanded ? 'rotate-180' : ''}`}>
+            <ChevronDown className="h-5 w-5" />
+          </div>
+        </div>
       </div>
 
+      {/* Expandable question palette — flat list, no subtopics */}
       {isExpanded && (
-        <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="space-y-6">
-            {Object.entries(
-              subjectQuestions.reduce((acc, q) => {
-                const subtopic = q.subtopic || (q.tags && q.tags[0]) || 'General'
-                if (!acc[subtopic]) acc[subtopic] = []
-                acc[subtopic].push(q)
-                return acc
-              }, {} as Record<string, Question[]>)
-            ).map(([topic, topicQuestions]) => (
-              <div key={topic} className="space-y-3">
-                <h4 className="text-[10px] font-black text-gray-440 uppercase tracking-[0.2em] px-1">{topic}</h4>
-                <div className="flex flex-wrap gap-2.5">
-                  {topicQuestions.map((q) => {
-                    const answer = answers[q.$id]
-                    const isCorrect = answer?.isCorrect
-                    const isSkipped = !answer
-                    
-                    let statusColor = 'bg-gray-50 text-gray-400 border-gray-100'
-                    if (isCorrect) statusColor = 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm shadow-emerald-50'
-                    else if (!isSkipped) statusColor = 'bg-red-50 text-red-600 border-red-100 shadow-sm shadow-red-50'
-                    
-                    return (
-                      <button
-                        key={q.$id}
-                        onClick={() => setExpandedQuestionId(prev => prev === q.$id ? null : q.$id)}
-                        className={`h-10 w-10 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${statusColor} ${expandedQuestionId === q.$id ? 'ring-2 ring-orange-500 ring-offset-4 scale-110' : ''}`}
-                      >
-                        {questions.findIndex(allQ => allQ.$id === q.$id) + 1}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+        <div className="px-6 pb-6 md:px-8 md:pb-8 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="border-t border-gray-100 pt-6">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+              Question Numbers — click to review
+            </p>
+            <div className="flex flex-wrap gap-2.5">
+              {subjectQuestions.map((q) => {
+                const answer = answers[q.$id]
+                const isCorrect = answer?.isCorrect
+                const isSkipped = !answer
+                const globalIndex = questions.findIndex(allQ => allQ.$id === q.$id)
+                
+                let statusColor = 'bg-gray-50 text-gray-400 border-gray-200 hover:border-gray-400'
+                if (isCorrect) statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:border-emerald-400 shadow-sm shadow-emerald-50'
+                else if (!isSkipped) statusColor = 'bg-red-50 text-red-700 border-red-200 hover:border-red-400 shadow-sm shadow-red-50'
+                
+                // Show confidence badge if tagged
+                const confTag = answer?.confidenceTag
+                const confDot = confTag === 'sure' ? 'ring-2 ring-emerald-400' 
+                  : confTag === 'fifty_fifty' ? 'ring-2 ring-purple-400' 
+                  : confTag === 'guess' ? 'ring-2 ring-yellow-400' 
+                  : ''
+                
+                return (
+                  <button
+                    key={q.$id}
+                    title={`Q${globalIndex + 1} — ${isSkipped ? 'Not Answered' : isCorrect ? 'Correct' : 'Incorrect'}${confTag ? ` (${confLabel(confTag)})` : ''}`}
+                    onClick={() => onQuestionClick(globalIndex)}
+                    className={`h-10 w-10 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${statusColor} ${confDot}`}
+                  >
+                    {globalIndex + 1}
+                  </button>
+                )
+              })}
+            </div>
+            {/* Legend */}
+            <div className="flex flex-wrap gap-4 mt-4 text-[10px] text-gray-500">
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-100 border border-emerald-300" />Correct</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-100 border border-red-300" />Wrong</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-50 border border-gray-200" />Not Answered</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-emerald-400" />Sure</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-purple-400" />50:50</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-yellow-400" />Guess</span>
+            </div>
           </div>
-
-          <QuestionDetailView 
-            expandedQuestion={expandedQuestion} 
-            expandedAnswer={expandedAnswer} 
-            questions={questions} 
-            onClose={() => setExpandedQuestionId(null)} 
-          />
         </div>
       )}
     </div>
@@ -234,7 +142,7 @@ function SubjectPerformanceCard({
 
 export default function ResultsPage() {
   const router = useRouter()
-  const { questions, answers, getScore, reset, paperLabel, elapsedSeconds } = useQuizStore()
+  const { questions, answers, confidenceMap, getScore, reset, paperLabel, elapsedSeconds } = useQuizStore()
   const score = getScore()
 
   // ─── No data state ───────────────────────────────────────────
@@ -261,21 +169,25 @@ export default function ResultsPage() {
   const analytics = useMemo(() => 
     generateTestAnalytics({ 
       questions, 
-      attempts: Object.entries(answers).map(([id, ans]) => ({
-        question_id: id,
-        selected_option: ans.selectedOption,
-        is_correct: ans.isCorrect,
-        time_taken_seconds: ans.timeTaken,
-        used_5050: ans.used5050 || false,
-        used_guess: ans.isGuess || false,
-        used_areyousure: ans.usedAreYouSure || false,
-        is_guess: ans.isGuess || false,
-        confidence_tag: ans.confidenceTag || null,
-        selection_history: ans.selectionHistory ? JSON.stringify({ selections: ans.selectionHistory }) : undefined,
-      })),
+      attempts: Object.entries(answers).map(([id, ans]) => {
+        // Prefer confidenceMap (set after option click) over stored tag
+        const finalTag: 'sure' | 'fifty_fifty' | 'guess' | null = confidenceMap[id] || ans.confidenceTag || null
+        return {
+          question_id: id,
+          selected_option: ans.selectedOption,
+          is_correct: ans.isCorrect,
+          time_taken_seconds: ans.timeTaken,
+          used_5050: finalTag === 'fifty_fifty',
+          used_guess: finalTag === 'guess',
+          used_areyousure: finalTag === 'sure',
+          is_guess: finalTag === 'guess',
+          confidence_tag: finalTag,
+          selection_history: ans.selectionHistory ? JSON.stringify({ selections: ans.selectionHistory }) : undefined,
+        }
+      }),
       totalTestTime: elapsedSeconds 
     }),
-    [questions, answers, elapsedSeconds]
+    [questions, answers, confidenceMap, elapsedSeconds]
   )
 
   const subjectChartData = analytics.subjectStats.map(s => ({
@@ -284,13 +196,29 @@ export default function ResultsPage() {
     incorrect: 100 - s.accuracy
   }))
 
+  const { buttonUsageStats } = analytics
+
+  const sureAcc = buttonUsageStats.totalAreYouSure
+    ? Math.round((buttonUsageStats.correctAreYouSure / buttonUsageStats.totalAreYouSure) * 100)
+    : 0
+  const fiftyAcc = buttonUsageStats.total5050
+    ? Math.round((buttonUsageStats.correct5050 / buttonUsageStats.total5050) * 100)
+    : 0
+  const guessAcc = buttonUsageStats.totalGuess
+    ? Math.round((buttonUsageStats.correctGuess / buttonUsageStats.totalGuess) * 100)
+    : 0
+
   const confidenceRadarData = [
-    { subject: '100% Sure', A: analytics.buttonUsageStats.totalAreYouSure ? Math.round((analytics.buttonUsageStats.correctAreYouSure / analytics.buttonUsageStats.totalAreYouSure) * 100) : 0 },
-    { subject: '50:50 Deduction', A: analytics.buttonUsageStats.total5050 ? Math.round((analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) * 100) : 0 },
-    { subject: 'Intuition/Guess', A: analytics.buttonUsageStats.totalGuess ? Math.round((analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) * 100) : 0 },
+    { subject: '100% Sure', A: sureAcc },
+    { subject: '50:50 Deduction', A: fiftyAcc },
+    { subject: 'Intuition/Guess', A: guessAcc },
   ]
 
   const threshold = getScoreThreshold(score.percentage)
+
+  const handleQuestionClick = (index: number) => {
+    router.push(`/results/review?q=${index}`)
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FC] pb-24">
@@ -325,7 +253,7 @@ export default function ResultsPage() {
 
       <main className="max-w-6xl mx-auto px-6 mt-8 space-y-8">
         
-        {/* Top Tier Metrics: The "Control Room" Look */}
+        {/* Top Tier Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="md:col-span-1 bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -349,6 +277,12 @@ export default function ResultsPage() {
                 <h2 className={`text-sm font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r ${threshold.color.includes('emerald') ? 'from-emerald-600 to-teal-500' : 'from-orange-600 to-red-500'}`}>
                   {threshold.label}
                 </h2>
+                {/* Score counts */}
+                <div className="mt-4 flex gap-4 justify-center text-xs font-bold">
+                  <span className="text-emerald-600">✓ {score.correct}</span>
+                  <span className="text-red-500">✗ {score.wrong}</span>
+                  <span className="text-gray-400">— {questions.length - score.correct - score.wrong}</span>
+                </div>
              </div>
           </div>
 
@@ -368,14 +302,14 @@ export default function ResultsPage() {
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94A3B8'}} dy={10} />
                     <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94A3B8'}} unit="%" domain={[0, 100]} />
                     <RechartsTooltip cursor={{fill: '#F8FAFC'}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '11px', fontWeight: 'bold' }} />
-                    <Bar dataKey="accuracy" fill="#FF6B00" radius={[8, 8, 8, 8]} barSize={45} />
+                    <Bar dataKey="accuracy" fill="#FF6B00" radius={[8, 8, 8, 8]} barSize={45} name="Accuracy %" />
                   </BarChart>
                 </ResponsiveContainer>
              </div>
           </div>
         </div>
 
-        {/* Confidence Intelligence Layer */}
+        {/* Confidence Intelligence Layer — only show if any confidence buttons were used */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm space-y-6">
               <div className="flex items-center gap-3">
@@ -388,19 +322,48 @@ export default function ResultsPage() {
                  </div>
               </div>
 
-              <div className="h-[280px] w-full mt-4">
-                 <ResponsiveContainer width="100%" height="100%">
-                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={confidenceRadarData}>
-                     <PolarGrid stroke="#F1F5F9" />
-                     <PolarAngleAxis dataKey="subject" tick={{fontSize: 10, fontWeight: 800, fill: '#475569'}} />
-                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                     <Radar name="Accuracy" dataKey="A" stroke="#FF6B00" fill="#FF6B00" fillOpacity={0.4} />
-                   </RadarChart>
-                 </ResponsiveContainer>
-              </div>
+              {(buttonUsageStats.totalAreYouSure > 0 || buttonUsageStats.total5050 > 0 || buttonUsageStats.totalGuess > 0) ? (
+                <div className="h-[260px] w-full mt-4">
+                   <ResponsiveContainer width="100%" height="100%">
+                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={confidenceRadarData}>
+                       <PolarGrid stroke="#F1F5F9" />
+                       <PolarAngleAxis dataKey="subject" tick={{fontSize: 10, fontWeight: 800, fill: '#475569'}} />
+                       <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                       <Radar name="Accuracy" dataKey="A" stroke="#FF6B00" fill="#FF6B00" fillOpacity={0.4} />
+                     </RadarChart>
+                   </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[200px] text-center text-gray-400 bg-gray-50 rounded-2xl">
+                  <Zap className="h-8 w-8 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">No confidence buttons used</p>
+                  <p className="text-xs mt-1">Use Sure / 50:50 / Guess buttons next time to see insights here</p>
+                </div>
+              )}
+
+              {/* Confidence usage stats */}
+              {(buttonUsageStats.totalAreYouSure > 0 || buttonUsageStats.total5050 > 0 || buttonUsageStats.totalGuess > 0) && (
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="bg-emerald-50 rounded-xl p-2 border border-emerald-100">
+                    <p className="font-black text-emerald-700 text-base">{buttonUsageStats.totalAreYouSure}</p>
+                    <p className="text-emerald-600 font-medium">Sure</p>
+                    <p className="text-emerald-500 font-bold">{sureAcc}%</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-xl p-2 border border-purple-100">
+                    <p className="font-black text-purple-700 text-base">{buttonUsageStats.total5050}</p>
+                    <p className="text-purple-600 font-medium">50:50</p>
+                    <p className="text-purple-500 font-bold">{fiftyAcc}%</p>
+                  </div>
+                  <div className="bg-yellow-50 rounded-xl p-2 border border-yellow-100">
+                    <p className="font-black text-yellow-700 text-base">{buttonUsageStats.totalGuess}</p>
+                    <p className="text-yellow-600 font-medium">Guess</p>
+                    <p className="text-yellow-500 font-bold">{guessAcc}%</p>
+                  </div>
+                </div>
+              )}
            </div>
 
-           <div className="space-y-6">
+           <div className="space-y-4">
                {/* 100% Sure Analysis */}
                <div className="bg-emerald-50/50 rounded-[2rem] p-6 border border-emerald-100/50 flex gap-4 items-start group hover:bg-emerald-50 transition-all">
                   <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
@@ -409,12 +372,14 @@ export default function ResultsPage() {
                   <div className="flex-1">
                      <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Mastery Level</span>
-                        <span className="text-xs font-black text-emerald-700">{analytics.buttonUsageStats.totalAreYouSure ? Math.round((analytics.buttonUsageStats.correctAreYouSure / analytics.buttonUsageStats.totalAreYouSure) * 100) : 0}% Accuracy</span>
+                        <span className="text-xs font-black text-emerald-700">
+                          {buttonUsageStats.totalAreYouSure > 0 ? `${sureAcc}% Accuracy (${buttonUsageStats.totalAreYouSure} used)` : 'Not used'}
+                        </span>
                      </div>
                      <h4 className="font-bold text-gray-900 leading-tight">Sure-Answer Consistency</h4>
                      <p className="text-xs text-gray-600 mt-2 leading-relaxed italic">
-                        {analytics.buttonUsageStats.totalAreYouSure === 0 ? "You haven't marked any answers as 'Sure'. Try marking them to track accuracy in your strong zones." : 
-                         (analytics.buttonUsageStats.correctAreYouSure / analytics.buttonUsageStats.totalAreYouSure) > 0.9 ? 
+                        {buttonUsageStats.totalAreYouSure === 0 ? "You haven't marked any answers as 'Sure'. Try marking them to track accuracy in your strong zones." : 
+                         sureAcc > 90 ? 
                          "Excellent self-calibration! You know exactly what you know. This is critical for zero-risk scoring." :
                          "Your 'Sure' accuracy is under 90%. This suggests 'Hidden Knowledge Gaps'—you think you are right, but nuances are tricking you."}
                      </p>
@@ -429,12 +394,14 @@ export default function ResultsPage() {
                   <div className="flex-1">
                      <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Deduction Index</span>
-                        <span className="text-xs font-black text-blue-700">{analytics.buttonUsageStats.total5050 ? Math.round((analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) * 100) : 0}% Success</span>
+                        <span className="text-xs font-black text-blue-700">
+                          {buttonUsageStats.total5050 > 0 ? `${fiftyAcc}% Success (${buttonUsageStats.total5050} used)` : 'Not used'}
+                        </span>
                      </div>
                      <h4 className="font-bold text-gray-900 leading-tight">50:50 Logic Outcomes</h4>
                      <p className="text-xs text-gray-600 mt-2 leading-relaxed italic">
-                        {analytics.buttonUsageStats.total5050 === 0 ? "Use the 50:50 tool when you narrow down to two options to analyze your elimination logic." : 
-                         (analytics.buttonUsageStats.correct5050 / analytics.buttonUsageStats.total5050) > 0.6 ? 
+                        {buttonUsageStats.total5050 === 0 ? "Use the 50:50 tool when you narrow down to two options to analyze your elimination logic." : 
+                         fiftyAcc > 60 ? 
                          "Strong elimination skills! Your ability to navigate through complex options is better than average." :
                          "Your deduction is failing at the final hurdle. You are identifying the wrong one between the final two choices."}
                      </p>
@@ -449,12 +416,14 @@ export default function ResultsPage() {
                   <div className="flex-1">
                      <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-black text-orange-700 uppercase tracking-widest">Risk Quotient</span>
-                        <span className="text-xs font-black text-orange-700">{analytics.buttonUsageStats.totalGuess ? Math.round((analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) * 100) : 0}% Hit Rate</span>
+                        <span className="text-xs font-black text-orange-700">
+                          {buttonUsageStats.totalGuess > 0 ? `${guessAcc}% Hit Rate (${buttonUsageStats.totalGuess} guessed)` : 'Not used'}
+                        </span>
                      </div>
                      <h4 className="font-bold text-gray-900 leading-tight">Intuition Efficiency</h4>
                      <p className="text-xs text-gray-600 mt-2 leading-relaxed italic">
-                        {analytics.buttonUsageStats.totalGuess === 0 ? "Zero guessing detected. You are playing a very safe game—typical for final-days revision." : 
-                         (analytics.buttonUsageStats.correctGuess / analytics.buttonUsageStats.totalGuess) > 0.4 ? 
+                        {buttonUsageStats.totalGuess === 0 ? "Zero guessing detected. You are playing a very safe game—typical for final-days revision." : 
+                         guessAcc > 40 ? 
                          "Educated guessing is working. Your subconscious intuition is high—but don't make it a habit." :
                          "High blind guessing rate. This is dangerous for negative marking—focus on conceptual clarity to reduce guesses."}
                      </p>
@@ -463,28 +432,40 @@ export default function ResultsPage() {
            </div>
         </div>
 
-        {/* Drill-Down Section Header */}
+        {/* Drill-Down Section */}
         <div className="pt-8 border-t border-gray-100">
            <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight italic">Engine Drill-Down</h2>
-                <p className="text-xs text-gray-500 font-medium">Subject-wise subtopic segmentation and solution review</p>
+                <p className="text-xs text-gray-500 font-medium">Subject-wise question breakdown — click a question number to review</p>
               </div>
            </div>
            
-           <div className="space-y-6">
-              {analytics.subjectStats.map((stat) => (
-                <SubjectPerformanceCard
-                  key={stat.subject}
-                  subject={stat.subject}
-                  correct={stat.correct}
-                  total={stat.total}
-                  accuracy={stat.accuracy}
-                  questions={questions}
-                  answers={answers}
-                />
-              ))}
-           </div>
+           {/* Merge confidenceMap into answers so question badges reflect the latest tags */}
+           {(() => {
+             const mergedAnswers = Object.fromEntries(
+               Object.entries(answers).map(([qId, ans]) => [
+                 qId,
+                 { ...ans, confidenceTag: confidenceMap[qId] || ans.confidenceTag || null }
+               ])
+             )
+             return (
+               <div className="space-y-4">
+                 {analytics.subjectStats.map((stat) => (
+                   <SubjectPerformanceCard
+                     key={stat.subject}
+                     subject={stat.subject}
+                     correct={stat.correct}
+                     total={stat.total}
+                     accuracy={stat.accuracy}
+                     questions={questions}
+                     answers={mergedAnswers}
+                     onQuestionClick={handleQuestionClick}
+                   />
+                 ))}
+               </div>
+             )
+           })()}
         </div>
 
         {/* Global Strategy Suggestions */}
@@ -513,4 +494,3 @@ export default function ResultsPage() {
     </div>
   )
 }
-
