@@ -59,6 +59,7 @@ interface QuizStore {
   setConfidenceForQuestion: (questionId: string, tag: 'fifty_fifty' | 'guess' | 'sure' | undefined) => void
   incrementButtonUsage: (type: 'areYouSure' | 'used5050' | 'guessed') => void
   clearResponse: (questionId: string) => void
+  updateTimeForAnswer: (questionId: string, timeTaken: number) => void
 }
 
 export const useQuizStore = create<QuizStore>((set, get) => ({
@@ -295,6 +296,20 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       return { 
         answers: newAnswers,
         confidenceMap: newConfidenceMap
+      }
+    }),
+  updateTimeForAnswer: (questionId: string, timeTaken: number) =>
+    set((state) => {
+      const answer = state.answers[questionId]
+      if (!answer) return state
+      return {
+        answers: {
+          ...state.answers,
+          [questionId]: {
+            ...answer,
+            timeTaken,
+          }
+        }
       }
     }),
 }))

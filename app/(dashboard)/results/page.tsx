@@ -39,6 +39,14 @@ function confColor(tag: string | null | undefined) {
   return 'bg-gray-100 text-gray-500 border-gray-200'
 }
 
+function formatTime(seconds: number | undefined) {
+  if (seconds === undefined) return '0s'
+  if (seconds < 60) return `${seconds}s`
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}m ${s}s`
+}
+
 // Subject performance card — collapsed by default, flat question list (no subtopics)
 function SubjectPerformanceCard({ 
   subject, 
@@ -115,7 +123,7 @@ function SubjectPerformanceCard({
                 return (
                   <button
                     key={q.$id}
-                    title={`Q${globalIndex + 1} — ${isSkipped ? 'Not Answered' : isCorrect ? 'Correct' : 'Incorrect'}${confTag ? ` (${confLabel(confTag)})` : ''}`}
+                    title={`Q${globalIndex + 1} — ${isSkipped ? 'Not Answered' : isCorrect ? 'Correct' : 'Incorrect'}${confTag ? ` (${confLabel(confTag)})` : ''} — Took ${formatTime(answer?.timeTaken)}`}
                     onClick={() => onQuestionClick(globalIndex)}
                     className={`h-10 w-10 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${statusColor} ${confDot}`}
                   >

@@ -128,6 +128,7 @@ export default function TestSessionPage() {
     incrementButtonUsage,
     setConfidenceForQuestion,
     clearResponse,
+    updateTimeForAnswer,
   } = useQuizStore()
 
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
@@ -175,7 +176,7 @@ export default function TestSessionPage() {
   const correctCount = Object.values(answers).filter(a => a.isCorrect).length
   let timerDisplay = ''
   if (testMode) {
-    const totalSeconds = 3 * 60 * 60 // 3 hours
+    const totalSeconds = 120 * 60 // 120 minutes (2 hours)
     const timeLeft = Math.max(totalSeconds - elapsedSeconds, 0)
     const mTotal = Math.floor(timeLeft / 60).toString().padStart(2, '0')
     const s = (timeLeft % 60).toString().padStart(2, '0')
@@ -279,6 +280,10 @@ export default function TestSessionPage() {
 
   // ── Navigate: Save & Next (test mode) ──
   const handleSaveAndNext = () => {
+    if (currentQuestion) {
+      const currentTime = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
+      updateTimeForAnswer(currentQuestion.$id, currentTime)
+    }
     if (currentIndex < total - 1) {
       nextQuestion()  // also marks next as visited in store
     }
@@ -286,6 +291,10 @@ export default function TestSessionPage() {
 
   // ── Navigate: Mark for Review & Next ──
   const handleMarkForReviewAndNext = () => {
+    if (currentQuestion) {
+      const currentTime = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
+      updateTimeForAnswer(currentQuestion.$id, currentTime)
+    }
     toggleMarkForReview(currentQuestion.$id)
     if (currentIndex < total - 1) {
       nextQuestion()
@@ -308,6 +317,12 @@ export default function TestSessionPage() {
         // Get snapshot of confidenceMap at submit time (this is the real source of truth)
         const { confidenceMap: finalConfidenceMap } = useQuizStore.getState()
 
+        // Make sure all times are fresh before submitting
+        for (const [qId, ans] of Object.entries(answers)) {
+          const finalTimeTaken = Math.floor(getTimeForQuestion(qId) / 1000)
+          updateTimeForAnswer(qId, finalTimeTaken)
+        }
+
         for (const [qId, ans] of Object.entries(answers)) {
           const finalTimeTaken = Math.floor(getTimeForQuestion(qId) / 1000)
           // Use confidenceMap as final source of truth, fallback to stored answer tag
@@ -319,7 +334,7 @@ export default function TestSessionPage() {
             question_id: qId, 
             selected_option: ans.selectedOption, 
             is_correct: ans.isCorrect,
-            time_taken_seconds: finalTimeTaken,
+            time_taken_seconds: finalTimeTaken, 
             used_5050: finalConfTag === 'fifty_fifty',
             used_guess: finalConfTag === 'guess',
             used_areyousure: finalConfTag === 'sure',

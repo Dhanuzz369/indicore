@@ -209,7 +209,11 @@ function ReviewContent() {
               {answer.timeTaken !== undefined && (
                 <div className="bg-white rounded-xl p-3 border border-gray-200 text-center">
                   <p className="text-xs text-gray-500 font-medium">Time Taken</p>
-                  <p className="text-lg font-black text-gray-900 mt-1">{answer.timeTaken}s</p>
+                  <p className="text-lg font-black text-gray-900 mt-1">
+                    {answer.timeTaken !== undefined && answer.timeTaken > 60 
+                      ? `${Math.floor(answer.timeTaken / 60)}m ${answer.timeTaken % 60}s` 
+                      : `${answer.timeTaken || 0}s`}
+                  </p>
                 </div>
               )}
               {confTag && (
