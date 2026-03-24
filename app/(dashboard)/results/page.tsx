@@ -140,6 +140,80 @@ function SubjectPerformanceCard({
   )
 }
 
+function TaggedQuestionsDropdown({ 
+  tag,
+  title,
+  questions,
+  answers,
+  confidenceMap,
+  onQuestionClick
+}: {
+  tag: 'sure' | 'fifty_fifty' | 'guess'
+  title: string
+  questions: Question[]
+  answers: Record<string, any>
+  confidenceMap: Record<string, string>
+  onQuestionClick: (index: number) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  
+  const taggedItems = questions.map((q, index) => {
+    const finalTag = confidenceMap[q.$id] || answers[q.$id]?.confidenceTag || null
+    return { q, index, finalTag, answer: answers[q.$id] }
+  }).filter(item => item.finalTag === tag)
+
+  if (taggedItems.length === 0) return null
+
+  const themeClass = tag === 'sure' 
+    ? 'text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 border-emerald-200' 
+    : tag === 'fifty_fifty'
+      ? 'text-blue-700 bg-blue-50/80 hover:bg-blue-100 border-blue-200'
+      : 'text-orange-700 bg-orange-50/80 hover:bg-orange-100 border-orange-200'
+
+  return (
+    <div className="mt-4 rounded-2xl overflow-hidden border border-gray-100 bg-white/50 backdrop-blur-md shadow-sm transition-all duration-300">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between px-5 py-3 text-xs font-black transition-all ${themeClass}`}
+      >
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-3.5 w-3.5 opacity-70" />
+          <span className="uppercase tracking-widest">{title}</span>
+          <span className="px-1.5 py-0.5 rounded-md bg-white/50 text-[10px] ml-1">{taggedItems.length}</span>
+        </div>
+        <ChevronDown className={`h-4 w-4 transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      
+      <div 
+        className={`transition-all duration-500 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}
+      >
+        <div className="p-4 border-t border-gray-100 bg-white/80">
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Questions marked as {tag.replace('_', ':')}</p>
+          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
+            {taggedItems.map(({ q, index, answer }) => {
+              const isCorrect = answer?.isCorrect
+              let statusStyle = 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100'
+              if (isCorrect === true) statusStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-sm shadow-emerald-100/50'
+              else if (isCorrect === false) statusStyle = 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 shadow-sm shadow-red-100/50'
+              
+              return (
+                <button
+                  key={q.$id}
+                  onClick={() => onQuestionClick(index)}
+                  className={`flex items-center justify-center h-9 w-9 rounded-xl text-[11px] font-black border transition-all hover:scale-110 active:scale-95 ${statusStyle}`}
+                  title={`${isCorrect === true ? 'Correct' : isCorrect === false ? 'Incorrect' : 'Skipped'}`}
+                >
+                  {index + 1}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ResultsPage() {
   const router = useRouter()
   const { questions, answers, confidenceMap, getScore, reset, paperLabel, elapsedSeconds } = useQuizStore()
@@ -385,6 +459,14 @@ export default function ResultsPage() {
                          "Excellent self-calibration! You know exactly what you know. This is critical for zero-risk scoring." :
                          "Your 'Sure' accuracy is under 90%. This suggests 'Hidden Knowledge Gaps'—you think you are right, but nuances are tricking you."}
                      </p>
+                     <TaggedQuestionsDropdown
+                        tag="sure"
+                        title="Check 'Sure' Questions"
+                        questions={questions}
+                        answers={answers}
+                        confidenceMap={confidenceMap}
+                        onQuestionClick={handleQuestionClick}
+                     />
                   </div>
                </div>
 
@@ -407,6 +489,14 @@ export default function ResultsPage() {
                          "Strong elimination skills! Your ability to navigate through complex options is better than average." :
                          "Your deduction is failing at the final hurdle. You are identifying the wrong one between the final two choices."}
                      </p>
+                     <TaggedQuestionsDropdown
+                        tag="fifty_fifty"
+                        title="Check '50:50' Questions"
+                        questions={questions}
+                        answers={answers}
+                        confidenceMap={confidenceMap}
+                        onQuestionClick={handleQuestionClick}
+                     />
                   </div>
                </div>
 
@@ -429,6 +519,14 @@ export default function ResultsPage() {
                          "Educated guessing is working. Your subconscious intuition is high—but don't make it a habit." :
                          "High blind guessing rate. This is dangerous for negative marking—focus on conceptual clarity to reduce guesses."}
                      </p>
+                     <TaggedQuestionsDropdown
+                        tag="guess"
+                        title="Check 'Guess' Questions"
+                        questions={questions}
+                        answers={answers}
+                        confidenceMap={confidenceMap}
+                        onQuestionClick={handleQuestionClick}
+                     />
                   </div>
                </div>
            </div>
