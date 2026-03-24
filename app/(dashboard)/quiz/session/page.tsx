@@ -127,6 +127,7 @@ export default function TestSessionPage() {
     getTimeForQuestion,
     incrementButtonUsage,
     setConfidenceForQuestion,
+    clearResponse,
   } = useQuizStore()
 
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
@@ -640,17 +641,11 @@ export default function TestSessionPage() {
                 </Button>
 
                 <button
-                  onClick={() => setShowSubmitDialog(true)}
-                  className="flex-1 bg-[#FF6B00] hover:bg-[#FF8C00] text-white flex items-center justify-center gap-1.5 font-bold text-[11px] md:text-sm py-2 px-2 md:px-3 rounded-lg transition-colors"
+                  onClick={() => clearResponse(currentQuestion.$id)}
+                  className="flex-1 bg-white border-2 border-orange-200 text-orange-600 hover:bg-orange-50 flex items-center justify-center gap-1.5 font-bold text-[11px] md:text-sm py-2 px-2 md:px-3 rounded-lg transition-colors"
                 >
-                  {isSaving ? (
-                    <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin shrink-0" />
-                  ) : (
-                    <>
-                      <span className="hidden lg:inline">Submit Test</span>
-                      <span className="lg:hidden">Submit</span>
-                    </>
-                  )}
+                  <span className="hidden lg:inline">Clear Response</span>
+                  <span className="lg:hidden">Clear</span>
                 </button>
               </div>
             )}

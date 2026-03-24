@@ -329,59 +329,82 @@ export default function ResultsPage() {
 
       <main className="max-w-6xl mx-auto px-6 mt-8 space-y-8">
         
-        {/* Top Tier Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1 bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Target className="h-24 w-24 text-[#FF6B00]" />
-             </div>
-             <div className="relative z-10">
-                <div className="relative inline-flex items-center justify-center mb-4">
-                  <svg className="w-32 h-32 transform -rotate-90">
-                    <circle cx="64" cy="64" r="58" stroke="#F1F5F9" strokeWidth="8" fill="none" />
-                    <circle 
-                      cx="64" cy="64" r="58" stroke="#FF6B00" strokeWidth="10" 
-                      strokeDasharray={364} strokeDashoffset={364 - (364 * score.percentage / 100)}
-                      fill="none" strokeLinecap="round" className="transition-all duration-1000 ease-out"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-black text-gray-900">{score.percentage}%</span>
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Accuracy</span>
+        {/* Top Tier Metrics Redesigned */}
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            {/* Dark Header Part */}
+            <div className="bg-[#111111] p-8 md:p-10 text-white relative">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                    {paperLabel || 'Real-time Mock Analysis'} · {questions.length} Qs
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-6xl md:text-7xl font-black">
+                      {Math.max(0, parseFloat(((score.correct * 2) - (score.wrong * 0.66)).toFixed(1)))}
+                    </span>
+                    <span className="text-2xl md:text-3xl font-bold text-gray-500">/{questions.length * 2}</span>
+                  </div>
+                  
+                  {/* Progress Bar Area */}
+                  <div className="pt-4 max-w-md">
+                    <div className="flex justify-between items-end mb-2">
+                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        {Object.keys(answers).length} of {questions.length} attempted
+                       </span>
+                    </div>
+                    <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[#00E5BE] rounded-full transition-all duration-1000"
+                        style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
-                <h2 className={`text-sm font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r ${threshold.color.includes('emerald') ? 'from-emerald-600 to-teal-500' : 'from-orange-600 to-red-500'}`}>
-                  {threshold.label}
-                </h2>
-                {/* Score counts */}
-                <div className="mt-4 flex gap-4 justify-center text-xs font-bold">
-                  <span className="text-emerald-600">✓ {score.correct}</span>
-                  <span className="text-red-500">✗ {score.wrong}</span>
-                  <span className="text-gray-400">— {questions.length - score.correct - score.wrong}</span>
-                </div>
-             </div>
-          </div>
 
-          <div className="md:col-span-3 bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm flex flex-col">
-             <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h3 className="font-black text-gray-900 uppercase tracking-tight flex items-center gap-2 text-sm italic">
-                    <TrendingUp className="h-4 w-4 text-orange-500" /> Subject Proficiency Matrix
-                  </h3>
-                  <p className="text-xs text-gray-400 font-medium">Correlation between attempted subjects and hit-ratio</p>
+                {/* Accuracy Circle/Text on Right */}
+                <div className="flex flex-col items-end">
+                   <div className="text-right">
+                      <span className="text-4xl md:text-5xl font-black text-[#00E5BE]">{score.percentage}%</span>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">accuracy</p>
+                   </div>
                 </div>
-             </div>
-             <div className="flex-1 h-[220px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={subjectChartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F1F5F9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94A3B8'}} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94A3B8'}} unit="%" domain={[0, 100]} />
-                    <RechartsTooltip cursor={{fill: '#F8FAFC'}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '11px', fontWeight: 'bold' }} />
-                    <Bar dataKey="accuracy" fill="#FF6B00" radius={[8, 8, 8, 8]} barSize={45} name="Accuracy %" />
-                  </BarChart>
-                </ResponsiveContainer>
-             </div>
+              </div>
+            </div>
+
+            {/* Light Bottom Part */}
+            <div className="p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 bg-white">
+              {/* Status Boxes */}
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                <div className="min-w-[120px] bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 text-center">
+                  <p className="text-2xl font-black text-emerald-600">{score.correct}</p>
+                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Correct</p>
+                </div>
+                <div className="min-w-[120px] bg-red-50/50 border border-red-100 rounded-2xl p-4 text-center">
+                  <p className="text-2xl font-black text-red-600">{score.wrong}</p>
+                  <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">Wrong</p>
+                </div>
+                <div className="min-w-[120px] bg-gray-50 border border-gray-100 rounded-2xl p-4 text-center">
+                  <p className="text-2xl font-black text-gray-400">{questions.length - Object.keys(answers).length}</p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Skipped</p>
+                </div>
+              </div>
+
+              {/* Bottom Actions */}
+              <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                <div className="flex items-center gap-2 text-gray-400 font-bold text-xs uppercase tracking-widest">
+                  Duration <span className="text-gray-900 ml-1">
+                    {Math.floor(elapsedSeconds / 3600)} hrs {Math.floor((elapsedSeconds % 3600) / 60)} mins
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleQuestionClick(0)}
+                  className="bg-gray-50 border border-gray-200 px-6 py-3 rounded-2xl text-xs font-black text-gray-900 hover:bg-gray-100 transition-all flex items-center gap-2 shadow-sm uppercase tracking-widest"
+                >
+                  <Clock className="h-3 w-3" /> Review test
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
