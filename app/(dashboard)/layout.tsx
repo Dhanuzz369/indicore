@@ -18,6 +18,7 @@ import {
   ChevronRight,
   ClipboardList,
   BookOpen,
+  Sparkles,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Profile } from '@/types'
@@ -32,12 +33,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 const navigation = [
-  { name: 'Home',     href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Practice', href: '/quiz',      icon: Brain },
-  { name: 'My Tests', href: '/tests',     icon: ClipboardList },
-  { name: 'Notes',    href: '/notes',     icon: BookOpen },
-  { name: 'Results',  href: '/results',   icon: BarChart3 },
-  { name: 'Profile',  href: '/profile',   icon: User },
+  { name: 'Home',         href: '/dashboard',      icon: LayoutDashboard },
+  { name: 'Practice',     href: '/quiz',            icon: Brain },
+  { name: 'My Tests',     href: '/tests',           icon: ClipboardList },
+  { name: 'Notes',        href: '/notes',           icon: BookOpen },
+  { name: 'Results',      href: '/results',         icon: BarChart3 },
+  { name: 'Intelligence', href: '/intelligence',    icon: Sparkles },
+  { name: 'Profile',      href: '/profile',         icon: User },
 ]
 
 function getInitials(name: string) {
