@@ -5,9 +5,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
 import { getCurrentUser } from '@/lib/appwrite/auth'
-import { 
-  saveAttempt, incrementStats, saveUserTestSummary, createTestSession, 
-  reportIssue 
+import {
+  saveAttempt, incrementStats, saveUserTestSummary, createTestSession,
+  reportIssue, getSubjects
 } from '@/lib/appwrite/queries'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { OptionButton } from '@/components/quiz/OptionButton'
@@ -23,8 +23,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Loader2, ChevronLeft, ChevronRight, Bookmark, PanelRight, X, House, Flag } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, Bookmark, PanelRight, X, House, Flag, BookOpen } from 'lucide-react'
 import { toast } from 'sonner'
+import type { Subject } from '@/types'
+import { NoteEditor } from '@/components/notes/NoteEditor'
 
 // ─────────────────────────────────────────────────────────────────
 // Question palette color logic for Full Length Test
@@ -144,6 +146,8 @@ export default function TestSessionPage() {
   const [showReportModal, setShowReportModal] = useState(false)
   const [reportDescription, setReportDescription] = useState('')
   const [isReporting, setIsReporting] = useState(false)
+  const [showNoteModal, setShowNoteModal] = useState(false)
+  const [subjects, setSubjects] = useState<Subject[]>([])
 
   // ── 1. Redirect if no questions ──
   useEffect(() => {
@@ -188,6 +192,11 @@ export default function TestSessionPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elapsedSeconds, testMode, isSubmitted, practiceTimerTotal])
+
+  // ── Load subjects for NoteEditor ──
+  useEffect(() => {
+    getSubjects().then(res => setSubjects(res.documents as unknown as Subject[]))
+  }, [])
 
   if (questions.length === 0) return null
 
@@ -691,14 +700,24 @@ export default function TestSessionPage() {
                   </span>
                 )}
               </div>
-              <button
-                onClick={openReportModal}
-                className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm"
-                title="Report issue with this question"
-              >
-                <Flag className="h-3 w-3" />
-                Report
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowNoteModal(true)}
+                  className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-[#FF6B00] transition-colors bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm"
+                  title="Save this question as a note"
+                >
+                  <BookOpen className="h-3 w-3" />
+                  Note
+                </button>
+                <button
+                  onClick={openReportModal}
+                  className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm"
+                  title="Report issue with this question"
+                >
+                  <Flag className="h-3 w-3" />
+                  Report
+                </button>
+              </div>
             </div>
 
             {/* Question text */}
@@ -900,6 +919,16 @@ export default function TestSessionPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      )}
+
+      {/* ─── NOTE EDITOR MODAL ─── */}
+      {showNoteModal && (
+        <NoteEditor
+          prefillFront={currentQuestion.question_text}
+          sourceQuestionId={currentQuestion.$id}
+          subjects={subjects}
+          onClose={() => setShowNoteModal(false)}
+        />
       )}
 
       {/* ─── REPORT ISSUE MODAL ─── */}
