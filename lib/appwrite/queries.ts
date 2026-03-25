@@ -1,6 +1,6 @@
 import { databases, storage, DATABASE_ID, COLLECTIONS, STORAGE_BUCKET_ID } from './config'
 import { ID, Query, ImageGravity } from 'appwrite'
-import type { TestSession } from '@/types'
+import type { TestSession, Note } from '@/types'
 
 // ─── AVATAR STORAGE ─────────────────────────────────
 export async function uploadAvatar(file: File): Promise<string> {
@@ -371,4 +371,81 @@ export async function reportIssue(data: {
   }
 
   throw new Error('Failed to save report after all retries')
+}
+
+// ─── NOTES (Flashcards) ─────────────────────────────
+
+export async function createNote(data: {
+  user_id: string
+  front: string
+  back: string
+  subject: string
+  topic: string
+  source_question_id?: string
+}): Promise<Note> {
+  const now = new Date().toISOString()
+  const doc = await databases.createDocument(
+    DATABASE_ID,
+    COLLECTIONS.NOTES,
+    ID.unique(),
+    {
+      user_id: data.user_id,
+      front: data.front,
+      back: data.back,
+      subject: data.subject,
+      topic: data.topic || '',
+      source_question_id: data.source_question_id || '',
+      next_review_at: now,
+      interval_days: 1,
+      ease_factor: 2.5,
+      review_count: 0,
+      created_at: now,
+    }
+  )
+  return doc as unknown as Note
+}
+
+export async function getNotesByUser(params: {
+  userId: string
+  subject?: string
+  search?: string
+  limit?: number
+  offset?: number
+}): Promise<{ documents: Note[]; total: number }> {
+  const { userId, subject, limit = 50, offset = 0 } = params
+  const q: string[] = [Query.equal('user_id', userId), Query.orderDesc('created_at'), Query.limit(limit), Query.offset(offset)]
+  if (subject && subject !== 'all') q.push(Query.equal('subject', subject))
+  const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.NOTES, q)
+  return result as unknown as { documents: Note[]; total: number }
+}
+
+export async function getDueNotes(userId: string): Promise<Note[]> {
+  const now = new Date().toISOString()
+  const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.NOTES, [
+    Query.equal('user_id', userId),
+    Query.lessThanEqual('next_review_at', now),
+    Query.orderAsc('next_review_at'),
+    Query.limit(200),
+  ])
+  return result.documents as unknown as Note[]
+}
+
+export async function getDueNotesCount(userId: string): Promise<number> {
+  const due = await getDueNotes(userId)
+  return due.length
+}
+
+export async function updateNote(noteId: string, data: Partial<Note>): Promise<Note> {
+  const { $id, $createdAt, user_id, created_at, ...rest } = data as any
+  const doc = await databases.updateDocument(DATABASE_ID, COLLECTIONS.NOTES, noteId, rest)
+  return doc as unknown as Note
+}
+
+export async function deleteNote(noteId: string): Promise<void> {
+  await databases.deleteDocument(DATABASE_ID, COLLECTIONS.NOTES, noteId)
+}
+
+export async function getNoteById(noteId: string): Promise<Note> {
+  const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.NOTES, noteId)
+  return doc as unknown as Note
 }
