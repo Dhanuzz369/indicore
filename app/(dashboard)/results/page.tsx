@@ -12,7 +12,8 @@ import type { Question } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { 
   ResponsiveContainer, 
-  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar 
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell
 } from 'recharts'
 
 // ─── Score helpers ───────────────────────────────────────────
@@ -406,14 +407,14 @@ export default function ResultsPage() {
                 <Target className="h-5 w-5 text-[#FF6B00]" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight leading-none">Subject Proficiency</h3>
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight leading-none">Subject Proficiency Radar</h3>
                 <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Correct questions per subject</p>
               </div>
             </div>
 
             {subjectRadarData.length > 0 ? (
               <>
-                <div className="flex-1 h-[220px]">
+                <div className="flex-1 min-h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="75%" data={subjectRadarData}>
                       <PolarGrid stroke="#F1F5F9" />
@@ -438,33 +439,110 @@ export default function ResultsPage() {
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
-
-                {/* Subject legend */}
-                <div className="mt-3 space-y-2">
-                  {subjectRadarData.map(s => (
-                    <div key={s.subject} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full bg-[#FF6B00] shrink-0"
-                          style={{ opacity: Math.max(0.3, s.correct / maxCorrect) }}
-                        />
-                        <span className="text-[11px] font-semibold text-gray-600 truncate max-w-[140px]">{s.subject}</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[11px] font-black text-emerald-600">{s.correct}/{s.total}</span>
-                        <span className="text-[10px] font-bold text-gray-400">{s.accuracy}%</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 bg-gray-50 rounded-2xl py-10">
                 <Target className="h-8 w-8 mb-3 opacity-30" />
                 <p className="text-sm font-medium">No subject data yet</p>
-                <p className="text-xs mt-1">Answer some questions to see your subject proficiency</p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* ── SUBJECT BAR GRAPH SECTION ── */}
+        <div className="bg-[#111111] rounded-[2.5rem] p-10 text-white overflow-hidden relative">
+           <div className="max-w-3xl">
+              <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Subject Performance Analytics</h2>
+              <p className="text-sm text-gray-400 font-medium mb-12">Detailed breakdown of correct vs total questions across all subjects.</p>
+           </div>
+           
+           <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={analytics.subjectStats} 
+                  layout="vertical" 
+                  margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#222" horizontal={false} />
+                  <XAxis type="number" hide />
+                  <YAxis 
+                    dataKey="subject" 
+                    type="category" 
+                    tick={{ fill: '#888', fontSize: 11, fontWeight: 800 }} 
+                    width={100}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    contentStyle={{ backgroundColor: '#1A1A1A', border: 'none', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}
+                    itemStyle={{ color: '#FF6B00' }}
+                  />
+                  <Bar dataKey="correct" radius={[0, 4, 4, 0]} barSize={20}>
+                    {analytics.subjectStats.map((entry, index) => (
+                      <Cell key={index} fill={entry.accuracy >= 70 ? '#00E5BE' : entry.accuracy >= 40 ? '#FF6B00' : '#FF4B4B'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+           </div>
+        </div>
+
+        {/* ── CONFIDENCE METRIC CARDS ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-[2rem] border border-emerald-100 shadow-sm p-8 flex flex-col">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-emerald-600" />
+              </div>
+              <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">Mastery</span>
+            </div>
+            <h4 className="text-xl font-black text-gray-900 mb-2">Sure Items</h4>
+            <p className="text-xs text-gray-500 font-medium mb-6 leading-relaxed">Questions you answered with absolute confidence. These reflect your core strengths.</p>
+            <TaggedQuestionsDropdown 
+                tag="sure" 
+                title="Review Sure Items" 
+                questions={questions} 
+                answers={answers} 
+                confidenceMap={confidenceMap} 
+                onQuestionClick={handleQuestionClick}
+            />
+          </div>
+
+          <div className="bg-white rounded-[2rem] border border-blue-100 shadow-sm p-8 flex flex-col">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
+                <Brain className="h-6 w-6 text-blue-600" />
+              </div>
+              <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Learning</span>
+            </div>
+            <h4 className="text-xl font-black text-gray-900 mb-2">50:50 Logic</h4>
+            <p className="text-xs text-gray-500 font-medium mb-6 leading-relaxed">Questions where you narrowed it down but were hesitant. This is where your edge lies.</p>
+            <TaggedQuestionsDropdown 
+                tag="fifty_fifty" 
+                title="Review Fifty-Fifty Items" 
+                questions={questions} 
+                answers={answers} 
+                confidenceMap={confidenceMap} 
+                onQuestionClick={handleQuestionClick}
+            />
+          </div>
+
+          <div className="bg-white rounded-[2rem] border border-orange-100 shadow-sm p-8 flex flex-col">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center">
+                <Zap className="h-6 w-6 text-orange-600" />
+              </div>
+              <span className="text-xs font-black text-orange-600 uppercase tracking-widest">Luck Factor</span>
+            </div>
+            <h4 className="text-xl font-black text-gray-900 mb-2">Calculated Guesses</h4>
+            <p className="text-xs text-gray-500 font-medium mb-6 leading-relaxed">Pure guesses. Analyzing these helps you understand your subconscious processing.</p>
+            <TaggedQuestionsDropdown 
+                tag="guess" 
+                title="Review Guess Items" 
+                questions={questions} 
+                answers={answers} 
+                confidenceMap={confidenceMap} 
+                onQuestionClick={handleQuestionClick}
+            />
           </div>
         </div>
 
