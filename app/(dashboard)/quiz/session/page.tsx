@@ -283,7 +283,7 @@ export default function TestSessionPage() {
       } catch (e) { console.error('Failed to save attempt:', e) }
       // Navigate
       if (isLastQuestion) {
-        router.push('/tests')
+        router.push('/results')
       } else {
         nextQuestion()
       }
@@ -463,14 +463,14 @@ export default function TestSessionPage() {
         }
 
         toast.success('Test submitted and saved! 🎉')
-        router.push(sessionDocId ? `/tests/${sessionDocId}/results` : '/tests')
+        router.push(sessionDocId ? `/results?session=${sessionDocId}` : '/results')
         return
       }
     } catch (e) {
       console.error('Failed to save attempts:', e)
       toast.error('Submission saved locally. Some data may not have synced.')
     }
-    router.push('/tests')
+    router.push('/results')
   }
 
   // ── Report Issue ──
@@ -501,7 +501,7 @@ export default function TestSessionPage() {
 
   // ── Practice: Next ──
   const handleNextInPractice = () => {
-    if (isLastQuestion) router.push('/tests')
+    if (isLastQuestion) router.push('/results')
     else nextQuestion()
   }
 

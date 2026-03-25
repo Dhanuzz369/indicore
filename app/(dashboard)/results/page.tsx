@@ -1,21 +1,21 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { ResultsView } from '@/components/results/ResultsView'
 import { Loader2 } from 'lucide-react'
 
-// Results are now shown at /tests/[sessionId]/results after quiz completion.
-// This page redirects to My Tests for any stale links.
-export default function ResultsPage() {
-  const router = useRouter()
-  useEffect(() => {
-    router.replace('/tests')
-  }, [router])
+function ResultsContent() {
+  const searchParams = useSearchParams()
+  const sessionId = searchParams.get('session') ?? ''
+  return <ResultsView sessionId={sessionId} replayMode={false} />
+}
 
+export default function ResultsPage() {
   return (
-    <div className="flex items-center justify-center min-h-[80vh]">
-      <Loader2 className="h-8 w-8 text-[#FF6B00] animate-spin" />
-    </div>
+    <Suspense fallback={<div className="p-20 text-center"><Loader2 className="h-10 w-10 animate-spin mx-auto text-[#FF6B00]" /></div>}>
+      <ResultsContent />
+    </Suspense>
   )
 }
