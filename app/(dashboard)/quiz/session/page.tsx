@@ -7,9 +7,12 @@ import { useQuizStore } from '@/store/quiz-store'
 import { getCurrentUser } from '@/lib/appwrite/auth'
 import {
   saveAttempt, incrementStats, saveUserTestSummary, createTestSession,
-  reportIssue, getSubjects
+  reportIssue, getSubjects, getSkillProfile, upsertSkillProfile, getSessionCount
 } from '@/lib/appwrite/queries'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
+import { computeAnalyticsV1 } from '@/lib/intelligence/analytics-engine'
+import { updateSkillProfile as computeSkillUpdate } from '@/lib/intelligence/skill-model'
+import { generateNarrativeFeedback } from '@/lib/intelligence/ai-coach'
 import { OptionButton } from '@/components/quiz/OptionButton'
 import { ExplanationBox } from '@/components/quiz/ExplanationBox'
 import { Button } from '@/components/ui/button'
@@ -376,6 +379,23 @@ export default function TestSessionPage() {
           }
         })
         const analytics = generateTestAnalytics({ questions, attempts: attemptsToAnalyze, totalTestTime: elapsedSeconds })
+
+        // ── New V1 analytics (for intelligence engine) ──
+        let sessionDocId = ''
+        const analyticsV1 = computeAnalyticsV1({
+          sessionId: sessionDocId,
+          questions,
+          attempts: attemptsToAnalyze.map(a => ({
+            question_id: a.question_id,
+            selected_option: a.selected_option,
+            is_correct: a.is_correct,
+            time_taken_seconds: a.time_taken_seconds,
+            confidence_tag: a.confidence_tag ?? null,
+            selection_history: a.selection_history,
+          })),
+          totalTimeSeconds: elapsedSeconds,
+        })
+
         const totalCorrect = analytics.subjectStats.reduce((sum, s) => sum + s.correct, 0)
         const totalWrong = Object.values(answers).filter(a => !a.isCorrect).length
         const numAttempted = Object.keys(answers).length
@@ -384,7 +404,6 @@ export default function TestSessionPage() {
         const startedAt = startTime ? new Date(startTime).toISOString() : submittedAt
 
         // ── 1. Create test_session document ──
-        let sessionDocId = ''
         try {
           const firstQuestion = questions[0]
           const { practiceTimerTotal: ptt } = useQuizStore.getState()
@@ -426,6 +445,35 @@ export default function TestSessionPage() {
           // Continue saving attempts even if session doc fails
         }
 
+        // ── 1b. Update skill profile (non-blocking) ──
+        try {
+          const [existingProfile, sessionCount] = await Promise.all([
+            getSkillProfile(user.$id),
+            getSessionCount(user.$id),
+          ])
+          const skillResult = computeSkillUpdate({
+            userId: user.$id,
+            analytics: analyticsV1,
+            existingProfile,
+          })
+          const now = new Date().toISOString()
+          await upsertSkillProfile({
+            user_id: user.$id,
+            updated_at: now,
+            model_version: 'v1_elo_subtopic',
+            subject_scores_json: JSON.stringify(skillResult.subjectScores),
+            subtopic_scores_json: JSON.stringify(skillResult.subtopicRatings),
+            behavior_signals_json: JSON.stringify(skillResult.behaviorSignals),
+            recommendations_json: JSON.stringify(skillResult.recommendations),
+          })
+          // Fire-and-forget AI coach narrative (non-blocking)
+          generateNarrativeFeedback({ analytics: analyticsV1, skillProfile: existingProfile, sessionCount })
+            .catch(err => console.error('AI coach failed (non-critical):', err))
+        } catch (e) {
+          console.error('Skill profile update failed (non-critical):', e)
+          // Do NOT re-throw — skill profile failure must never block test submission
+        }
+
         // ── 2. Save all quiz_attempts with session_id ──
         for (const [qId, ans] of Object.entries(answers)) {
           const finalTimeTaken = Math.floor(getTimeForQuestion(qId) / 1000)
@@ -445,12 +493,9 @@ export default function TestSessionPage() {
               used_areyousure: finalConfTag === 'sure',
               is_guess: finalConfTag === 'guess',
               confidence_tag: finalConfTag,
-              selection_history: JSON.stringify({
-                q_id: qId,
-                selections: ans.selectionHistory || [],
-                final_answer: ans.selectedOption,
-                correct_answer: questions.find(q => q.$id === qId)?.correct_option
-              })
+              selection_history: ans.selectionHistory
+                ? JSON.stringify(ans.selectionHistory)
+                : JSON.stringify({ events: [], change_count: 0 }),
             })
             await incrementStats(user.$id, ans.isCorrect)
           } catch (e) {
