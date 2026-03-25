@@ -235,7 +235,8 @@ function ResultsContent() {
   } = useQuizStore()
   
   const [isRehydrating, setIsRehydrating] = useState(false)
-  const score = getScore()
+  const [storedAnalytics, setStoredAnalytics] = useState<any>(null)
+  
 
   // ─── REHYDRATION LOGIC ──────────────────────────────────────
   useEffect(() => {
@@ -247,6 +248,16 @@ function ResultsContent() {
         const session = await getTestSession(sessionId)
         if (!session) throw new Error('Session not found')
 
+        // 0. Set stored analytics if present for perfect historical reproduction
+        if (session.analytics || session.results_history) {
+          try {
+            const data = session.results_history || session.analytics
+            setStoredAnalytics(typeof data === 'string' ? JSON.parse(data) : data)
+          } catch (e: any) {
+            console.warn('Failed to parse stored analytics:', e.message)
+          }
+        }
+
         // 1. Get attempts to reconstruct answers & confidence
         const attemptsResult = await listAttemptsBySession(sessionId)
         
@@ -256,7 +267,7 @@ function ResultsContent() {
         
         const questionsResult = await getQuestionsByIds(qIds)
         // Sort questions order to match the original attempt
-        const orderedQs = qIds.map((id: string) => questionsResult.documents.find(q => q.$id === id)).filter(Boolean)
+        const orderedQs = qIds.map((id: string) => questionsResult.documents.find((q: any) => q.$id === id)).filter(Boolean)
 
         // 3. Update store
         setQuestions(orderedQs as any)
@@ -273,7 +284,8 @@ function ResultsContent() {
             confidenceTag: att.confidence_tag,
             used5050: !!att.used_5050,
             isGuess: !!(att.is_guess || att.used_guess),
-            usedAreYouSure: !!att.used_areyousure
+            usedAreYouSure: !!att.used_areyousure,
+            selectionHistory: att.selection_history ? JSON.parse(att.selection_history).selections : []
           }
           if (att.confidence_tag) {
             setConfidenceForQuestion(att.question_id, att.confidence_tag)
@@ -281,7 +293,7 @@ function ResultsContent() {
         })
         setAnswers(reconstructedAnswers)
 
-      } catch (e) {
+      } catch (e: any) {
         console.error('Rehydration failed:', e)
         toast.error('Failed to reconstruct analysis.')
       } finally {
@@ -292,13 +304,11 @@ function ResultsContent() {
     rehydrate()
   }, [sessionId, questions.length, setQuestions, setAnswers, setConfidenceForQuestion, setTestMode, setPaperLabel, setElapsed])
 
-
-
-  const analytics = useMemo(() => 
+  // ─── ANALYTICS CALCULATION ──────────────────────────────────
+  const generatedAnalytics = useMemo(() => 
     generateTestAnalytics({ 
       questions, 
       attempts: Object.entries(answers).map(([id, ans]) => {
-        // Prefer confidenceMap (set after option click) over stored tag
         const finalTag: 'sure' | 'fifty_fifty' | 'guess' | null = confidenceMap[id] || ans.confidenceTag || null
         return {
           question_id: id,
@@ -318,11 +328,14 @@ function ResultsContent() {
     [questions, answers, confidenceMap, elapsedSeconds]
   )
 
+  const analytics = storedAnalytics || generatedAnalytics
+  const score = analytics.score || getScore()
+
   // Subject radar — up to 5 subjects, value = correct questions count
   const MAX_RADAR_SUBJECTS = 5
   const subjectRadarData = analytics.subjectStats
     .slice(0, MAX_RADAR_SUBJECTS)
-    .map(s => ({
+    .map((s: any) => ({
       subject: s.subject
         .replace(/_/g, ' ')
         .split(' ')
@@ -332,7 +345,7 @@ function ResultsContent() {
       total: s.total,
       accuracy: s.accuracy,
     }))
-  const maxCorrect = Math.max(...subjectRadarData.map(d => d.correct), 1)
+  const maxCorrect = Math.max(...subjectRadarData.map((d: any) => d.correct), 1)
 
   const threshold = getScoreThreshold(score.percentage)
 
@@ -505,7 +518,7 @@ function ResultsContent() {
                     contentStyle={{ backgroundColor: '#FFF', border: '1px solid #F1F5F9', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold' }}
                   />
                   <Bar dataKey="correct" radius={[0, 4, 4, 0]} barSize={14}>
-                    {analytics.subjectStats.map((entry, index) => (
+                    {analytics.subjectStats.map((entry: any, index: number) => (
                       <Cell key={index} fill={entry.accuracy >= 70 ? '#00E5BE' : entry.accuracy >= 40 ? '#FF6B00' : '#FF4B4B'} />
                     ))}
                   </Bar>

@@ -19,6 +19,12 @@ interface AnalyticsResult {
     changedCorrectToWrong: number
     changedWrongToCorrect: number
   }
+  score: {
+    correct: number
+    wrong: number
+    total: number
+    percentage: number
+  }
   suggestions: string[]
 }
 
@@ -169,6 +175,15 @@ export function generateTestAnalytics({
       accuracy: Math.round((v.correct / v.total) * 100),
     })),
     revisionSummary,
+    score: {
+      correct: Array.from(subjectStats.values()).reduce((sum, s) => sum + s.correct, 0),
+      // Use actual attempts to count wrongs vs total questions
+      wrong: attempts.filter(a => !a.is_correct).length,
+      total: questions.length,
+      percentage: questions.length > 0 
+        ? Math.round((Array.from(subjectStats.values()).reduce((sum, s) => sum + s.correct, 0) / questions.length) * 100)
+        : 0
+    },
     suggestions,
   }
 }
