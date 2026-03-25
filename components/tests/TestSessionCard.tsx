@@ -46,20 +46,20 @@ export function TestSessionCard({ session }: TestSessionCardProps) {
             </Badge>
           </div>
           <p className="text-xs text-gray-400 mt-1 font-medium">
-            {session.exam_type} · {session.year} · {session.paper}
+            {session.exam_type || 'UPSC'} · {session.year || 2024} · {session.paper || 'Prelims GS1'}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
-            Submitted on {formatDateTime(session.submitted_at)}
+            Submitted on {formatDateTime(session.submitted_at || session.date || session.$createdAt)}
           </p>
         </div>
 
         {/* Score bubble */}
         <div className="shrink-0">
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm
-            ${session.score >= 60 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-              : session.score >= 40 ? 'bg-amber-50 text-amber-700 border border-amber-100'
+            ${(session.score ?? session.accuracy ?? 0) >= 60 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+              : (session.score ?? session.accuracy ?? 0) >= 40 ? 'bg-amber-50 text-amber-700 border border-amber-100'
               : 'bg-red-50 text-red-700 border border-red-100'}`}>
-            {session.score.toFixed(0)}%
+            {(session.score ?? session.accuracy ?? 0).toFixed(0)}%
           </div>
         </div>
       </div>
