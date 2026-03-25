@@ -40,7 +40,7 @@ export function TestFilters({ filters, onChange }: TestFiltersProps) {
         />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {/* Exam Type */}
         <div className="space-y-1">
           <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Exam</Label>
@@ -98,6 +98,18 @@ export function TestFilters({ filters, onChange }: TestFiltersProps) {
             type="date"
             value={filters.from}
             onChange={e => onChange({ from: e.target.value })}
+            className="w-full h-9 rounded-md border border-gray-100 bg-gray-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] transition-colors"
+          />
+        </div>
+
+        {/* Date To */}
+        <div className="space-y-1">
+          <Label htmlFor="filter-to" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">To</Label>
+          <input
+            id="filter-to"
+            type="date"
+            value={filters.to}
+            onChange={e => onChange({ to: e.target.value })}
             className="w-full h-9 rounded-md border border-gray-100 bg-gray-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] transition-colors"
           />
         </div>

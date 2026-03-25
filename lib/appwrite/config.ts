@@ -11,6 +11,7 @@ export { client }
 
 // IDs
 export const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!
+export const STORAGE_BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_STORAGE_BUCKET_ID ?? ''
 export const COLLECTIONS = {
   PROFILES:         process.env.NEXT_PUBLIC_COLLECTION_PROFILES!,
   QUESTIONS:        process.env.NEXT_PUBLIC_COLLECTION_QUESTIONS!,

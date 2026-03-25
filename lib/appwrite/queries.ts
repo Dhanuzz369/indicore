@@ -1,6 +1,34 @@
-import { databases, DATABASE_ID, COLLECTIONS } from './config'
-import { ID, Query } from 'appwrite'
+import { databases, storage, DATABASE_ID, COLLECTIONS, STORAGE_BUCKET_ID } from './config'
+import { ID, Query, ImageGravity } from 'appwrite'
 import type { TestSession } from '@/types'
+
+// ─── AVATAR STORAGE ─────────────────────────────────
+export async function uploadAvatar(file: File): Promise<string> {
+  if (!STORAGE_BUCKET_ID) throw new Error('Storage bucket not configured')
+  const result = await storage.createFile({ bucketId: STORAGE_BUCKET_ID, fileId: ID.unique(), file })
+  return result.$id
+}
+
+export function getAvatarUrl(fileId: string): string {
+  if (!STORAGE_BUCKET_ID) return ''
+  return storage.getFilePreview({
+    bucketId: STORAGE_BUCKET_ID,
+    fileId,
+    width: 256,
+    height: 256,
+    gravity: ImageGravity.Center,
+    quality: 80,
+  }).toString()
+}
+
+export async function deleteAvatarFile(fileId: string): Promise<void> {
+  if (!STORAGE_BUCKET_ID) return
+  try {
+    await storage.deleteFile({ bucketId: STORAGE_BUCKET_ID, fileId })
+  } catch {
+    // Ignore deletion errors (file may not exist)
+  }
+}
 
 // ─── PROFILES ───────────────────────────────────────
 export async function createProfile(userId: string, name: string) {

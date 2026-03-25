@@ -137,11 +137,28 @@ export default function SessionResultsPage() {
           listAttemptsBySession(sessionId),
         ])
         const attemptDocs = attemptsResult.documents as unknown as QuizAttempt[]
-        const qIds = attemptDocs.map(a => a.question_id)
+
+        // Prefer question_ids from session (preserves original order + includes skipped)
+        // Fall back to IDs from attempts if question_ids not stored
+        let qIds: string[]
+        try {
+          qIds = sess.question_ids ? JSON.parse(sess.question_ids) : []
+        } catch {
+          qIds = []
+        }
+        if (qIds.length === 0) {
+          qIds = attemptDocs.map(a => a.question_id)
+        }
+
         const qResult = await getQuestionsByIds(qIds)
+        // Restore original question order
+        const orderedQuestions = qIds
+          .map(id => (qResult.documents as unknown as Question[]).find(q => q.$id === id))
+          .filter(Boolean) as Question[]
+
         setSession(sess)
         setAttempts(attemptDocs)
-        setQuestions(qResult.documents as unknown as Question[])
+        setQuestions(orderedQuestions)
       } catch (e) {
         console.error(e)
         toast.error('Failed to load this test session.')
