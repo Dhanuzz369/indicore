@@ -5,7 +5,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
 import { getCurrentUser } from '@/lib/appwrite/auth'
-import { saveAttempt, incrementStats, saveUserTestSummary } from '@/lib/appwrite/queries'
+import { 
+  saveAttempt, incrementStats, saveUserTestSummary, createTestSession, 
+  reportIssue 
+} from '@/lib/appwrite/queries'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { OptionButton } from '@/components/quiz/OptionButton'
 import { ExplanationBox } from '@/components/quiz/ExplanationBox'
@@ -20,7 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Loader2, ChevronLeft, ChevronRight, Bookmark, PanelRight, X, House } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, Bookmark, PanelRight, X, House, Flag } from 'lucide-react'
+import { toast } from 'sonner'
 
 // ─────────────────────────────────────────────────────────────────
 // Question palette color logic for Full Length Test
@@ -318,46 +322,19 @@ export default function TestSessionPage() {
         const { confidenceMap: finalConfidenceMap } = useQuizStore.getState()
 
         // Make sure all times are fresh before submitting
-        for (const [qId, ans] of Object.entries(answers)) {
+        for (const qId of Object.keys(answers)) {
           const finalTimeTaken = Math.floor(getTimeForQuestion(qId) / 1000)
           updateTimeForAnswer(qId, finalTimeTaken)
         }
 
-        for (const [qId, ans] of Object.entries(answers)) {
-          const finalTimeTaken = Math.floor(getTimeForQuestion(qId) / 1000)
-          // Use confidenceMap as final source of truth, fallback to stored answer tag
-          const finalConfTag: 'sure' | 'fifty_fifty' | 'guess' | null = 
-            finalConfidenceMap[qId] || ans.confidenceTag || null
-          
-          await saveAttempt({ 
-            user_id: user.$id, 
-            question_id: qId, 
-            selected_option: ans.selectedOption, 
-            is_correct: ans.isCorrect,
-            time_taken_seconds: finalTimeTaken, 
-            used_5050: finalConfTag === 'fifty_fifty',
-            used_guess: finalConfTag === 'guess',
-            used_areyousure: finalConfTag === 'sure',
-            is_guess: finalConfTag === 'guess',
-            confidence_tag: finalConfTag,
-            selection_history: JSON.stringify({
-              q_id: qId,
-              selections: ans.selectionHistory || [],
-              final_answer: ans.selectedOption,
-              correct_answer: questions.find(q => q.$id === qId)?.correct_option
-            })
-          })
-          await incrementStats(user.$id, ans.isCorrect)
-        }
-
-        // Generate analytics using the final confidence map
+        // Compute analytics
         const { confidenceMap: cm } = useQuizStore.getState()
         const attemptsToAnalyze = Object.entries(answers).map(([qId, ans]) => {
           const finalTag: 'sure' | 'fifty_fifty' | 'guess' | null = cm[qId] || ans.confidenceTag || null
           return {
             $id: '', user_id: user.$id, question_id: qId,
             selected_option: ans.selectedOption, is_correct: ans.isCorrect,
-            time_taken_seconds: Math.floor(getTimeForQuestion(qId) / 1000), 
+            time_taken_seconds: Math.floor(getTimeForQuestion(qId) / 1000),
             used_5050: finalTag === 'fifty_fifty',
             used_guess: finalTag === 'guess', used_areyousure: finalTag === 'sure',
             is_guess: finalTag === 'guess', confidence_tag: finalTag,
@@ -366,22 +343,119 @@ export default function TestSessionPage() {
         })
         const analytics = generateTestAnalytics({ questions, attempts: attemptsToAnalyze, totalTestTime: elapsedSeconds })
         const totalCorrect = analytics.subjectStats.reduce((sum, s) => sum + s.correct, 0)
-        
-        await saveUserTestSummary({
-          user_id: user.$id,
-          test_id: `test_${Date.now()}`,
-          date: new Date().toISOString(),
-          total_score: (totalCorrect * 2) - ((questions.length - totalCorrect) * 0.66), 
-          subject_scores: JSON.stringify(analytics.subjectStats),
-          difficulty_scores: JSON.stringify(analytics.difficultyStats),
-          accuracy: questions.length ? Math.round((totalCorrect/questions.length)*100) : 0,
-          attempts_count: questions.length,
-          confidence_stats: JSON.stringify(analytics.confidenceStats)
-        })
+        const totalWrong = Object.values(answers).filter(a => !a.isCorrect).length
+        const numAttempted = Object.keys(answers).length
+        const scorePercent = numAttempted > 0 ? Math.round((totalCorrect / questions.length) * 100) : 0
+        const submittedAt = new Date().toISOString()
+        const startedAt = startTime ? new Date(startTime).toISOString() : submittedAt
 
+        // ── 1. Create test_session document ──
+        let sessionDocId = ''
+        try {
+          const firstQuestion = questions[0]
+          const sessDoc = await createTestSession({
+            user_id: user.$id,
+            exam_type: firstQuestion?.exam_type ?? 'UPSC',
+            year: firstQuestion?.year ?? new Date().getFullYear(),
+            paper: firstQuestion?.paper ?? 'Prelims GS1',
+            paper_label: paperLabel || 'Full Length Test',
+            mode: 'full_length',
+            started_at: startedAt,
+            submitted_at: submittedAt,
+            total_time_seconds: elapsedSeconds,
+            total_questions: questions.length,
+            attempted: numAttempted,
+            correct: totalCorrect,
+            incorrect: totalWrong,
+            skipped: questions.length - numAttempted,
+            score: scorePercent,
+            analytics: JSON.stringify(analytics),
+            ai_feedback: '', // TODO: call AI feedback generator here
+          })
+          sessionDocId = sessDoc.$id
+        } catch (e) {
+          console.error('Failed to save test session:', e)
+          // Continue saving attempts even if session doc fails
+        }
+
+        // ── 2. Save all quiz_attempts with session_id ──
+        for (const [qId, ans] of Object.entries(answers)) {
+          const finalTimeTaken = Math.floor(getTimeForQuestion(qId) / 1000)
+          const finalConfTag: 'sure' | 'fifty_fifty' | 'guess' | null =
+            finalConfidenceMap[qId] || ans.confidenceTag || null
+
+          try {
+            await saveAttempt({
+              user_id: user.$id,
+              question_id: qId,
+              selected_option: ans.selectedOption,
+              is_correct: ans.isCorrect,
+              session_id: sessionDocId || undefined,
+              time_taken_seconds: finalTimeTaken,
+              used_5050: finalConfTag === 'fifty_fifty',
+              used_guess: finalConfTag === 'guess',
+              used_areyousure: finalConfTag === 'sure',
+              is_guess: finalConfTag === 'guess',
+              confidence_tag: finalConfTag,
+              selection_history: JSON.stringify({
+                q_id: qId,
+                selections: ans.selectionHistory || [],
+                final_answer: ans.selectedOption,
+                correct_answer: questions.find(q => q.$id === qId)?.correct_option
+              })
+            })
+            await incrementStats(user.$id, ans.isCorrect)
+          } catch (e) {
+            console.error('Failed to save attempt for', qId, e)
+          }
+        }
+
+        // ── 3. Save legacy user_test_summary ──
+        try {
+          await saveUserTestSummary({
+            user_id: user.$id,
+            test_id: sessionDocId || `test_${Date.now()}`,
+            date: submittedAt,
+            total_score: Math.max(0, parseFloat(((totalCorrect * 2) - (totalWrong * 0.66)).toFixed(1))),
+            subject_scores: JSON.stringify(analytics.subjectStats),
+            difficulty_scores: JSON.stringify(analytics.difficultyStats),
+            accuracy: scorePercent,
+            attempts_count: numAttempted,
+            confidence_stats: JSON.stringify(analytics.confidenceStats)
+          })
+        } catch (e) {
+          console.error('Failed to save test summary:', e)
+        }
+
+        toast.success('Test submitted and saved! 🎉')
       }
-    } catch (e) { console.error('Failed to save attempts:', e) }
+    } catch (e) {
+      console.error('Failed to save attempts:', e)
+      toast.error('Submission saved locally. Some data may not have synced.')
+    }
     router.push('/results')
+  }
+
+  // ── Report Issue ──
+  const handleReportIssue = async () => {
+    try {
+      const user = await getCurrentUser()
+      if (!user) return
+      
+      const promise = reportIssue({
+        user_id: user.$id,
+        question_id: currentQuestion.$id,
+        mode: testMode ? 'full_length' : 'subject'
+      })
+
+      toast.promise(promise, {
+        loading: 'Reporting question...',
+        success: 'Thank you! Issue logged for review.',
+        error: 'Failed to report'
+      })
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   // ── Practice: Next ──
@@ -536,17 +610,27 @@ export default function TestSessionPage() {
               </div>
             )}
 
-            {/* Question number + mark tag */}
+            {/* Question number + mark tag + Report Flag */}
             <div className="flex items-center justify-between">
-              <span className="bg-[#FF6B00] text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
-                Q.{currentIndex + 1}
-              </span>
-              {testMode && isMarkedCurrent && (
-                <span className="flex items-center gap-1 text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-full">
-                  <Bookmark className="h-3 w-3 fill-purple-500" />
-                  Marked for Review
+              <div className="flex items-center gap-2">
+                <span className="bg-[#FF6B00] text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
+                  Q.{currentIndex + 1}
                 </span>
-              )}
+                {testMode && isMarkedCurrent && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-full">
+                    <Bookmark className="h-3 w-3 fill-purple-500" />
+                    Marked
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={handleReportIssue}
+                className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm"
+                title="Report issue with this question"
+              >
+                <Flag className="h-3 w-3" />
+                Report
+              </button>
             </div>
 
             {/* Question text */}

@@ -5,13 +5,13 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
 import { 
-  CheckCircle, XCircle, ChevronDown, Trophy, BookOpen, Clock, RefreshCw, Home, 
-  TrendingUp, AlertCircle, Lightbulb, Brain, Target, Zap
+  CheckCircle, XCircle, ChevronDown, BookOpen, Clock, RefreshCw, Home, 
+  AlertCircle, Lightbulb, Brain, Target, Zap
 } from 'lucide-react'
 import type { Question } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
+  ResponsiveContainer, 
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar 
 } from 'recharts'
 
@@ -253,29 +253,21 @@ export default function ResultsPage() {
     [questions, answers, confidenceMap, elapsedSeconds]
   )
 
-  const subjectChartData = analytics.subjectStats.map(s => ({
-    name: s.subject.charAt(0).toUpperCase() + s.subject.slice(1).toLowerCase().replace(/_/g, ' '),
-    accuracy: s.accuracy,
-    incorrect: 100 - s.accuracy
-  }))
-
-  const { buttonUsageStats } = analytics
-
-  const sureAcc = buttonUsageStats.totalAreYouSure
-    ? Math.round((buttonUsageStats.correctAreYouSure / buttonUsageStats.totalAreYouSure) * 100)
-    : 0
-  const fiftyAcc = buttonUsageStats.total5050
-    ? Math.round((buttonUsageStats.correct5050 / buttonUsageStats.total5050) * 100)
-    : 0
-  const guessAcc = buttonUsageStats.totalGuess
-    ? Math.round((buttonUsageStats.correctGuess / buttonUsageStats.totalGuess) * 100)
-    : 0
-
-  const confidenceRadarData = [
-    { subject: '100% Sure', A: sureAcc },
-    { subject: '50:50 Deduction', A: fiftyAcc },
-    { subject: 'Intuition/Guess', A: guessAcc },
-  ]
+  // Subject radar — up to 5 subjects, value = correct questions count
+  const MAX_RADAR_SUBJECTS = 5
+  const subjectRadarData = analytics.subjectStats
+    .slice(0, MAX_RADAR_SUBJECTS)
+    .map(s => ({
+      subject: s.subject
+        .replace(/_/g, ' ')
+        .split(' ')
+        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' '),
+      correct: s.correct,
+      total: s.total,
+      accuracy: s.accuracy,
+    }))
+  const maxCorrect = Math.max(...subjectRadarData.map(d => d.correct), 1)
 
   const threshold = getScoreThreshold(score.percentage)
 
@@ -308,7 +300,7 @@ export default function ResultsPage() {
     <div className="min-h-screen bg-[#F8F9FC] pb-24">
       {/* Dynamic Glassmorphic Navbar */}
       <div className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-[#FF6B00] p-2 rounded-xl shadow-lg shadow-orange-200">
               <Brain className="h-5 w-5 text-white" />
@@ -335,233 +327,147 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-6 mt-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-6 mt-8 space-y-8">
         
-        {/* Top Tier Metrics Redesigned */}
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-            {/* Dark Header Part */}
-            <div className="bg-[#111111] p-8 md:p-10 text-white relative">
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                <div className="space-y-4">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                    {paperLabel || 'Real-time Mock Analysis'} · {questions.length} Qs
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-6xl md:text-7xl font-black">
-                      {Math.max(0, parseFloat(((score.correct * 2) - (score.wrong * 0.66)).toFixed(1)))}
+        {/* ── TOP SECTION: Compact Score Card (left) + Subject Radar (right) ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* LEFT — Compact square score card */}
+          <div className="bg-[#111111] rounded-[2rem] overflow-hidden flex flex-col">
+            {/* Score block */}
+            <div className="p-7 flex-1">
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
+                {paperLabel || 'Mock Analysis'} · {questions.length} Qs
+              </p>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Score</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl font-black text-white">
+                      {score.correct}
                     </span>
-                    <span className="text-2xl md:text-3xl font-bold text-gray-500">/{questions.length * 2}</span>
+                    <span className="text-xl font-bold text-gray-600">/{questions.length}</span>
                   </div>
-                  
-                  {/* Progress Bar Area */}
-                  <div className="pt-4 max-w-md">
-                    <div className="flex justify-between items-end mb-2">
-                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        {Object.keys(answers).length} of {questions.length} attempted
-                       </span>
-                    </div>
-                    <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-[#00E5BE] rounded-full transition-all duration-1000"
-                        style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
+                </div>
+                <div className="text-right">
+                  <span className="text-4xl font-black text-[#00E5BE]">{score.percentage}%</span>
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-0.5">accuracy</p>
+                </div>
+              </div>
+
+              {/* Attempt progress bar */}
+              <div className="mt-5">
+                <div className="flex justify-between text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">
+                  <span>{Object.keys(answers).length} of {questions.length} attempted</span>
+                </div>
+                <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#00E5BE] rounded-full transition-all duration-1000"
+                    style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-3 border-t border-white/5">
+              <div className="py-4 text-center border-r border-white/5">
+                <p className="text-xl font-black text-emerald-400">{score.correct}</p>
+                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-0.5">Correct</p>
+              </div>
+              <div className="py-4 text-center border-r border-white/5">
+                <p className="text-xl font-black text-red-400">{score.wrong}</p>
+                <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mt-0.5">Wrong</p>
+              </div>
+              <div className="py-4 text-center">
+                <p className="text-xl font-black text-gray-500">{questions.length - Object.keys(answers).length}</p>
+                <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-0.5">Skipped</p>
+              </div>
+            </div>
+
+            {/* Duration + Review */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-white/5">
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                {Math.floor(elapsedSeconds / 3600)}h {Math.floor((elapsedSeconds % 3600) / 60)}m
+              </div>
+              <button
+                onClick={() => handleQuestionClick(0)}
+                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+              >
+                <Clock className="h-3 w-3" /> Review Test
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT — Subject Performance Radar */}
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-7 flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/10 flex items-center justify-center shrink-0">
+                <Target className="h-5 w-5 text-[#FF6B00]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight leading-none">Subject Proficiency</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Correct questions per subject</p>
+              </div>
+            </div>
+
+            {subjectRadarData.length > 0 ? (
+              <>
+                <div className="flex-1 h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={subjectRadarData}>
+                      <PolarGrid stroke="#F1F5F9" />
+                      <PolarAngleAxis
+                        dataKey="subject"
+                        tick={{ fontSize: 9, fontWeight: 800, fill: '#475569' }}
                       />
+                      <PolarRadiusAxis
+                        angle={30}
+                        domain={[0, maxCorrect]}
+                        tick={false}
+                        axisLine={false}
+                      />
+                      <Radar
+                        name="Correct"
+                        dataKey="correct"
+                        stroke="#FF6B00"
+                        fill="#FF6B00"
+                        fillOpacity={0.35}
+                        strokeWidth={2}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Subject legend */}
+                <div className="mt-3 space-y-2">
+                  {subjectRadarData.map(s => (
+                    <div key={s.subject} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full bg-[#FF6B00] shrink-0"
+                          style={{ opacity: Math.max(0.3, s.correct / maxCorrect) }}
+                        />
+                        <span className="text-[11px] font-semibold text-gray-600 truncate max-w-[140px]">{s.subject}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[11px] font-black text-emerald-600">{s.correct}/{s.total}</span>
+                        <span className="text-[10px] font-bold text-gray-400">{s.accuracy}%</span>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-
-                {/* Accuracy Circle/Text on Right */}
-                <div className="flex flex-col items-end">
-                   <div className="text-right">
-                      <span className="text-4xl md:text-5xl font-black text-[#00E5BE]">{score.percentage}%</span>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">accuracy</p>
-                   </div>
-                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 bg-gray-50 rounded-2xl py-10">
+                <Target className="h-8 w-8 mb-3 opacity-30" />
+                <p className="text-sm font-medium">No subject data yet</p>
+                <p className="text-xs mt-1">Answer some questions to see your subject proficiency</p>
               </div>
-            </div>
-
-            {/* Light Bottom Part */}
-            <div className="p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 bg-white">
-              {/* Status Boxes */}
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                <div className="min-w-[120px] bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 text-center">
-                  <p className="text-2xl font-black text-emerald-600">{score.correct}</p>
-                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Correct</p>
-                </div>
-                <div className="min-w-[120px] bg-red-50/50 border border-red-100 rounded-2xl p-4 text-center">
-                  <p className="text-2xl font-black text-red-600">{score.wrong}</p>
-                  <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">Wrong</p>
-                </div>
-                <div className="min-w-[120px] bg-gray-50 border border-gray-100 rounded-2xl p-4 text-center">
-                  <p className="text-2xl font-black text-gray-400">{questions.length - Object.keys(answers).length}</p>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Skipped</p>
-                </div>
-              </div>
-
-              {/* Bottom Actions */}
-              <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
-                <div className="flex items-center gap-2 text-gray-400 font-bold text-xs uppercase tracking-widest">
-                  Duration <span className="text-gray-900 ml-1">
-                    {Math.floor(elapsedSeconds / 3600)} hrs {Math.floor((elapsedSeconds % 3600) / 60)} mins
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleQuestionClick(0)}
-                  className="bg-gray-50 border border-gray-200 px-6 py-3 rounded-2xl text-xs font-black text-gray-900 hover:bg-gray-100 transition-all flex items-center gap-2 shadow-sm uppercase tracking-widest"
-                >
-                  <Clock className="h-3 w-3" /> Review test
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Confidence Intelligence Layer — only show if any confidence buttons were used */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm space-y-6">
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-indigo-600" />
-                 </div>
-                 <div>
-                    <h3 className="text-sm font-black text-gray-900 uppercase leading-none">Decision Confidence Map</h3>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Accuracy vs Internally Perceived Confidence</p>
-                 </div>
-              </div>
-
-              {(buttonUsageStats.totalAreYouSure > 0 || buttonUsageStats.total5050 > 0 || buttonUsageStats.totalGuess > 0) ? (
-                <div className="h-[260px] w-full mt-4">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={confidenceRadarData}>
-                       <PolarGrid stroke="#F1F5F9" />
-                       <PolarAngleAxis dataKey="subject" tick={{fontSize: 10, fontWeight: 800, fill: '#475569'}} />
-                       <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                       <Radar name="Accuracy" dataKey="A" stroke="#FF6B00" fill="#FF6B00" fillOpacity={0.4} />
-                     </RadarChart>
-                   </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[200px] text-center text-gray-400 bg-gray-50 rounded-2xl">
-                  <Zap className="h-8 w-8 mb-3 opacity-30" />
-                  <p className="text-sm font-medium">No confidence buttons used</p>
-                  <p className="text-xs mt-1">Use Sure / 50:50 / Guess buttons next time to see insights here</p>
-                </div>
-              )}
-
-              {/* Confidence usage stats */}
-              {(buttonUsageStats.totalAreYouSure > 0 || buttonUsageStats.total5050 > 0 || buttonUsageStats.totalGuess > 0) && (
-                <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="bg-emerald-50 rounded-xl p-2 border border-emerald-100">
-                    <p className="font-black text-emerald-700 text-base">{buttonUsageStats.totalAreYouSure}</p>
-                    <p className="text-emerald-600 font-medium">Sure</p>
-                    <p className="text-emerald-500 font-bold">{sureAcc}%</p>
-                  </div>
-                  <div className="bg-purple-50 rounded-xl p-2 border border-purple-100">
-                    <p className="font-black text-purple-700 text-base">{buttonUsageStats.total5050}</p>
-                    <p className="text-purple-600 font-medium">50:50</p>
-                    <p className="text-purple-500 font-bold">{fiftyAcc}%</p>
-                  </div>
-                  <div className="bg-yellow-50 rounded-xl p-2 border border-yellow-100">
-                    <p className="font-black text-yellow-700 text-base">{buttonUsageStats.totalGuess}</p>
-                    <p className="text-yellow-600 font-medium">Guess</p>
-                    <p className="text-yellow-500 font-bold">{guessAcc}%</p>
-                  </div>
-                </div>
-              )}
-           </div>
-
-           <div className="space-y-4">
-               {/* 100% Sure Analysis */}
-               <div className="bg-emerald-50/50 rounded-[2rem] p-6 border border-emerald-100/50 flex gap-4 items-start group hover:bg-emerald-50 transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
-                     <CheckCircle className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <div className="flex-1">
-                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Mastery Level</span>
-                        <span className="text-xs font-black text-emerald-700">
-                          {buttonUsageStats.totalAreYouSure > 0 ? `${sureAcc}% Accuracy (${buttonUsageStats.totalAreYouSure} used)` : 'Not used'}
-                        </span>
-                     </div>
-                     <h4 className="font-bold text-gray-900 leading-tight">Sure-Answer Consistency</h4>
-                     <p className="text-xs text-gray-600 mt-2 leading-relaxed italic">
-                        {buttonUsageStats.totalAreYouSure === 0 ? "You haven't marked any answers as 'Sure'. Try marking them to track accuracy in your strong zones." : 
-                         sureAcc > 90 ? 
-                         "Excellent self-calibration! You know exactly what you know. This is critical for zero-risk scoring." :
-                         "Your 'Sure' accuracy is under 90%. This suggests 'Hidden Knowledge Gaps'—you think you are right, but nuances are tricking you."}
-                     </p>
-                     <TaggedQuestionsDropdown
-                        tag="sure"
-                        title="Check 'Sure' Questions"
-                        questions={questions}
-                        answers={answers}
-                        confidenceMap={confidenceMap}
-                        onQuestionClick={handleQuestionClick}
-                     />
-                  </div>
-               </div>
-
-               {/* Logical Deduction Analysis */}
-               <div className="bg-blue-50/50 rounded-[2rem] p-6 border border-blue-100/50 flex gap-4 items-start group hover:bg-blue-50 transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
-                     <Target className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Deduction Index</span>
-                        <span className="text-xs font-black text-blue-700">
-                          {buttonUsageStats.total5050 > 0 ? `${fiftyAcc}% Success (${buttonUsageStats.total5050} used)` : 'Not used'}
-                        </span>
-                     </div>
-                     <h4 className="font-bold text-gray-900 leading-tight">50:50 Logic Outcomes</h4>
-                     <p className="text-xs text-gray-600 mt-2 leading-relaxed italic">
-                        {buttonUsageStats.total5050 === 0 ? "Use the 50:50 tool when you narrow down to two options to analyze your elimination logic." : 
-                         fiftyAcc > 60 ? 
-                         "Strong elimination skills! Your ability to navigate through complex options is better than average." :
-                         "Your deduction is failing at the final hurdle. You are identifying the wrong one between the final two choices."}
-                     </p>
-                     <TaggedQuestionsDropdown
-                        tag="fifty_fifty"
-                        title="Check '50:50' Questions"
-                        questions={questions}
-                        answers={answers}
-                        confidenceMap={confidenceMap}
-                        onQuestionClick={handleQuestionClick}
-                     />
-                  </div>
-               </div>
-
-               {/* Risk Management / Guess Analysis */}
-               <div className="bg-orange-50/50 rounded-[2rem] p-6 border border-orange-100/50 flex gap-4 items-start group hover:bg-orange-50 transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
-                     <AlertCircle className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <div className="flex-1">
-                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-black text-orange-700 uppercase tracking-widest">Risk Quotient</span>
-                        <span className="text-xs font-black text-orange-700">
-                          {buttonUsageStats.totalGuess > 0 ? `${guessAcc}% Hit Rate (${buttonUsageStats.totalGuess} guessed)` : 'Not used'}
-                        </span>
-                     </div>
-                     <h4 className="font-bold text-gray-900 leading-tight">Intuition Efficiency</h4>
-                     <p className="text-xs text-gray-600 mt-2 leading-relaxed italic">
-                        {buttonUsageStats.totalGuess === 0 ? "Zero guessing detected. You are playing a very safe game—typical for final-days revision." : 
-                         guessAcc > 40 ? 
-                         "Educated guessing is working. Your subconscious intuition is high—but don't make it a habit." :
-                         "High blind guessing rate. This is dangerous for negative marking—focus on conceptual clarity to reduce guesses."}
-                     </p>
-                     <TaggedQuestionsDropdown
-                        tag="guess"
-                        title="Check 'Guess' Questions"
-                        questions={questions}
-                        answers={answers}
-                        confidenceMap={confidenceMap}
-                        onQuestionClick={handleQuestionClick}
-                     />
-                  </div>
-               </div>
-           </div>
-        </div>
 
         {/* Drill-Down Section */}
         <div className="pt-8 border-t border-gray-100">

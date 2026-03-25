@@ -16,6 +16,7 @@ import {
   LogOut,
   Trophy,
   ChevronRight,
+  ClipboardList,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Profile } from '@/types'
@@ -32,6 +33,7 @@ import {
 const navigation = [
   { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Practice', href: '/quiz', icon: Brain },
+  { name: 'My Tests', href: '/tests', icon: ClipboardList },
   { name: 'Results', href: '/results', icon: BarChart3 },
   { name: 'Profile', href: '/profile', icon: User },
 ]
@@ -209,7 +211,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* ── Mobile Bottom Navigation ── */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-bottom">
-          <div className="grid grid-cols-4 h-16">
+          <div className="grid grid-cols-5 h-16">
             {navigation.map(item => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               return (

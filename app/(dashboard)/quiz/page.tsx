@@ -3,46 +3,46 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getSubjects, getQuestions, getQuestionCountBySubject } from '@/lib/appwrite/queries'
+import { getSubjects, getQuestions, getQuestionCountBySubject, reportIssue } from '@/lib/appwrite/queries'
+import { getCurrentUser } from '@/lib/appwrite/auth'
 import { useQuizStore } from '@/store/quiz-store'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Loader2, ChevronRight } from 'lucide-react'
+import { 
+  Loader2, ChevronRight, Search, SlidersHorizontal, 
+  Lock, ArrowRight, Sparkles, User, LayoutGrid, Flag, FileText
+} from 'lucide-react'
 import type { Question, Subject } from '@/types'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const PAPER_OPTIONS = [
-  { examType: "UPSC_PRE", year: 2024, label: "UPSC Prelims GS-I 2024", questions: 100, time: "2 Hours", subject: "GS Paper I", badgeLabel: "UPSC Prelims", id: "p1" },
-  { examType: "UPSC_PRE", year: 2023, label: "UPSC Prelims GS-I 2023", questions: 100, time: "2 Hours", subject: "GS Paper I", badgeLabel: "UPSC Prelims", id: "p2" },
-  { examType: "UPSC_PRE", year: 2022, label: "UPSC Prelims GS-I 2022", questions: 100, time: "2 Hours", subject: "GS Paper I", badgeLabel: "UPSC Prelims", id: "p3" },
-  { examType: "TNPSC", year: 2024, label: "TNPSC Group I 2024", questions: 100, time: "2 Hours", subject: "GS Paper I", badgeLabel: "TNPSC Group I", id: "p4" }
+  { examType: "UPSC_PRE", year: 2024, label: "GS Paper I", status: "active", theme: "orange", questions: 100, time: "2 Hr", marks: 200, id: "p1" },
+  { examType: "UPSC_PRE", year: 2023, label: "GS Paper I", status: "active", theme: "black", questions: 100, time: "2 Hr", marks: 200, id: "p2" },
+  { examType: "UPSC_PRE", year: 2022, label: "GS Paper I", status: "locked", theme: "gray", questions: 100, time: "2 Hr", marks: 200, id: "p3" },
 ]
 
 const DIFFICULTY_OPTIONS = ['All', 'Easy', 'Medium', 'Hard'] as const
 const QUESTION_COUNT_OPTIONS = [10, 20, 30, 50]
 
-function getEmoji(name?: string) {
-  if (!name) return '📚'
+function getSubjectAccent(name: string) {
   const l = name.toLowerCase()
-  if (l.includes('geo')) return '🌍'
-  if (l.includes('polity') || l.includes('governance')) return '⚖️'
-  if (l.includes('hist')) return '🏛️'
-  if (l.includes('econ')) return '📈'
-  if (l.includes('environ')) return '🌿'
-  if (l.includes('science') || l.includes('tech')) return '🔬'
-  if (l.includes('art') || l.includes('cult')) return '🎨'
-  if (l.includes('intern') || l.includes('relation')) return '🌐'
-  return '📚'
+  if (l.includes('polity')) return { color: '#FF6B00', bg: 'bg-orange-50', icon: '⚖️' }
+  if (l.includes('hist')) return { color: '#8B4513', bg: 'bg-[#FDF5E6]', icon: '🏛️' }
+  if (l.includes('geo')) return { color: '#007AFF', bg: 'bg-blue-50', icon: '🌍' }
+  if (l.includes('econ')) return { color: '#FF3B30', bg: 'bg-red-50', icon: '📈' }
+  if (l.includes('environ')) return { color: '#34C759', bg: 'bg-green-50', icon: '🌿' }
+  if (l.includes('science') || l.includes('tech')) return { color: '#5856D6', bg: 'bg-indigo-50', icon: '🔬' }
+  return { color: '#FF6B00', bg: 'bg-orange-50', icon: '📚' }
 }
 
 function QuizSetupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
-  const subjectParam = searchParams.get('subject')
   const { setQuestions, setTestMode, setPaperLabel } = useQuizStore()
 
+  const [activeTab, setActiveTab] = useState<'full' | 'subject'>(tabParam === 'subject' ? 'subject' : 'full')
   const [loadingCardId, setLoadingCardId] = useState<string | null>(null)
+  
   type SubjectWithCount = Subject & { count: number }
   const [subjects, setSubjects] = useState<SubjectWithCount[]>([])
   const [loadingSubjects, setLoadingSubjects] = useState(true)
@@ -50,8 +50,13 @@ function QuizSetupContent() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'All' | 'Easy' | 'Medium' | 'Hard'>('All')
   const [questionCount, setQuestionCount] = useState(20)
   const [startLoading, setStartLoading] = useState(false)
+  const [userName, setUserName] = useState('')
 
   useEffect(() => {
+    getCurrentUser().then(user => {
+      if (user) setUserName(user.name || 'Aspirant')
+    })
+
     const fetchSubjects = async () => {
       try {
         const result = await getSubjects()
@@ -63,10 +68,6 @@ function QuizSetupContent() {
           }))
         )
         setSubjects(withCounts)
-        if (subjectParam) {
-          const matched = withCounts.find(s => s.slug === subjectParam || s.$id === subjectParam)
-          if (matched) setSelectedSubject(matched)
-        }
       } catch {
         toast.error('Failed to load subjects')
       } finally {
@@ -74,19 +75,23 @@ function QuizSetupContent() {
       }
     }
     fetchSubjects()
-  }, [subjectParam])
+  }, [])
 
   const handleStartTest = async (paper: typeof PAPER_OPTIONS[0]) => {
+    if (paper.status === 'locked') {
+      toast.info('This test is currently locked. Complete previous papers to unlock.')
+      return
+    }
     setLoadingCardId(paper.id)
     try {
       const result = await getQuestions({ limit: paper.questions, examType: paper.examType, year: paper.year })
-      if (!result.documents?.length) { toast.error('No questions found for this paper yet.'); setLoadingCardId(null); return }
+      if (!result.documents?.length) { toast.error('No questions found for this paper.'); setLoadingCardId(null); return }
       setQuestions(result.documents as unknown as Question[])
       setTestMode(true)
-      setPaperLabel(paper.label)
+      setPaperLabel(`${paper.label} ${paper.year}`)
       router.push('/quiz/session?id=' + crypto.randomUUID())
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to start test')
+      toast.error('Failed to start test')
       setLoadingCardId(null)
     }
   }
@@ -101,264 +106,254 @@ function QuizSetupContent() {
       if (!result.documents?.length) { toast.error('No questions found. Try different filters.'); setStartLoading(false); return }
       setQuestions(result.documents as unknown as Question[])
       setTestMode(false)
-      setPaperLabel(`${selectedSubject.Name} · UPSC PYQ`)
+      setPaperLabel(`${selectedSubject.Name} · Practice`)
       router.push('/quiz/session?id=' + crypto.randomUUID())
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to start practice')
+      toast.error('Failed to start practice')
       setStartLoading(false)
     }
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
-      <Tabs defaultValue={tabParam === 'subject' ? 'subject' : 'full'}>
-        <TabsList className="w-full h-12 grid grid-cols-2 bg-gray-100 p-1 rounded-xl">
-          <TabsTrigger value="full" className="rounded-lg data-[state=active]:bg-[#FF6B00] data-[state=active]:text-white font-medium">
-            Full Length Test
-          </TabsTrigger>
-          <TabsTrigger value="subject" className="rounded-lg data-[state=active]:bg-[#FF6B00] data-[state=active]:text-white font-medium">
-            Subject Practice
-          </TabsTrigger>
-        </TabsList>
-
-        {/* ── FULL LENGTH TEST ── */}
-        <TabsContent value="full" className="mt-6">
-          <div className="mb-5">
-            <h1 className="text-xl font-bold text-gray-900">Full Length Test</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Complete previous year paper under timed conditions</p>
+    <div className="min-h-screen bg-[#FDFDFD] pb-32">
+      
+      {/* ── HEADER ── */}
+      <div className="max-w-7xl mx-auto px-6 pt-10 pb-6 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-100">
+             <LayoutGrid className="h-6 w-6" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {PAPER_OPTIONS.map((paper) => {
-              const isLoading = loadingCardId === paper.id
-              return (
-                <div
-                  key={paper.id}
-                  onClick={() => !loadingCardId && handleStartTest(paper)}
-                  className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:border-[#FF6B00]/30 transition-all cursor-pointer p-5 flex flex-col gap-4"
-                >
-                  <div>
-                    <span className="inline-block px-2.5 py-1 bg-orange-50 text-[#FF6B00] font-semibold text-xs rounded-full">
-                      {paper.badgeLabel}
-                    </span>
-                    <div className="mt-2">
-                      <h3 className="font-bold text-gray-900 group-hover:text-[#FF6B00] transition-colors">
-                        {paper.label.replace(` ${paper.year}`, '')}
-                      </h3>
-                      <div className="text-3xl font-black text-[#FF6B00] mt-1">{paper.year}</div>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
+            {activeTab === 'full' ? 'Practice Selection' : 'PRACTICE LAB'}
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-[#FF6B00] transition-colors">
+            <Search className="h-5 w-5" />
+          </button>
+          <div className="h-12 w-12 rounded-full bg-gray-900 border-2 border-white shadow-md overflow-hidden ring-4 ring-gray-50">
+             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="User" />
+          </div>
+        </div>
+      </div>
+
+      {/* ── TABS ── */}
+      <div className="max-w-3xl mx-auto px-6 mt-4">
+        <div className="bg-gray-100 p-1.5 rounded-[2rem] flex h-16">
+          <button 
+            onClick={() => setActiveTab('full')}
+            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'full' ? 'bg-[#FF6B00] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Full Length Test
+          </button>
+          <button 
+            onClick={() => setActiveTab('subject')}
+            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'subject' ? 'bg-[#FF6B00] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Subject Practice
+          </button>
+        </div>
+      </div>
+
+      <main className="max-w-7xl mx-auto px-6 mt-16">
+        
+        {/* ── FULL LENGTH TEST VIEW ── */}
+        {activeTab === 'full' && (
+          <div className="space-y-12">
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <h2 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase">UPSC CSE.</h2>
+              <div className="flex bg-gray-100 p-1.5 rounded-full h-10 px-3 w-fit">
+                <button className="text-[10px] font-black text-white bg-black rounded-full px-5 uppercase tracking-tighter">Prelims</button>
+                <button className="text-[10px] font-black text-gray-400 px-5 uppercase tracking-tighter">Mains</button>
+              </div>
+            </div>
+
+            {/* GS Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {PAPER_OPTIONS.map(paper => (
+                <div key={paper.id} className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 group hover:shadow-xl hover:border-orange-100 transition-all flex flex-col">
+                  <div className="absolute top-6 right-8 text-[72px] font-black text-gray-50 opacity-100 select-none -z-10 tracking-tighter group-hover:scale-110 transition-transform">
+                    {paper.year}
+                  </div>
+                  
+                  <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1 font-mono">UPSC PRELIMS</p>
+                  <h3 className="text-2xl font-black text-gray-900 mb-8">{paper.label}</h3>
+
+                  <div className="grid grid-cols-3 gap-4 mb-10 mt-auto">
+                    <div>
+                      <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Questions</p>
+                      <p className="text-sm font-black text-gray-900">{paper.questions}</p>
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-medium text-gray-400 mt-2">
-                      <span>{paper.questions} Questions</span><span>·</span>
-                      <span>{paper.time}</span><span>·</span>
-                      <span>{paper.subject}</span>
+                    <div>
+                      <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Duration</p>
+                      <p className="text-sm font-black text-gray-900">{paper.time}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Marks</p>
+                      <p className="text-sm font-black text-gray-900">{paper.marks}</p>
                     </div>
                   </div>
-                  <button
-                    disabled={loadingCardId !== null}
-                    className="w-full bg-[#FF6B00] hover:bg-[#FF8C00] text-white py-2.5 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+
+                  <button 
+                    onClick={() => handleStartTest(paper)}
+                    className={`h-16 w-full rounded-2xl flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-widest transition-all ${
+                      paper.status === 'locked' 
+                        ? 'bg-gray-50 text-gray-300 border border-gray-100' 
+                        : paper.theme === 'black'
+                          ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
+                          : 'bg-[#FF6B00] text-white hover:bg-orange-600 shadow-lg shadow-orange-100'
+                    }`}
                   >
-                    {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Loading...</> : <>Start Test <ChevronRight className="h-4 w-4" /></>}
+                    {loadingCardId === paper.id ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                      <>
+                        Start Test {paper.status === 'locked' ? <Lock className="h-4 w-4" /> : <ArrowRight className="h-5 w-5" />}
+                      </>
+                    )}
                   </button>
                 </div>
-              )
-            })}
-          </div>
-        </TabsContent>
+              ))}
+            </div>
 
-        {/* ── SUBJECT PRACTICE — two-column when subject selected ── */}
-        <TabsContent value="subject" className="mt-6">
-          <div className="mb-5">
-            <h1 className="text-xl font-bold text-gray-900">Subject-wise Practice</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Pick a subject and start practicing targeted PYQs</p>
-          </div>
-
-          {/* Two-column layout: subjects left (or full width), config right when active */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
-
-            {/* Left: Subject Grid */}
-            <div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-                {loadingSubjects
-                  ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)
-                  : subjects.map(subj => {
-                    const isSelected = selectedSubject?.$id === subj.$id
-                    return (
-                      <button
-                        key={subj.$id}
-                        onClick={() => setSelectedSubject(isSelected ? null : subj)}
-                        className={`relative text-left w-full rounded-2xl p-4 border-2 transition-all duration-200 overflow-hidden ${isSelected
-                            ? 'border-[#FF6B00] bg-[#FFF8F4] shadow-md scale-[1.02]'
-                            : 'border-gray-100 bg-white hover:border-[#FF6B00]/40 hover:shadow-sm'
-                          }`}
-                      >
-                        {/* Colored top accent bar */}
-                        <div
-                          className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
-                          style={{ backgroundColor: subj.color || '#FF6B00' }}
-                        />
-                        <div className="mt-1">
-                          <div className="text-2xl mb-1.5">{getEmoji(subj.Name)}</div>
-                          <h3 className={`font-semibold text-sm leading-tight ${isSelected ? 'text-[#FF6B00]' : 'text-gray-800'}`}>
-                            {subj.Name}
-                          </h3>
-                          <p className="text-[11px] text-gray-400 mt-0.5">{subj.count} questions</p>
-                        </div>
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#FF6B00] flex items-center justify-center">
-                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        )}
-                      </button>
-                    )
-                  })
-                }
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* ADAPTIVE LEARNING CARD */}
+              <div className="lg:col-span-2 bg-[#111111] rounded-[2.5rem] overflow-hidden p-10 text-white relative">
+                <span className="inline-block px-4 py-1.5 bg-[#FF6B00] text-[10px] font-black uppercase tracking-widest rounded-full mb-6">
+                  Adaptive Learning
+                </span>
+                <h3 className="text-4xl font-black tracking-tight leading-tight mb-6">Focus on Weak<br/>Subjects</h3>
+                <p className="text-sm text-gray-400 font-medium leading-relaxed mb-10 max-w-md">
+                  Our AI analyzed your recent mock tests. You should practice &apos;Ancient History&apos; and &apos;Art & Culture&apos; for higher impact scores.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <button 
+                    onClick={() => setActiveTab('subject')}
+                    className="w-full sm:w-auto bg-white text-black px-10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors shadow-xl"
+                  >
+                    Go to Subjects
+                  </button>
+                  <div className="flex -space-x-3">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="h-10 w-10 rounded-full border-4 border-[#111111] bg-gray-800 flex items-center justify-center overflow-hidden">
+                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}red`} alt="Aspirant" />
+                      </div>
+                    ))}
+                    <div className="h-10 w-10 rounded-full border-4 border-[#111111] bg-orange-600 flex items-center justify-center text-[10px] font-black">+42</div>
+                  </div>
+                </div>
+                
+                <div className="hidden lg:block absolute right-0 bottom-0 w-1/3 h-full grayscale opacity-20 hover:opacity-40 transition-opacity">
+                  <img 
+                    src="https://images.unsplash.com/photo-1599599810769-bcde5a160d32?auto=format&fit=crop&q=80&w=800" 
+                    alt="Ancient" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
 
-              {/* Mobile: show config inline below grid when selected */}
-              {selectedSubject && (
-                <div className="lg:hidden mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <PracticeConfig
-                    subject={selectedSubject}
-                    difficulty={selectedDifficulty}
-                    setDifficulty={setSelectedDifficulty}
-                    count={questionCount}
-                    setCount={setQuestionCount}
-                    loading={startLoading}
-                    onStart={handleStartPractice}
-                  />
+              {/* PREVIOUS ANALYSIS CARD */}
+              <div className="bg-[#FFF8EF] rounded-[2.5rem] p-10 flex flex-col">
+                <div className="h-14 w-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-8">
+                  <Sparkles className="h-7 w-7 text-orange-600" />
                 </div>
-              )}
+                <h4 className="text-2xl font-black text-gray-900 mb-4">Previous Analysis</h4>
+                <p className="text-sm text-gray-500 font-medium leading-relaxed mb-10">
+                  Review your mistakes from the 2023 prelims to improve your current score by up to 15%.
+                </p>
+                <button className="mt-auto text-[11px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-2 hover:translate-x-2 transition-transform">
+                  View Insights <ArrowRight className="h-5 w-5" />
+                </button>
+              </div>
             </div>
-
-            {/* Right: sticky config panel — desktop only */}
-            <div className="hidden lg:block">
-              {selectedSubject ? (
-                <div className="sticky top-4 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <PracticeConfig
-                    subject={selectedSubject}
-                    difficulty={selectedDifficulty}
-                    setDifficulty={setSelectedDifficulty}
-                    count={questionCount}
-                    setCount={setQuestionCount}
-                    loading={startLoading}
-                    onStart={handleStartPractice}
-                  />
-                </div>
-              ) : (
-                <div className="sticky top-4 rounded-2xl border-2 border-dashed border-gray-200 p-8 flex flex-col items-center justify-center text-center gap-3 h-64">
-                  <div className="text-4xl">👈</div>
-                  <p className="text-gray-500 text-sm font-medium">Select a subject to configure your practice session</p>
-                </div>
-              )}
-            </div>
-
           </div>
-        </TabsContent>
-      </Tabs>
+        )}
+
+        {/* ── SUBJECT PRACTICE VIEW ── */}
+        {activeTab === 'subject' && (
+          <div className="space-y-12">
+            <div className="mb-16">
+              <h2 className="text-6xl md:text-8xl font-black text-gray-900 tracking-tighter leading-none">Subject-wise<br/>Practice</h2>
+              <p className="text-lg text-gray-400 font-medium mt-6 max-w-xl leading-relaxed">Pick a subject and start practicing targeted PYQs from the world&apos;s most exhaustive database.</p>
+            </div>
+
+            {/* Subject Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {loadingSubjects ? (
+                 Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-[2.5rem]" />)
+              ) : subjects.map(subj => {
+                const accent = getSubjectAccent(subj.Name)
+                
+                return (
+                  <div 
+                    key={subj.$id} 
+                    className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 hover:shadow-xl hover:border-orange-50 transition-all group flex flex-col"
+                  >
+                    <div 
+                      className="absolute top-0 left-0 right-0 h-1.5" 
+                      style={{ backgroundColor: accent.color }}
+                    />
+                    
+                    <div className="flex items-start justify-between mb-8">
+                      <div className={`h-16 w-16 ${accent.bg} rounded-3xl flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform`}>
+                        {accent.icon}
+                      </div>
+                      <div className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full ${accent.bg}`} style={{ color: accent.color }}>
+                        {subj.slug.split('-')[0]}
+                      </div>
+                    </div>
+
+                    <h3 className="text-2xl font-black text-gray-900 mb-2">{subj.Name}</h3>
+                    <p className="text-[11px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-2 grayscale-0">
+                      <FileText className="h-3 w-3" /> {subj.count} questions
+                    </p>
+                    
+                    <button 
+                      onClick={() => handleStartPracticeWithDefault(subj)}
+                      className="mt-10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#FF6B00] group-hover:translate-x-2 transition-transform h-12 w-fit px-6 rounded-2xl bg-orange-50/50 hover:bg-orange-50"
+                    >
+                      Start Practice <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* UNLOCK ALL CARD */}
+            <div className="bg-gradient-to-tr from-[#FF6B00] to-orange-500 rounded-[3rem] p-12 text-white relative overflow-hidden mt-16 shadow-2xl shadow-orange-100">
+               <div className="relative z-10 max-w-2xl">
+                 <h3 className="text-4xl md:text-5xl font-black uppercase leading-tight mb-6">Unlock All<br/>Subjects</h3>
+                 <p className="text-lg text-orange-100 font-medium mb-12 leading-relaxed">Get unlimited access to 10,000+ targeted PYQs and advanced analytics. Join 50,000+ aspirants preparing for UPSC 2025.</p>
+                 <button className="w-full sm:w-auto px-12 py-5 bg-white text-black rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest shadow-2xl hover:scale-[1.02] transition-transform">
+                    Upgrade to Premium 👑
+                 </button>
+               </div>
+               <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
+                  <LayoutGrid className="w-full h-full rotate-12 scale-150" />
+               </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   )
-}
 
-// ──────────────────────────────────────────────────────────────
-// Reusable practice configuration panel
-// ──────────────────────────────────────────────────────────────
-interface PracticeConfigProps {
-  subject: Subject
-  difficulty: 'All' | 'Easy' | 'Medium' | 'Hard'
-  setDifficulty: (d: 'All' | 'Easy' | 'Medium' | 'Hard') => void
-  count: number
-  setCount: (n: number) => void
-  loading: boolean
-  onStart: () => void
-}
-
-function PracticeConfig({ subject, difficulty, setDifficulty, count, setCount, loading, onStart }: PracticeConfigProps) {
-  const difficultyStyles: Record<string, string> = {
-    All: 'bg-gray-100 text-gray-700',
-    Easy: 'bg-green-100 text-green-700 border-green-400',
-    Medium: 'bg-yellow-100 text-yellow-700 border-yellow-400',
-    Hard: 'bg-red-100 text-red-700 border-red-400',
+  async function handleStartPracticeWithDefault(subj: Subject) {
+    setSelectedSubject(subj)
+    setStartLoading(true)
+    try {
+      const result = await getQuestions({ subjectId: subj.$id, limit: 20 })
+      if (!result.documents?.length) { toast.error('No questions found.'); setStartLoading(false); return }
+      setQuestions(result.documents as unknown as Question[])
+      setTestMode(false)
+      setPaperLabel(`${subj.Name} · Practice`)
+      router.push('/quiz/session?id=' + crypto.randomUUID())
+    } catch (error) {
+       toast.error('Failed to start')
+       setStartLoading(false)
+    }
   }
-
-  return (
-    <>
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] p-5 text-white">
-        <div className="text-3xl mb-1">{getEmoji(subject.Name)}</div>
-        <h3 className="font-bold text-lg">{subject.Name}</h3>
-        <p className="text-orange-100 text-xs mt-0.5">Configure your practice session</p>
-      </div>
-
-      <div className="p-5 space-y-5">
-        {/* Difficulty */}
-        <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Difficulty</label>
-          <div className="grid grid-cols-4 gap-1.5 mt-2">
-            {DIFFICULTY_OPTIONS.map(diff => (
-              <button
-                key={diff}
-                onClick={() => setDifficulty(diff)}
-                className={`py-1.5 text-xs font-semibold rounded-lg border transition-all ${difficulty === diff
-                    ? difficultyStyles[diff] + ' border-current'
-                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
-                  }`}
-              >
-                {diff}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Question Count */}
-        <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Questions</label>
-          <div className="grid grid-cols-4 gap-1.5 mt-2">
-            {QUESTION_COUNT_OPTIONS.map(n => (
-              <button
-                key={n}
-                onClick={() => setCount(n)}
-                className={`py-1.5 text-sm font-semibold rounded-lg border transition-all ${count === n
-                    ? 'bg-[#FF6B00] text-white border-[#FF6B00]'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-[#FF6B00]/50'
-                  }`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Summary */}
-        <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 space-y-1">
-          <div className="flex justify-between">
-            <span className="text-gray-400">Subject</span>
-            <span className="font-semibold text-gray-800">{subject.Name}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Questions</span>
-            <span className="font-semibold text-gray-800">{count}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Difficulty</span>
-            <span className="font-semibold text-gray-800">{difficulty === 'All' ? 'All Levels' : difficulty}</span>
-          </div>
-        </div>
-
-        {/* Start Button */}
-        <button
-          onClick={onStart}
-          disabled={loading}
-          className="w-full bg-[#FF6B00] hover:bg-[#FF8C00] text-white py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
-        >
-          {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Loading...</> : <>Start Practice <ChevronRight className="h-4 w-4" /></>}
-        </button>
-      </div>
-    </>
-  )
 }
 
-export default function QuizSetupPage() {
+export default function PracticePage() {
   return (
     <Suspense fallback={<div className="p-6 text-gray-400 text-sm">Loading...</div>}>
       <QuizSetupContent />

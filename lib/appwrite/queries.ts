@@ -1,5 +1,6 @@
 import { databases, DATABASE_ID, COLLECTIONS } from './config'
 import { ID, Query } from 'appwrite'
+import type { TestSession } from '@/types'
 
 // ─── PROFILES ───────────────────────────────────────
 export async function createProfile(userId: string, name: string) {
@@ -39,10 +40,17 @@ export async function getQuestions(filters: {
   if (filters.difficulty && filters.difficulty !== 'all')
     queries.push(Query.equal('difficulty', filters.difficulty))
   queries.push(Query.limit(filters.limit ?? 20))
-  // Removing OrderAsc for now because it might need index in Appwrite. If you had it in the prompt, let's keep it.
   queries.push(Query.orderAsc('year'))
 
   return await databases.listDocuments(DATABASE_ID, COLLECTIONS.QUESTIONS, queries)
+}
+
+export async function getQuestionsByIds(ids: string[]) {
+  if (ids.length === 0) return { documents: [], total: 0 }
+  return await databases.listDocuments(DATABASE_ID, COLLECTIONS.QUESTIONS, [
+    Query.equal('$id', ids),
+    Query.limit(500),
+  ])
 }
 
 export async function getQuestionCountBySubject(subjectId: string): Promise<number> {
@@ -68,6 +76,7 @@ export async function saveAttempt(data: {
   question_id: string
   selected_option: string
   is_correct: boolean
+  session_id?: string
   time_taken_seconds?: number
   used_5050?: boolean
   used_guess?: boolean
@@ -91,6 +100,13 @@ export async function getUserAttempts(userId: string, limit = 50) {
     Query.equal('user_id', userId),
     Query.orderDesc('$createdAt'),
     Query.limit(limit),
+  ])
+}
+
+export async function listAttemptsBySession(sessionId: string) {
+  return await databases.listDocuments(DATABASE_ID, COLLECTIONS.ATTEMPTS, [
+    Query.equal('session_id', sessionId),
+    Query.limit(500),
   ])
 }
 
@@ -143,4 +159,87 @@ export async function getUserTestSummaries(userId: string) {
     Query.orderDesc('date'),
     Query.limit(50),
   ])
+}
+
+// ─── TEST SESSIONS ──────────────────────────────────
+
+export async function createTestSession(data: Omit<TestSession, '$id'>): Promise<TestSession> {
+  const doc = await databases.createDocument(
+    DATABASE_ID,
+    COLLECTIONS.TEST_SESSIONS,
+    ID.unique(),
+    data
+  )
+  return doc as unknown as TestSession
+}
+
+export async function getTestSession(sessionId: string): Promise<TestSession> {
+  const doc = await databases.getDocument(
+    DATABASE_ID,
+    COLLECTIONS.TEST_SESSIONS,
+    sessionId
+  )
+  return doc as unknown as TestSession
+}
+
+export async function listTestSessions(params: {
+  userId: string
+  from?: string          // ISO date string
+  to?: string            // ISO date string
+  examType?: string
+  mode?: string
+  sort?: 'newest' | 'oldest' | 'highest_score' | 'lowest_score'
+  limit?: number
+  offset?: number
+}): Promise<{ documents: TestSession[]; total: number }> {
+  const { userId, from, to, examType, mode, sort = 'newest', limit = 10, offset = 0 } = params
+  const queries: string[] = [Query.equal('user_id', userId)]
+
+  if (from) queries.push(Query.greaterThanEqual('submitted_at', from))
+  if (to) queries.push(Query.lessThanEqual('submitted_at', to))
+  if (examType && examType !== 'all') queries.push(Query.equal('exam_type', examType))
+  if (mode && mode !== 'all') queries.push(Query.equal('mode', mode))
+
+  switch (sort) {
+    case 'oldest':
+      queries.push(Query.orderAsc('submitted_at'))
+      break
+    case 'highest_score':
+      queries.push(Query.orderDesc('score'))
+      break
+    case 'lowest_score':
+      queries.push(Query.orderAsc('score'))
+      break
+    case 'newest':
+    default:
+      queries.push(Query.orderDesc('submitted_at'))
+  }
+
+  queries.push(Query.limit(limit))
+  queries.push(Query.offset(offset))
+
+  const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, queries)
+  return {
+    documents: result.documents as unknown as TestSession[],
+    total: result.total,
+  }
+}
+
+// ─── REPORTED ISSUES ────────────────────────────────
+
+export async function reportIssue(data: {
+  user_id: string
+  question_id: string
+  mode: string
+}) {
+  return await databases.createDocument(
+    DATABASE_ID,
+    COLLECTIONS.REPORTED_ISSUES,
+    ID.unique(),
+    {
+      ...data,
+      reported_at: new Date().toISOString(),
+      status: 'pending'
+    }
+  )
 }

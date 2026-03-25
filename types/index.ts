@@ -40,6 +40,7 @@ export interface QuizAttempt {
   question_id: string
   selected_option: string
   is_correct: boolean
+  session_id?: string
   time_taken_seconds?: number
   used_5050?: boolean
   used_guess?: boolean
@@ -48,6 +49,27 @@ export interface QuizAttempt {
   confidence_tag?: 'guess' | 'sure' | 'fifty_fifty' | null
   selection_history?: string
   revision_summary?: string
+}
+
+export interface TestSession {
+  $id: string
+  user_id: string
+  exam_type: string
+  year: number
+  paper: string
+  paper_label: string
+  mode: 'full_length' | 'subject_practice'
+  started_at: string
+  submitted_at: string
+  total_time_seconds: number
+  total_questions: number
+  attempted: number
+  correct: number
+  incorrect: number
+  skipped: number
+  score: number
+  analytics: string    // JSON string of AnalyticsResult
+  ai_feedback: string  // AI generated feedback or empty string
 }
 
 export interface UserTestSummary {

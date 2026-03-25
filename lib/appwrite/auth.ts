@@ -100,3 +100,22 @@ export async function getCurrentUser() {
     return null
   }
 }
+
+// ─────────────────────────────────────────────────────────────────
+// FORGOT PASSWORD — sends recovery email via Appwrite
+// ─────────────────────────────────────────────────────────────────
+export async function sendPasswordRecovery(email: string) {
+  const redirectUrl = `${window.location.origin}/reset-password`
+  return await account.createRecovery(email, redirectUrl)
+}
+
+// ─────────────────────────────────────────────────────────────────
+// RESET PASSWORD — confirms recovery with userId + secret from URL
+// ─────────────────────────────────────────────────────────────────
+export async function confirmPasswordRecovery(
+  userId: string,
+  secret: string,
+  password: string
+) {
+  return await account.updateRecovery(userId, secret, password)
+}

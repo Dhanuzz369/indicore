@@ -58,7 +58,7 @@ function ReviewContent() {
     <div className="min-h-screen bg-[#F8F9FC]">
       {/* Top Bar */}
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 h-14 flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center gap-4">
           <button
             onClick={() => router.push('/results')}
             className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition-colors text-sm font-semibold"
@@ -90,12 +90,12 @@ function ReviewContent() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
         
         {/* Left: Question + answer review */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Status banner */}
-          <div className={`rounded-2xl p-4 flex items-center gap-3 ${
+          <div className={`rounded-3xl p-6 flex items-center gap-4 ${
             !answer ? 'bg-gray-100 border border-gray-200'
             : answer.isCorrect ? 'bg-emerald-50 border border-emerald-200'
             : 'bg-red-50 border border-red-200'
