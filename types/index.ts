@@ -125,3 +125,117 @@ export interface Note {
 }
 
 export type SRSRating = 'again' | 'hard' | 'good' | 'easy'
+
+// ─── INTELLIGENCE ENGINE ─────────────────────────────────────────
+
+export type ConfidenceTag = 'sure' | 'fifty_fifty' | 'guess' | 'normal'
+
+export interface SelectionEvent {
+  t: number            // seconds since question viewed
+  type: 'view' | 'select' | 'change' | 'submit' | 'used_5050' | 'used_guess' | 'used_sure' | 'clear'
+  option?: string
+  from?: string
+  to?: string
+}
+
+export interface SelectionHistory {
+  events: SelectionEvent[]
+  change_count: number
+}
+
+// ── Analytics Engine V1 ──
+
+export interface SubjectBreakdown {
+  subjectId: string
+  total: number
+  correct: number
+  incorrect: number
+  skipped: number
+  accuracy: number
+  avgTimeSeconds: number
+  sureWrongRate: number
+  guessRate: number
+  fiftyFiftyRate: number
+}
+
+export interface SubtopicBreakdown {
+  subtopicId: string
+  subjectId: string
+  total: number
+  correct: number
+  incorrect: number
+  skipped: number
+  accuracy: number
+  avgTimeSeconds: number
+  confusionScore: number
+}
+
+export interface TimeSink {
+  questionId: string
+  subjectId: string
+  subtopicId: string
+  timeTakenSeconds: number
+  wasCorrect: boolean
+}
+
+export interface BehaviorMetrics {
+  sureButWrongCount: number
+  sureButWrongRate: number
+  guessButCorrectCount: number
+  answerChangeAvg: number
+}
+
+export interface Recommendation {
+  type: 'revise' | 'practice' | 'speed_drill'
+  target: { subjectId?: string; subtopicId?: string }
+  reason: string
+  priority: 1 | 2 | 3
+}
+
+export interface TestAnalyticsV1 {
+  sessionId: string
+  scorePercent: number
+  totalTimeSeconds: number
+  avgTimePerQuestionSeconds: number
+  subjectBreakdown: SubjectBreakdown[]
+  subtopicBreakdown: SubtopicBreakdown[]
+  timeSinks: TimeSink[]
+  behavior: BehaviorMetrics
+  recommendations: Recommendation[]
+}
+
+// ── Skill Model ──
+
+export interface SubtopicRating {
+  subtopicId: string
+  subjectId: string
+  rating: number          // ELO rating, starts at 1200
+  attempts: number
+  lastUpdated: string     // ISO
+}
+
+export interface SubjectScore {
+  subjectId: string
+  avgRating: number
+  accuracy: number
+  attempts: number
+}
+
+export interface BehaviorSignals {
+  sureButWrongRate: number
+  guessRate: number
+  avgTimePerQuestion: number
+  totalSessions: number
+}
+
+export interface SkillProfile {
+  $id?: string
+  user_id: string
+  updated_at: string
+  model_version: string
+  subject_scores_json: string      // JSON: SubjectScore[]
+  subtopic_scores_json: string     // JSON: SubtopicRating[]
+  behavior_signals_json: string    // JSON: BehaviorSignals
+  recommendations_json: string     // JSON: Recommendation[]
+  narrative_feedback?: string
+}
