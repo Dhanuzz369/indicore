@@ -42,8 +42,10 @@ export function NoteEditor({ prefillFront, sourceQuestionId, subjects, onClose, 
       toast.success('Note saved!')
       onSaved?.()
       onClose()
-    } catch {
-      toast.error('Failed to save note.')
+    } catch (err: any) {
+      console.error('[NoteEditor] save failed:', err)
+      const msg = err?.message || err?.response?.message || 'Unknown error'
+      toast.error(`Failed to save note: ${msg}`)
     } finally {
       setSaving(false)
     }

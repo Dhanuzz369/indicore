@@ -384,25 +384,27 @@ export async function createNote(data: {
   source_question_id?: string
 }): Promise<Note> {
   const now = new Date().toISOString()
-  const doc = await databases.createDocument(
-    DATABASE_ID,
-    COLLECTIONS.NOTES,
-    ID.unique(),
-    {
-      user_id: data.user_id,
-      front: data.front,
-      back: data.back,
-      subject: data.subject,
-      topic: data.topic || '',
-      source_question_id: data.source_question_id || '',
-      next_review_at: now,
-      interval_days: 1,
-      ease_factor: 2.5,
-      review_count: 0,
-      created_at: now,
-    }
-  )
-  return doc as unknown as Note
+  // Only include optional fields when they have actual values — Appwrite can reject empty strings
+  const payload: Record<string, unknown> = {
+    user_id: data.user_id,
+    front: data.front,
+    back: data.back,
+    subject: data.subject,
+    next_review_at: now,
+    interval_days: 1,
+    ease_factor: 2.5,
+    review_count: 0,
+    created_at: now,
+  }
+  if (data.topic) payload.topic = data.topic
+  if (data.source_question_id) payload.source_question_id = data.source_question_id
+  try {
+    const doc = await databases.createDocument(DATABASE_ID, COLLECTIONS.NOTES, ID.unique(), payload)
+    return doc as unknown as Note
+  } catch (err: any) {
+    console.error('[createNote] Appwrite error:', err?.code, err?.message, err)
+    throw err
+  }
 }
 
 export async function getNotesByUser(params: {

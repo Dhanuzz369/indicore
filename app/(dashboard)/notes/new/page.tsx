@@ -38,8 +38,10 @@ export default function NewNotePage() {
       await createNote({ user_id: userId, front: front.trim(), back: back.trim(), subject: subject || 'General', topic: topic.trim() })
       toast.success('Note saved!')
       router.push('/notes')
-    } catch {
-      toast.error('Failed to save note.')
+    } catch (err: any) {
+      console.error('[NewNote] save failed:', err)
+      const msg = err?.message || err?.response?.message || 'Unknown error'
+      toast.error(`Failed to save note: ${msg}`)
     } finally {
       setSaving(false)
     }
