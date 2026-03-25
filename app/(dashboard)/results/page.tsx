@@ -400,91 +400,48 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          {/* RIGHT — Subject Performance Radar */}
+          {/* RIGHT — Subject Performance Bar Graph (moved from below) */}
           <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-7 flex flex-col">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/10 flex items-center justify-center shrink-0">
                 <Target className="h-5 w-5 text-[#FF6B00]" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight leading-none">Subject Proficiency Radar</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Correct questions per subject</p>
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight leading-none">Subject Performance</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Accuracy per subject</p>
               </div>
             </div>
 
-            {subjectRadarData.length > 0 ? (
-              <>
-                <div className="flex-1 min-h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={subjectRadarData}>
-                      <PolarGrid stroke="#F1F5F9" />
-                      <PolarAngleAxis
-                        dataKey="subject"
-                        tick={{ fontSize: 9, fontWeight: 800, fill: '#475569' }}
-                      />
-                      <PolarRadiusAxis
-                        angle={30}
-                        domain={[0, maxCorrect]}
-                        tick={false}
-                        axisLine={false}
-                      />
-                      <Radar
-                        name="Correct"
-                        dataKey="correct"
-                        stroke="#FF6B00"
-                        fill="#FF6B00"
-                        fillOpacity={0.35}
-                        strokeWidth={2}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 bg-gray-50 rounded-2xl py-10">
-                <Target className="h-8 w-8 mb-3 opacity-30" />
-                <p className="text-sm font-medium">No subject data yet</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── SUBJECT BAR GRAPH SECTION ── */}
-        <div className="bg-[#111111] rounded-[2.5rem] p-10 text-white overflow-hidden relative">
-           <div className="max-w-3xl">
-              <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Subject Performance Analytics</h2>
-              <p className="text-sm text-gray-400 font-medium mb-12">Detailed breakdown of correct vs total questions across all subjects.</p>
-           </div>
-           
-           <div className="h-[400px] w-full">
+            <div className="flex-1 min-h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={analytics.subjectStats} 
                   layout="vertical" 
-                  margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                  margin={{ top: 0, right: 30, left: 20, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#222" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
                   <XAxis type="number" hide />
                   <YAxis 
                     dataKey="subject" 
                     type="category" 
-                    tick={{ fill: '#888', fontSize: 11, fontWeight: 800 }} 
-                    width={100}
+                    tick={{ fill: '#64748b', fontSize: 10, fontWeight: 800 }} 
+                    width={80}
                   />
                   <Tooltip 
-                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                    contentStyle={{ backgroundColor: '#1A1A1A', border: 'none', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}
-                    itemStyle={{ color: '#FF6B00' }}
+                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                    contentStyle={{ backgroundColor: '#FFF', border: '1px solid #F1F5F9', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold' }}
                   />
-                  <Bar dataKey="correct" radius={[0, 4, 4, 0]} barSize={20}>
+                  <Bar dataKey="correct" radius={[0, 4, 4, 0]} barSize={14}>
                     {analytics.subjectStats.map((entry, index) => (
                       <Cell key={index} fill={entry.accuracy >= 70 ? '#00E5BE' : entry.accuracy >= 40 ? '#FF6B00' : '#FF4B4B'} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-           </div>
+            </div>
+          </div>
         </div>
+
 
         {/* ── CONFIDENCE METRIC CARDS ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
