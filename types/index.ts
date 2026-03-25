@@ -74,6 +74,7 @@ export interface TestSession {
   total_score?: number // Fallback for some history collectors
   analytics: string    // JSON string of AnalyticsResult
   results_history?: string // Fallback column name mentioned by user!
+  snapshot?: string    // JSON string of full replay snapshot (questions, answers, confidenceMap, etc.)
   ai_feedback: string  // AI generated feedback or empty string
   question_ids?: string // JSON array of question IDs in order
 }

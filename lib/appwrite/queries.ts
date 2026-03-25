@@ -192,16 +192,22 @@ export async function getUserTestSummaries(userId: string) {
 // ─── TEST SESSIONS ──────────────────────────────────
 
 export async function createTestSession(data: Omit<TestSession, '$id'>): Promise<TestSession> {
-  const doc = await databases.createDocument(
-    DATABASE_ID,
-    COLLECTIONS.TEST_SESSIONS,
-    ID.unique(),
-    {
-      ...data,
-      results_history: data.analytics // Map to the user's specific column name
+  const payload: Record<string, unknown> = {
+    ...data,
+    results_history: data.analytics, // Map to the user's specific column name
+  }
+  try {
+    const doc = await databases.createDocument(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, ID.unique(), payload)
+    return doc as unknown as TestSession
+  } catch (e: any) {
+    // If snapshot attribute doesn't exist in collection yet, retry without it
+    if (e?.message?.includes('snapshot') || e?.code === 400) {
+      const { snapshot: _snap, ...payloadWithoutSnapshot } = payload
+      const doc = await databases.createDocument(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, ID.unique(), payloadWithoutSnapshot)
+      return doc as unknown as TestSession
     }
-  )
-  return doc as unknown as TestSession
+    throw e
+  }
 }
 
 export async function getTestSession(sessionId: string): Promise<TestSession> {

@@ -392,6 +392,18 @@ export default function TestSessionPage() {
             skipped: questions.length - numAttempted,
             score: scorePercent,
             analytics: JSON.stringify(analytics),
+            snapshot: JSON.stringify({
+              questions,
+              answers: Object.fromEntries(
+                Object.entries(answers).map(([qId, ans]) => {
+                  const finalTag: 'sure' | 'fifty_fifty' | 'guess' | null = finalConfidenceMap[qId] || ans.confidenceTag || null
+                  return [qId, { ...ans, confidenceTag: finalTag }]
+                })
+              ),
+              confidenceMap: finalConfidenceMap,
+              elapsedSeconds,
+              paperLabel,
+            }),
             ai_feedback: '',
             question_ids: JSON.stringify(questions.map(q => q.$id)),
           })
