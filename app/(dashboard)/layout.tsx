@@ -226,7 +226,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* ── Mobile Bottom Navigation ── */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-bottom">
-          <div className="grid grid-cols-6 h-16">
+          <div className="grid grid-cols-7 h-16">
             {navigation.map(item => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               return (
