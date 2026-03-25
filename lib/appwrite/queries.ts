@@ -244,24 +244,80 @@ export async function listTestSessions(params: {
     return q
   }
 
+  // Helper to map UserTestSummary to TestSession interface
+  const mapSummaryToSession = (s: any): TestSession => ({
+    $id: s.$id,
+    $createdAt: s.$createdAt || s.date,
+    user_id: s.user_id,
+    exam_type: 'UPSC', // Default for older records
+    year: 2024,
+    paper: s.test_id || 'Practice',
+    paper_label: s.test_id || 'Test History Record',
+    mode: (s.test_id?.toLowerCase().includes('full') || s.attempts_count > 50) ? 'full_length' : 'subject_practice',
+    started_at: s.date,
+    submitted_at: s.date,
+    date: s.date,
+    total_time_seconds: 0,
+    total_questions: s.attempts_count || 0,
+    attempted: s.attempts_count || 0,
+    correct: Math.floor(((s.accuracy || 0) / 100) * (s.attempts_count || 0)),
+    incorrect: (s.attempts_count || 0) - Math.floor(((s.accuracy || 0) / 100) * (s.attempts_count || 0)),
+    skipped: 0,
+    score: s.total_score || s.accuracy || 0,
+    accuracy: s.accuracy,
+    analytics: s.subject_scores || s.confidence_stats || '{}',
+    results_history: s.confidence_stats || '{}',
+    ai_feedback: '',
+    question_ids: '[]'
+  })
+
   try {
-    // Full query with all filters — requires Appwrite indexes on user_id, submitted_at, score, exam_type, mode
-    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, buildQueries(true))
-    return { documents: result.documents as unknown as TestSession[], total: result.total }
-  } catch {
+    // 1. Fetch from main collection (Test Sessions / results_history)
+    let mainResults: any = { documents: [], total: 0 }
     try {
-      // Fallback: only user_id + newest sort (needs just user_id index)
-      const fallback = await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, [
+      mainResults = await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, buildQueries(true))
+    } catch (e: any) {
+      console.warn('Main sessions query failed, trying fallback...', e.message)
+      mainResults = await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, [
         Query.equal('user_id', userId),
         Query.orderDesc('$createdAt'),
-        Query.limit(limit),
-        Query.offset(offset),
+        Query.limit(limit)
       ])
-      return { documents: fallback.documents as unknown as TestSession[], total: fallback.total }
-    } catch (e2) {
-      console.error('listTestSessions failed:', e2)
-      throw e2
     }
+
+    // 2. Fetch from Summary collection (Older history system)
+    let summaryResults: any = { documents: [], total: 0 }
+    try {
+      summaryResults = await databases.listDocuments(DATABASE_ID, COLLECTIONS.USER_TEST_SUMMARY, [
+        Query.equal('user_id', userId),
+        Query.orderDesc('date'),
+        Query.limit(limit)
+      ])
+    } catch (e: any) {
+      console.warn('Summary sessions query failed:', e.message)
+    }
+
+    // 3. Merge and Sort
+    const merged = [
+      ...(mainResults.documents as TestSession[]),
+      ...(summaryResults.documents.map(mapSummaryToSession))
+    ]
+
+    // Sort by date newest first
+    merged.sort((a, b) => {
+      const dateA = new Date(a.submitted_at || a.date || a.$createdAt || 0).getTime()
+      const dateB = new Date(b.submitted_at || b.date || b.$createdAt || 0).getTime()
+      return dateB - dateA
+    })
+
+    return { 
+      documents: merged.slice(0, limit), 
+      total: mainResults.total + summaryResults.total 
+    }
+
+  } catch (err) {
+    console.error('Final listTestSessions failed:', err)
+    return { documents: [], total: 0 }
   }
 }
 
