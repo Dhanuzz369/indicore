@@ -279,7 +279,17 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
         // Fallback: reconstruct from Appwrite attempts + questions
         const qIds: string[] = session.question_ids ? JSON.parse(session.question_ids) : []
-        if (qIds.length === 0) throw new Error('No question IDs in session')
+        if (qIds.length === 0) {
+          // Legacy session with no question data — show summary-only view
+          if (!cancelled) setLocalData({
+            questions: [],
+            answers: {},
+            confidenceMap: {},
+            elapsedSeconds: session.total_time_seconds ?? 0,
+            paperLabel: session.paper_label ?? 'Practice Session',
+          })
+          return
+        }
 
         const [attResult, qResult] = await Promise.all([
           listAttemptsBySession(sessionId),
@@ -425,7 +435,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
     [displayQuestions, displayAnswers, displayConfMap, displayElapsed]
   )
 
-  const analytics = storedAnalytics || generatedAnalytics
+  const analytics = (storedAnalytics?.subjectStats ? storedAnalytics : null) || generatedAnalytics
   const score = analytics.score || getScore()
 
   const handleQuestionClick = (index: number) => {
@@ -455,9 +465,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           <div className="w-20 h-20 rounded-full bg-gray-200/50 flex items-center justify-center mx-auto ring-8 ring-gray-100">
             <BookOpen className="h-10 w-10 text-gray-400" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900">No Analysis Available</h2>
+          <h2 className="text-xl font-bold text-gray-900">No Full Analysis Available</h2>
           <p className="text-gray-500 text-sm">
-            {replayMode ? 'This test session could not be loaded.' : 'Complete a practice session to unlock the Analytical Engine.'}
+            {replayMode ? 'This is a legacy session. Question-level replay data was not saved for this test.' : 'Complete a practice session to unlock the Analytical Engine.'}
           </p>
           <button
             onClick={() => router.push(replayMode ? '/tests' : '/quiz')}

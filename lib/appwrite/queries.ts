@@ -210,13 +210,50 @@ export async function createTestSession(data: Omit<TestSession, '$id'>): Promise
   }
 }
 
+// Extracted so it can be used by both listTestSessions and getTestSession fallback
+function mapSummaryToSession(s: any): TestSession {
+  const isTimestampId = /^test_\d+$/.test(s.test_id || '')
+  return {
+    $id: s.$id,
+    $createdAt: s.$createdAt || s.date,
+    user_id: s.user_id,
+    exam_type: 'UPSC',
+    year: 2024,
+    paper: 'Practice',
+    paper_label: isTimestampId ? 'Subject Practice Session' : (s.test_id || 'Practice Session'),
+    mode: (s.test_id?.toLowerCase().includes('full') || s.attempts_count > 50) ? 'full_length' : 'subject_practice',
+    started_at: s.date,
+    submitted_at: s.date,
+    date: s.date,
+    total_time_seconds: 0,
+    total_questions: s.attempts_count || 0,
+    attempted: s.attempts_count || 0,
+    correct: Math.floor(((s.accuracy || 0) / 100) * (s.attempts_count || 0)),
+    incorrect: (s.attempts_count || 0) - Math.floor(((s.accuracy || 0) / 100) * (s.attempts_count || 0)),
+    skipped: 0,
+    score: s.total_score || s.accuracy || 0,
+    accuracy: s.accuracy,
+    analytics: s.subject_scores || s.confidence_stats || '{}',
+    results_history: s.confidence_stats || '{}',
+    ai_feedback: '',
+    question_ids: '[]',
+  }
+}
+
 export async function getTestSession(sessionId: string): Promise<TestSession> {
-  const doc = await databases.getDocument(
-    DATABASE_ID,
-    COLLECTIONS.TEST_SESSIONS,
-    sessionId
-  )
-  return doc as unknown as TestSession
+  try {
+    const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, sessionId)
+    return doc as unknown as TestSession
+  } catch (e: any) {
+    // If not in TEST_SESSIONS, try USER_TEST_SUMMARY (legacy sessions)
+    if (e?.code === 404 || e?.type === 'document_not_found') {
+      try {
+        const summaryDoc = await databases.getDocument(DATABASE_ID, COLLECTIONS.USER_TEST_SUMMARY, sessionId)
+        return mapSummaryToSession(summaryDoc)
+      } catch { /* not in summary either */ }
+    }
+    throw e
+  }
 }
 
 export async function listTestSessions(params: {
@@ -250,32 +287,7 @@ export async function listTestSessions(params: {
     return q
   }
 
-  // Helper to map UserTestSummary to TestSession interface
-  const mapSummaryToSession = (s: any): TestSession => ({
-    $id: s.$id,
-    $createdAt: s.$createdAt || s.date,
-    user_id: s.user_id,
-    exam_type: 'UPSC', // Default for older records
-    year: 2024,
-    paper: s.test_id || 'Practice',
-    paper_label: s.test_id || 'Test History Record',
-    mode: (s.test_id?.toLowerCase().includes('full') || s.attempts_count > 50) ? 'full_length' : 'subject_practice',
-    started_at: s.date,
-    submitted_at: s.date,
-    date: s.date,
-    total_time_seconds: 0,
-    total_questions: s.attempts_count || 0,
-    attempted: s.attempts_count || 0,
-    correct: Math.floor(((s.accuracy || 0) / 100) * (s.attempts_count || 0)),
-    incorrect: (s.attempts_count || 0) - Math.floor(((s.accuracy || 0) / 100) * (s.attempts_count || 0)),
-    skipped: 0,
-    score: s.total_score || s.accuracy || 0,
-    accuracy: s.accuracy,
-    analytics: s.subject_scores || s.confidence_stats || '{}',
-    results_history: s.confidence_stats || '{}',
-    ai_feedback: '',
-    question_ids: '[]'
-  })
+  // mapSummaryToSession is defined at module level above
 
   try {
     // 1. Fetch from main collection (Test Sessions / results_history)
@@ -303,10 +315,13 @@ export async function listTestSessions(params: {
       console.warn('Summary sessions query failed:', e.message)
     }
 
-    // 3. Merge and Sort
+    // 3. Merge and deduplicate (skip summary records that are already in TEST_SESSIONS)
+    const mainIds = new Set((mainResults.documents as TestSession[]).map(d => d.$id))
     const merged = [
       ...(mainResults.documents as TestSession[]),
-      ...(summaryResults.documents.map(mapSummaryToSession))
+      ...(summaryResults.documents
+        .filter((s: any) => !mainIds.has(s.test_id)) // skip if TEST_SESSIONS already has it
+        .map(mapSummaryToSession))
     ]
 
     // Sort by date newest first
