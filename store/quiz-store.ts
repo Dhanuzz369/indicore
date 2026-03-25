@@ -22,6 +22,7 @@ interface QuizStore {
   sessionId: string
 
   testMode: boolean
+  practiceTimerTotal: number   // 0 = no countdown; >0 = subject practice total seconds
   paperLabel: string
   startTime: number | null
   elapsedSeconds: number
@@ -44,6 +45,7 @@ interface QuizStore {
   getScore: () => { correct: number; wrong: number; total: number; percentage: number }
 
   setTestMode: (val: boolean) => void
+  setPracticeTimerTotal: (seconds: number) => void
   setPaperLabel: (label: string) => void
   startTimer: () => void
   setElapsed: (seconds: number) => void
@@ -74,6 +76,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   sessionId: '',
 
   testMode: false,
+  practiceTimerTotal: 0,
   paperLabel: '',
   startTime: null,
   elapsedSeconds: 0,
@@ -179,6 +182,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     markedForReview: new Set<string>(),
     isAnswered: false,
     testMode: false,
+    practiceTimerTotal: 0,
     paperLabel: '',
     startTime: null,
     elapsedSeconds: 0,
@@ -186,11 +190,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     timers: {},
     activeStartTimes: {},
     confidenceMap: {},
-    buttonStats: {
-      areYouSure: 0,
-      used5050: 0,
-      guessed: 0,
-    },
+    buttonStats: { areYouSure: 0, used5050: 0, guessed: 0 },
   }),
 
   resetQuiz: () => set({
@@ -201,6 +201,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     markedForReview: new Set<string>(),
     isAnswered: false,
     testMode: false,
+    practiceTimerTotal: 0,
     paperLabel: '',
     startTime: null,
     elapsedSeconds: 0,
@@ -208,11 +209,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     timers: {},
     activeStartTimes: {},
     confidenceMap: {},
-    buttonStats: {
-      areYouSure: 0,
-      used5050: 0,
-      guessed: 0,
-    },
+    buttonStats: { areYouSure: 0, used5050: 0, guessed: 0 },
   }),
 
   getScore: () => {
@@ -229,6 +226,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   },
 
   setTestMode: (val: boolean) => set({ testMode: val }),
+  setPracticeTimerTotal: (seconds: number) => set({ practiceTimerTotal: seconds }),
   setPaperLabel: (label: string) => set({ paperLabel: label }),
   startTimer: () => set({ startTime: Date.now() }),
   setElapsed: (seconds: number) => set({ elapsedSeconds: seconds }),

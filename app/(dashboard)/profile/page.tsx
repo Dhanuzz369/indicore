@@ -26,6 +26,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+// Radix UI Select crashes on empty-string values — use a sentinel instead
+const SELECT_NONE = '__none__'
+
 import { toast } from 'sonner'
 import {
   ChevronLeft, Settings, Pencil, Trophy, BarChart3,
@@ -133,8 +136,8 @@ export default function ProfilePage() {
   // ─── Open edit modal ─────────────────────────────────────────────────────────
   const openEditModal = () => {
     setEditName(profile?.full_name || userName)
-    setEditExam(profile?.target_exam || '')
-    setEditYear(profile?.target_year ? String(profile.target_year) : '')
+    setEditExam(profile?.target_exam || SELECT_NONE)
+    setEditYear(profile?.target_year ? String(profile.target_year) : SELECT_NONE)
     setEditOpen(true)
   }
 
@@ -145,8 +148,8 @@ export default function ProfilePage() {
     try {
       const updated = await updateProfile(userId, {
         full_name: editName.trim(),
-        target_exam: editExam || null,
-        target_year: editYear ? parseInt(editYear) : null,
+        target_exam: editExam === SELECT_NONE ? null : editExam || null,
+        target_year: editYear && editYear !== SELECT_NONE ? parseInt(editYear) : null,
       })
       setProfile(updated as unknown as Profile)
       setEditOpen(false)
@@ -456,7 +459,7 @@ export default function ProfilePage() {
                   <SelectValue placeholder="Select exam" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Not selected</SelectItem>
+                  <SelectItem value={SELECT_NONE}>Not selected</SelectItem>
                   {TARGET_EXAMS.map(exam => (
                     <SelectItem key={exam} value={exam}>{exam}</SelectItem>
                   ))}
@@ -474,7 +477,7 @@ export default function ProfilePage() {
                   <SelectValue placeholder="Select year" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Not selected</SelectItem>
+                  <SelectItem value={SELECT_NONE}>Not selected</SelectItem>
                   {TARGET_YEARS.map(y => (
                     <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                   ))}

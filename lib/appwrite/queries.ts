@@ -212,8 +212,8 @@ export async function getTestSession(sessionId: string): Promise<TestSession> {
 
 export async function listTestSessions(params: {
   userId: string
-  from?: string          // ISO date string
-  to?: string            // ISO date string
+  from?: string
+  to?: string
   examType?: string
   mode?: string
   sort?: 'newest' | 'oldest' | 'highest_score' | 'lowest_score'
@@ -221,35 +221,44 @@ export async function listTestSessions(params: {
   offset?: number
 }): Promise<{ documents: TestSession[]; total: number }> {
   const { userId, from, to, examType, mode, sort = 'newest', limit = 10, offset = 0 } = params
-  const queries: string[] = [Query.equal('user_id', userId)]
 
-  if (from) queries.push(Query.greaterThanEqual('submitted_at', from))
-  if (to) queries.push(Query.lessThanEqual('submitted_at', to))
-  if (examType && examType !== 'all') queries.push(Query.equal('exam_type', examType))
-  if (mode && mode !== 'all') queries.push(Query.equal('mode', mode))
-
-  switch (sort) {
-    case 'oldest':
-      queries.push(Query.orderAsc('submitted_at'))
-      break
-    case 'highest_score':
-      queries.push(Query.orderDesc('score'))
-      break
-    case 'lowest_score':
-      queries.push(Query.orderAsc('score'))
-      break
-    case 'newest':
-    default:
-      queries.push(Query.orderDesc('submitted_at'))
+  const buildQueries = (includeFilters: boolean) => {
+    const q: string[] = [Query.equal('user_id', userId)]
+    if (includeFilters) {
+      if (from) q.push(Query.greaterThanEqual('submitted_at', from))
+      if (to) q.push(Query.lessThanEqual('submitted_at', to))
+      if (examType && examType !== 'all') q.push(Query.equal('exam_type', examType))
+      if (mode && mode !== 'all') q.push(Query.equal('mode', mode))
+    }
+    switch (sort) {
+      case 'oldest': q.push(Query.orderAsc('submitted_at')); break
+      case 'highest_score': q.push(Query.orderDesc('score')); break
+      case 'lowest_score': q.push(Query.orderAsc('score')); break
+      default: q.push(Query.orderDesc('submitted_at'))
+    }
+    q.push(Query.limit(limit))
+    q.push(Query.offset(offset))
+    return q
   }
 
-  queries.push(Query.limit(limit))
-  queries.push(Query.offset(offset))
-
-  const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, queries)
-  return {
-    documents: result.documents as unknown as TestSession[],
-    total: result.total,
+  try {
+    // Full query with all filters — requires Appwrite indexes on user_id, submitted_at, score, exam_type, mode
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, buildQueries(true))
+    return { documents: result.documents as unknown as TestSession[], total: result.total }
+  } catch {
+    try {
+      // Fallback: only user_id + newest sort (needs just user_id index)
+      const fallback = await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, [
+        Query.equal('user_id', userId),
+        Query.orderDesc('$createdAt'),
+        Query.limit(limit),
+        Query.offset(offset),
+      ])
+      return { documents: fallback.documents as unknown as TestSession[], total: fallback.total }
+    } catch (e2) {
+      console.error('listTestSessions failed:', e2)
+      throw e2
+    }
   }
 }
 

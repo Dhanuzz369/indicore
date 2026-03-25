@@ -110,6 +110,7 @@ export default function TestSessionPage() {
     visitedQuestions,
     markedForReview,
     testMode,
+    practiceTimerTotal,
     paperLabel,
     startTime,
     elapsedSeconds,
@@ -169,6 +170,21 @@ export default function TestSessionPage() {
     return () => clearInterval(interval)
   }, [questions.length, isSubmitted, setElapsed])
 
+  // ── 2d. Auto-submit when countdown hits zero ──
+  const autoSubmittedRef = useRef(false)
+  useEffect(() => {
+    if (!testMode || isSubmitted || autoSubmittedRef.current) return
+    const total = practiceTimerTotal > 0 ? practiceTimerTotal : 120 * 60
+    const left = Math.max(total - elapsedSeconds, 0)
+    if (left === 0) {
+      autoSubmittedRef.current = true
+      toast.info("Time's up! Submitting your test…")
+      setShowSubmitDialog(false)
+      setTimeout(() => handleConfirmSubmit(), 100)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elapsedSeconds, testMode, isSubmitted, practiceTimerTotal])
+
   if (questions.length === 0) return null
 
   const currentQuestion = questions[currentIndex]
@@ -178,10 +194,14 @@ export default function TestSessionPage() {
   const isMarkedCurrent = markedForReview.has(currentQuestion.$id)
   const isLastQuestion = currentIndex === total - 1
   const correctCount = Object.values(answers).filter(a => a.isCorrect).length
+  // Determine total seconds for countdown:
+  // - Full-length (testMode + practiceTimerTotal=0): 120 min
+  // - Subject practice (testMode + practiceTimerTotal>0): practiceTimerTotal
+  // - Free practice (testMode=false): count up
+  const countdownTotal = testMode ? (practiceTimerTotal > 0 ? practiceTimerTotal : 120 * 60) : 0
+  const timeLeft = countdownTotal > 0 ? Math.max(countdownTotal - elapsedSeconds, 0) : 0
   let timerDisplay = ''
-  if (testMode) {
-    const totalSeconds = 120 * 60 // 120 minutes (2 hours)
-    const timeLeft = Math.max(totalSeconds - elapsedSeconds, 0)
+  if (countdownTotal > 0) {
     const mTotal = Math.floor(timeLeft / 60).toString().padStart(2, '0')
     const s = (timeLeft % 60).toString().padStart(2, '0')
     timerDisplay = `${mTotal}:${s}`
@@ -190,6 +210,7 @@ export default function TestSessionPage() {
     const s = (elapsedSeconds % 60).toString().padStart(2, '0')
     timerDisplay = `${m}:${s}`
   }
+  const isTimeCritical = countdownTotal > 0 && timeLeft <= 60
 
   // Counts for summary
   const visitedUnanswered = Array.from(visitedQuestions).filter(
@@ -353,13 +374,14 @@ export default function TestSessionPage() {
         let sessionDocId = ''
         try {
           const firstQuestion = questions[0]
+          const { practiceTimerTotal: ptt } = useQuizStore.getState()
           const sessDoc = await createTestSession({
             user_id: user.$id,
             exam_type: firstQuestion?.exam_type ?? 'UPSC',
             year: firstQuestion?.year ?? new Date().getFullYear(),
             paper: firstQuestion?.paper ?? 'Prelims GS1',
             paper_label: paperLabel || 'Full Length Test',
-            mode: 'full_length',
+            mode: ptt > 0 ? 'subject_practice' : 'full_length',
             started_at: startedAt,
             submitted_at: submittedAt,
             total_time_seconds: elapsedSeconds,
@@ -370,7 +392,8 @@ export default function TestSessionPage() {
             skipped: questions.length - numAttempted,
             score: scorePercent,
             analytics: JSON.stringify(analytics),
-            ai_feedback: '', // TODO: call AI feedback generator here
+            ai_feedback: '',
+            question_ids: JSON.stringify(questions.map(q => q.$id)),
           })
           sessionDocId = sessDoc.$id
         } catch (e) {
@@ -571,10 +594,14 @@ export default function TestSessionPage() {
             Q {currentIndex + 1} / {total}
           </div>
           {/* Timer */}
-          <div className="font-mono font-black shrink-0 text-sm md:text-base flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white shadow-sm">
-            <span className={testMode ? 'text-red-500' : 'text-[#FF6B00]'}>⏱</span>
-            <span className={testMode ? 'text-red-600' : 'text-[#FF6B00]'}>{timerDisplay}</span>
-            {testMode && <span className="text-[10px] uppercase font-bold tracking-widest ml-0.5 text-red-500 bg-red-50 px-1.5 py-0.5 rounded">Left</span>}
+          <div className={`font-mono font-black shrink-0 text-sm md:text-base flex items-center gap-1.5 px-3 py-1.5 rounded-xl border shadow-sm transition-colors ${
+            isTimeCritical ? 'bg-red-50 border-red-200 animate-pulse' : 'bg-white border-gray-200'
+          }`}>
+            <span className={countdownTotal > 0 ? (isTimeCritical ? 'text-red-600' : 'text-[#FF6B00]') : 'text-[#FF6B00]'}>⏱</span>
+            <span className={countdownTotal > 0 ? (isTimeCritical ? 'text-red-700 font-black' : 'text-red-600') : 'text-[#FF6B00]'}>{timerDisplay}</span>
+            {countdownTotal > 0 && (
+              <span className={`text-[10px] uppercase font-bold tracking-widest ml-0.5 px-1.5 py-0.5 rounded ${isTimeCritical ? 'text-red-600 bg-red-100' : 'text-red-500 bg-red-50'}`}>Left</span>
+            )}
           </div>
           {/* Mobile palette toggle (test mode only) */}
           {testMode && (
