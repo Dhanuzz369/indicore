@@ -53,7 +53,7 @@ export interface QuizAttempt {
 
 export interface TestSession {
   $id: string
-  $createdAt: string
+  $createdAt?: string
   user_id: string
   exam_type: string
   year: number

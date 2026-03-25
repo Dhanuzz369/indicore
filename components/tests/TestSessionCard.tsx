@@ -49,7 +49,7 @@ export function TestSessionCard({ session }: TestSessionCardProps) {
             {session.exam_type || 'UPSC'} · {session.year || 2024} · {session.paper || 'Prelims GS1'}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
-            Submitted on {formatDateTime(session.submitted_at || session.date || session.$createdAt)}
+            Submitted on {formatDateTime(session.submitted_at || session.date || session.$createdAt || '')}
           </p>
         </div>
 
