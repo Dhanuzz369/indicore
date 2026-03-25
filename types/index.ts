@@ -73,6 +73,7 @@ export interface TestSession {
   accuracy?: number // Fallback for some history collectors
   total_score?: number // Fallback for some history collectors
   analytics: string    // JSON string of AnalyticsResult
+  results_history?: string // Fallback column name mentioned by user!
   ai_feedback: string  // AI generated feedback or empty string
   question_ids?: string // JSON array of question IDs in order
 }

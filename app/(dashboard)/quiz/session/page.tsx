@@ -466,7 +466,10 @@ export default function TestSessionPage() {
   const handleReportIssue = async () => {
     try {
       const user = await getCurrentUser()
-      if (!user) return
+      if (!user) {
+        toast.error('Please log in to report issues.')
+        return
+      }
       
       const promise = reportIssue({
         user_id: user.$id,
@@ -477,10 +480,11 @@ export default function TestSessionPage() {
       toast.promise(promise, {
         loading: 'Reporting question...',
         success: 'Thank you! Issue logged for review.',
-        error: 'Failed to report'
+        error: (err) => `Failed to report: ${err.message || 'Unknown error'}`
       })
     } catch (e) {
       console.error(e)
+      toast.error('An error occurred while reporting.')
     }
   }
 

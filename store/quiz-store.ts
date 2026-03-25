@@ -99,6 +99,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       visitedQuestions: new Set<string>(),
       markedForReview: new Set<string>(),
       isAnswered: false,
+      sessionId: typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
     }),
 
   submitAnswer: (questionId, selected, correct, timeTaken, used5050, isGuess, usedAreYouSure) => {
@@ -181,6 +182,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     visitedQuestions: new Set<string>(),
     markedForReview: new Set<string>(),
     isAnswered: false,
+    sessionId: typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
     testMode: false,
     practiceTimerTotal: 0,
     paperLabel: '',
@@ -200,6 +202,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     visitedQuestions: new Set<string>(),
     markedForReview: new Set<string>(),
     isAnswered: false,
+    sessionId: typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
     testMode: false,
     practiceTimerTotal: 0,
     paperLabel: '',

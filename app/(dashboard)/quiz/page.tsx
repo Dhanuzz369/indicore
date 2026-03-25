@@ -110,6 +110,10 @@ function QuizSetupContent() {
     try {
       const result = await getQuestions({ limit: paper.questions, examType: paper.examType, year: paper.year })
       if (!result.documents?.length) { toast.error('No questions found.'); setLoadingCardId(null); return }
+      
+      // RESET STORE BEFORE STARTING NEW SESSION
+      useQuizStore.getState().resetQuiz()
+      
       setQuestions(result.documents as unknown as Question[])
       setTestMode(true)
       setPracticeTimerTotal(0)   // 0 = use default 120-min full-length timer
@@ -134,17 +138,22 @@ function QuizSetupContent() {
     setStartLoading(true)
     try {
       const cap = Math.min(questionCount, configSubject.count || questionCount)
-      const filters: Parameters<typeof getQuestions>[0] = {
+      const filters: any = {
         subjectId: configSubject.$id,
         limit: cap,
       }
       if (selectedDifficulty !== 'All') filters.difficulty = selectedDifficulty.toLowerCase()
+      
       const result = await getQuestions(filters)
       if (!result.documents?.length) {
         toast.error('No questions found. Try a different difficulty or count.')
         setStartLoading(false)
         return
       }
+
+      // RESET STORE BEFORE STARTING NEW SESSION
+      useQuizStore.getState().resetQuiz()
+
       const qs = result.documents as unknown as Question[]
       setQuestions(qs)
       setTestMode(true)                                           // same quiz mode as full-length

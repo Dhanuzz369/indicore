@@ -196,7 +196,10 @@ export async function createTestSession(data: Omit<TestSession, '$id'>): Promise
     DATABASE_ID,
     COLLECTIONS.TEST_SESSIONS,
     ID.unique(),
-    data
+    {
+      ...data,
+      results_history: data.analytics // Map to the user's specific column name
+    }
   )
   return doc as unknown as TestSession
 }
@@ -269,14 +272,19 @@ export async function reportIssue(data: {
   question_id: string
   mode: string
 }) {
-  return await databases.createDocument(
-    DATABASE_ID,
-    COLLECTIONS.REPORTED_ISSUES,
-    ID.unique(),
-    {
-      ...data,
-      reported_at: new Date().toISOString(),
-      status: 'pending'
-    }
-  )
+  try {
+    return await databases.createDocument(
+      DATABASE_ID,
+      COLLECTIONS.REPORTED_ISSUES,
+      ID.unique(),
+      {
+        ...data,
+        reported_at: new Date().toISOString().split('.')[0] + 'Z', // Try stripped milliseconds for datetime compat
+        status: 'pending'
+      }
+    )
+  } catch (err) {
+    console.error('Report issue failed:', err)
+    throw err
+  }
 }

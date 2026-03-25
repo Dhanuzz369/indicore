@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import type { Question } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
+import { toast } from 'sonner'
 import { 
   ResponsiveContainer, 
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -269,7 +270,10 @@ function ResultsContent() {
             selectedOption: att.selected_option,
             isCorrect: att.is_correct,
             timeTaken: att.time_taken_seconds,
-            confidenceTag: att.confidence_tag
+            confidenceTag: att.confidence_tag,
+            used5050: !!att.used_5050,
+            isGuess: !!(att.is_guess || att.used_guess),
+            usedAreYouSure: !!att.used_areyousure
           }
           if (att.confidence_tag) {
             setConfidenceForQuestion(att.question_id, att.confidence_tag)
@@ -279,6 +283,7 @@ function ResultsContent() {
 
       } catch (e) {
         console.error('Rehydration failed:', e)
+        toast.error('Failed to reconstruct analysis.')
       } finally {
         setIsRehydrating(false)
       }

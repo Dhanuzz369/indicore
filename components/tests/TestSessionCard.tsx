@@ -11,10 +11,10 @@ interface ParsedAnalytics {
   subjectStats?: { subject: string; accuracy: number }[]
 }
 
-function getWeakSubjects(analyticsJson: string): string {
+function getWeakSubjects(analyticsData: string | any): string {
   try {
-    const a: ParsedAnalytics = JSON.parse(analyticsJson)
-    if (!a.subjectStats) return ''
+    const a: ParsedAnalytics = typeof analyticsData === 'string' ? JSON.parse(analyticsData) : analyticsData
+    if (!a || !a.subjectStats) return ''
     const weak = a.subjectStats
       .filter(s => s.accuracy < 55)
       .sort((a, b) => a.accuracy - b.accuracy)
@@ -31,7 +31,7 @@ interface TestSessionCardProps {
 }
 
 export function TestSessionCard({ session }: TestSessionCardProps) {
-  const weakSubjects = getWeakSubjects(session.analytics)
+  const weakSubjects = getWeakSubjects(session.results_history || session.analytics)
   const avgTime = formatAvgTime(session.total_time_seconds, session.total_questions)
 
   return (
