@@ -1,9 +1,10 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
+import { getTestSession, listAttemptsBySession, getQuestionsByIds } from '@/lib/appwrite/queries'
 import { 
   CheckCircle, XCircle, ChevronDown, BookOpen, Clock, RefreshCw, Home, 
   AlertCircle, Lightbulb, Brain, Target, Zap
@@ -223,10 +224,68 @@ function TaggedQuestionsDropdown({
   )
 }
 
-export default function ResultsPage() {
+function ResultsContent() {
   const router = useRouter()
-  const { questions, answers, confidenceMap, getScore, reset, paperLabel, elapsedSeconds } = useQuizStore()
+  const searchParams = useSearchParams()
+  const sessionId = searchParams.get('session')
+  const { 
+    questions, answers, confidenceMap, getScore, reset, paperLabel, elapsedSeconds,
+    setQuestions, setAnswers, setConfidenceForQuestion, setTestMode, setPaperLabel, setElapsed
+  } = useQuizStore()
+  
+  const [isRehydrating, setIsRehydrating] = useState(false)
   const score = getScore()
+
+  // ─── REHYDRATION LOGIC ──────────────────────────────────────
+  useEffect(() => {
+    const rehydrate = async () => {
+      if (!sessionId || questions.length > 0) return
+      
+      setIsRehydrating(true)
+      try {
+        const session = await getTestSession(sessionId)
+        if (!session) throw new Error('Session not found')
+
+        // 1. Get attempts to reconstruct answers & confidence
+        const attemptsResult = await listAttemptsBySession(sessionId)
+        
+        // 2. Get questions
+        const qIds = session.question_ids ? JSON.parse(session.question_ids) : []
+        if (qIds.length === 0) throw new Error('No question IDs in session')
+        
+        const questionsResult = await getQuestionsByIds(qIds)
+        // Sort questions order to match the original attempt
+        const orderedQs = qIds.map((id: string) => questionsResult.documents.find(q => q.$id === id)).filter(Boolean)
+
+        // 3. Update store
+        setQuestions(orderedQs as any)
+        setTestMode(session.mode === 'full_length')
+        setPaperLabel(session.paper_label)
+        setElapsed(session.total_time_seconds)
+
+        const reconstructedAnswers: any = {}
+        attemptsResult.documents.forEach((att: any) => {
+          reconstructedAnswers[att.question_id] = {
+            selectedOption: att.selected_option,
+            isCorrect: att.is_correct,
+            timeTaken: att.time_taken_seconds,
+            confidenceTag: att.confidence_tag
+          }
+          if (att.confidence_tag) {
+            setConfidenceForQuestion(att.question_id, att.confidence_tag)
+          }
+        })
+        setAnswers(reconstructedAnswers)
+
+      } catch (e) {
+        console.error('Rehydration failed:', e)
+      } finally {
+        setIsRehydrating(false)
+      }
+    }
+    
+    rehydrate()
+  }, [sessionId, questions.length, setQuestions, setAnswers, setConfidenceForQuestion, setTestMode, setPaperLabel, setElapsed])
 
 
 
@@ -276,7 +335,16 @@ export default function ResultsPage() {
     router.push(`/results/review?q=${index}`)
   }
 
-  // ─── No data state ───────────────────────────────────────────
+  // ─── No data / Rehydrating state ────────────────────────────
+  if (isRehydrating) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-6 bg-gray-50">
+        <Loader2 className="h-10 w-10 text-[#FF6B00] animate-spin mb-4" />
+        <p className="text-gray-400 font-black text-sm uppercase tracking-widest">Reconstructing Analysis...</p>
+      </div>
+    )
+  }
+
   if (questions.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[80vh] p-6 bg-gray-50">
@@ -564,5 +632,14 @@ export default function ResultsPage() {
 
       </main>
     </div>
+  )
+}
+import { Loader2 } from 'lucide-react'
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center"><Loader2 className="h-10 w-10 animate-spin mx-auto text-[#FF6B00]" /></div>}>
+      <ResultsContent />
+    </Suspense>
   )
 }

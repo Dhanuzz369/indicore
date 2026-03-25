@@ -60,6 +60,8 @@ interface QuizStore {
   incrementButtonUsage: (type: 'areYouSure' | 'used5050' | 'guessed') => void
   clearResponse: (questionId: string) => void
   updateTimeForAnswer: (questionId: string, timeTaken: number) => void
+  setAnswers: (answers: Record<string, AnswerRecord>) => void
+  setConfidenceMap: (map: Record<string, 'fifty_fifty' | 'guess' | 'sure'>) => void
 }
 
 export const useQuizStore = create<QuizStore>((set, get) => ({
@@ -312,4 +314,6 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
         }
       }
     }),
+  setAnswers: (answers) => set({ answers }),
+  setConfidenceMap: (confidenceMap) => set({ confidenceMap }),
 }))

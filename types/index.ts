@@ -70,6 +70,7 @@ export interface TestSession {
   score: number
   analytics: string    // JSON string of AnalyticsResult
   ai_feedback: string  // AI generated feedback or empty string
+  question_ids?: string // JSON array of question IDs in order
 }
 
 export interface UserTestSummary {

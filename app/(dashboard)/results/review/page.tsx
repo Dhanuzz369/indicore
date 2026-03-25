@@ -4,8 +4,11 @@ export const dynamic = 'force-dynamic'
 import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
-import { CheckCircle, XCircle, Lightbulb, BookOpen, ArrowLeft, ArrowRight, ChevronLeft } from 'lucide-react'
+import { CheckCircle, XCircle, Lightbulb, BookOpen, ArrowLeft, ArrowRight, ChevronLeft, Flag } from 'lucide-react'
 import type { Question } from '@/types'
+import { reportIssue } from '@/lib/appwrite/queries'
+import { getCurrentUser } from '@/lib/appwrite/auth'
+import { toast } from 'sonner'
 
 function confLabel(tag: string | null | undefined) {
   if (tag === 'sure') return '100% Sure ✅'
@@ -53,6 +56,27 @@ function ReviewContent() {
   const confTag = confidenceMap[question.$id] || answer?.confidenceTag
 
   const goTo = (idx: number) => router.push(`/results/review?q=${idx}`)
+
+  const handleReportIssue = async () => {
+    try {
+      const user = await getCurrentUser()
+      if (!user) return
+      
+      const promise = reportIssue({
+        user_id: user.$id,
+        question_id: question.$id,
+        mode: 'review'
+      })
+
+      toast.promise(promise, {
+        loading: 'Reporting question...',
+        success: 'Thank you! Issue logged for review.',
+        error: 'Failed to report'
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
@@ -134,6 +158,14 @@ function ReviewContent() {
                 {question.difficulty}
               </span>
             )}
+            <button
+              onClick={handleReportIssue}
+              className="ml-auto flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm"
+              title="Report issue with this question"
+            >
+              <Flag className="h-3 w-3" />
+              Report
+            </button>
           </div>
 
           {/* Question text */}
@@ -257,7 +289,7 @@ function ReviewContent() {
         {/* Right: Question Palette */}
         <div className="hidden lg:block">
           <div className="sticky top-20 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 max-h-[calc(100vh-100px)] overflow-y-auto">
-            <h3 className="font-black text-gray-800 text-sm mb-4 uppercase tracking-tight">Question Palette</h3>
+            <h3 className="font-black text-gray-800 text-sm mb-4 uppercase">Question Palette</h3>
             <div className="grid grid-cols-5 gap-2">
               {questions.map((q, idx) => {
                 const ans = answers[q.$id]
