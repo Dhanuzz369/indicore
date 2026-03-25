@@ -451,6 +451,9 @@ export default function TestSessionPage() {
         }
 
         toast.success('Test submitted and saved! 🎉')
+        // Navigate to results with savedSessionId for immediate rehydration
+        router.push(sessionDocId ? `/results?session=${sessionDocId}` : '/results')
+        return
       }
     } catch (e) {
       console.error('Failed to save attempts:', e)
@@ -574,8 +577,8 @@ export default function TestSessionPage() {
       {/* ─── TOP BAR ─── */}
       <header className="shrink-0 bg-white border-b shadow-sm z-40">
         <div className="max-w-7xl mx-auto px-3 md:px-4 h-14 md:h-16 flex items-center gap-2">
-          {/* Home button (practice mode) */}
-          {!testMode && (
+          {/* Home button (free practice mode) OR Back button (subject practice) */}
+          {!testMode ? (
             <button
               onClick={() => router.push('/dashboard')}
               className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 py-1.5 rounded-lg transition-colors shrink-0"
@@ -584,7 +587,16 @@ export default function TestSessionPage() {
               <House className="h-4 w-4" />
               <span className="hidden sm:inline text-xs font-medium">Home</span>
             </button>
-          )}
+          ) : practiceTimerTotal > 0 && !isSubmitted ? (
+            <button
+              onClick={() => router.push('/quiz?tab=subject')}
+              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-2 py-1.5 rounded-lg transition-colors shrink-0"
+              title="Back to Subject Selection"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline text-xs font-medium">Subjects</span>
+            </button>
+          ) : null}
           {/* Paper label */}
           <div className="flex-1 font-semibold text-gray-800 text-sm truncate">
             {paperLabel || (testMode ? 'Full Length Test' : 'Subject Practice')}
@@ -679,8 +691,8 @@ export default function TestSessionPage() {
               ))}
             </div>
 
-            {/* Confidence Tracking — shown AFTER option is selected, and only when test is not yet submitted */}
-            {(testMode ? (!!currentAnswer && !isSubmitted) : (!isAnswered)) && (
+            {/* Confidence Tracking — shown AFTER option is selected in both modes */}
+            {(!!currentAnswer && !isSubmitted) && (
               <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-xl mt-4">
                 <p className="text-sm font-semibold text-gray-800 text-center mb-3">
                   {testMode && currentAnswer

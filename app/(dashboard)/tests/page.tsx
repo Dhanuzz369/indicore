@@ -126,7 +126,7 @@ export default function TestsPage() {
             <p className="text-sm text-gray-500 max-w-xs mx-auto">
               {filters.search || filters.examType !== 'all' || filters.mode !== 'all'
                 ? 'Try adjusting your filters.'
-                : 'Complete a Full Length test to see your history here.'}
+                : 'Complete a test or subject practice to see your history here.'}
             </p>
             <Button
               onClick={() => router.push('/quiz')}
