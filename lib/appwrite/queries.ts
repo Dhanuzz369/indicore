@@ -1,6 +1,6 @@
 import { databases, storage, DATABASE_ID, COLLECTIONS, STORAGE_BUCKET_ID } from './config'
 import { ID, Query, ImageGravity } from 'appwrite'
-import type { TestSession, Note } from '@/types'
+import type { TestSession, Note, SkillProfile } from '@/types'
 
 // ─── AVATAR STORAGE ─────────────────────────────────
 export async function uploadAvatar(file: File): Promise<string> {
@@ -450,4 +450,54 @@ export async function deleteNote(noteId: string): Promise<void> {
 export async function getNoteById(noteId: string): Promise<Note> {
   const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.NOTES, noteId)
   return doc as unknown as Note
+}
+
+// ─── USER SKILL PROFILES ─────────────────────────────────────────
+
+export async function getSkillProfile(userId: string): Promise<SkillProfile | null> {
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.USER_SKILL_PROFILES, [
+      Query.equal('user_id', userId),
+      Query.limit(1),
+    ])
+    if (result.documents.length === 0) return null
+    return result.documents[0] as unknown as SkillProfile
+  } catch {
+    return null
+  }
+}
+
+export async function upsertSkillProfile(data: Omit<SkillProfile, '$id'>): Promise<SkillProfile> {
+  // Try to find existing profile first
+  const existing = await getSkillProfile(data.user_id)
+  if (existing?.$id) {
+    const { user_id, ...rest } = data
+    const doc = await databases.updateDocument(
+      DATABASE_ID,
+      COLLECTIONS.USER_SKILL_PROFILES,
+      existing.$id,
+      rest
+    )
+    return doc as unknown as SkillProfile
+  }
+  // Create new
+  const doc = await databases.createDocument(
+    DATABASE_ID,
+    COLLECTIONS.USER_SKILL_PROFILES,
+    ID.unique(),
+    data
+  )
+  return doc as unknown as SkillProfile
+}
+
+export async function getSessionCount(userId: string): Promise<number> {
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEST_SESSIONS, [
+      Query.equal('user_id', userId),
+      Query.limit(1),
+    ])
+    return result.total
+  } catch {
+    return 0
+  }
 }
