@@ -140,6 +140,10 @@ export default function TestSessionPage() {
   const [isSaving, setIsSaving] = useState(false)
   // Mobile palette drawer
   const [showMobilePalette, setShowMobilePalette] = useState(false)
+  // Report issue modal
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportDescription, setReportDescription] = useState('')
+  const [isReporting, setIsReporting] = useState(false)
 
   // ── 1. Redirect if no questions ──
   useEffect(() => {
@@ -474,28 +478,38 @@ export default function TestSessionPage() {
   }
 
   // ── Report Issue ──
-  const handleReportIssue = async () => {
+  const openReportModal = () => {
+    setReportDescription('')
+    setShowReportModal(true)
+  }
+
+  const handleSubmitReport = async () => {
+    if (!reportDescription.trim()) {
+      toast.error('Please describe the issue before submitting.')
+      return
+    }
+    setIsReporting(true)
     try {
       const user = await getCurrentUser()
       if (!user) {
         toast.error('Please log in to report issues.')
+        setIsReporting(false)
         return
       }
-      
-      const promise = reportIssue({
+      await reportIssue({
         user_id: user.$id,
         question_id: currentQuestion.$id,
-        mode: testMode ? 'full_length' : 'subject'
+        mode: testMode ? 'full_length' : 'subject',
+        description: reportDescription.trim(),
       })
-
-      toast.promise(promise, {
-        loading: 'Reporting question...',
-        success: 'Thank you! Issue logged for review.',
-        error: (err) => `Failed to report: ${err.message || 'Unknown error'}`
-      })
-    } catch (e) {
+      toast.success('Thank you! Issue logged for review.')
+      setShowReportModal(false)
+      setReportDescription('')
+    } catch (e: any) {
       console.error(e)
-      toast.error('An error occurred while reporting.')
+      toast.error('Failed to submit report. Please try again.')
+    } finally {
+      setIsReporting(false)
     }
   }
 
@@ -678,7 +692,7 @@ export default function TestSessionPage() {
                 )}
               </div>
               <button
-                onClick={handleReportIssue}
+                onClick={openReportModal}
                 className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm"
                 title="Report issue with this question"
               >
@@ -886,6 +900,69 @@ export default function TestSessionPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      )}
+
+      {/* ─── REPORT ISSUE MODAL ─── */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowReportModal(false)} />
+          <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-7 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-red-50 rounded-xl flex items-center justify-center">
+                  <Flag className="h-5 w-5 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="font-black text-gray-900 text-base">Report an Issue</h3>
+                  <p className="text-xs text-gray-400 font-medium">Q.{currentIndex + 1} · {testMode ? 'Full Length' : 'Subject Practice'}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="h-8 w-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+              >
+                <X className="h-4 w-4 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Description field */}
+            <div className="mb-6">
+              <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
+                Describe the issue
+              </label>
+              <textarea
+                value={reportDescription}
+                onChange={e => setReportDescription(e.target.value)}
+                placeholder="e.g. Wrong answer key, typo in question, missing option, factual error..."
+                rows={4}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] resize-none transition-all"
+              />
+              <p className="text-[10px] text-gray-400 mt-1.5 font-medium">{reportDescription.length} characters</p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="flex-1 h-12 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitReport}
+                disabled={isReporting || !reportDescription.trim()}
+                className="flex-1 h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-100"
+              >
+                {isReporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <><Flag className="h-4 w-4" /> Submit Report</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

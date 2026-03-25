@@ -348,6 +348,7 @@ export async function reportIssue(data: {
   user_id: string
   question_id: string
   mode: string
+  description?: string
 }) {
   try {
     return await databases.createDocument(
@@ -355,8 +356,11 @@ export async function reportIssue(data: {
       COLLECTIONS.REPORTED_ISSUES,
       ID.unique(),
       {
-        ...data,
-        reported_at: new Date().toISOString().split('.')[0] + 'Z', // Try stripped milliseconds for datetime compat
+        user_id: data.user_id,
+        question_id: data.question_id,
+        mode: data.mode,
+        description: data.description || '',
+        reported_at: new Date().toISOString().split('.')[0] + 'Z',
         status: 'pending'
       }
     )

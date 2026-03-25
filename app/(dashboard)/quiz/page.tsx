@@ -8,7 +8,7 @@ import { getCurrentUser } from '@/lib/appwrite/auth'
 import { useQuizStore } from '@/store/quiz-store'
 import { toast } from 'sonner'
 import {
-  Loader2, ArrowRight, Lock, LayoutGrid, FileText, Sparkles, X,
+  Loader2, ArrowRight, LayoutGrid, FileText, Sparkles, X,
   Clock, Zap, Target, ChevronRight, Search,
 } from 'lucide-react'
 import type { Question, Subject } from '@/types'
@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 const PAPER_OPTIONS = [
   { examType: "UPSC_PRE", year: 2024, label: "GS Paper I", status: "active", theme: "orange", questions: 100, time: "2 Hr", marks: 200, id: "p1" },
   { examType: "UPSC_PRE", year: 2023, label: "GS Paper I", status: "active", theme: "black", questions: 100, time: "2 Hr", marks: 200, id: "p2" },
-  { examType: "UPSC_PRE", year: 2022, label: "GS Paper I", status: "locked", theme: "gray", questions: 100, time: "2 Hr", marks: 200, id: "p3" },
+  { examType: "UPSC_PRE", year: 2022, label: "GS Paper I", status: "active", theme: "gray", questions: 100, time: "2 Hr", marks: 200, id: "p3" },
 ]
 
 const DIFFICULTY_OPTIONS = ['All', 'Easy', 'Medium', 'Hard'] as const
@@ -102,10 +102,6 @@ function QuizSetupContent() {
 
   // ── Full Length Test ──
   const handleStartTest = async (paper: typeof PAPER_OPTIONS[0]) => {
-    if (paper.status === 'locked') {
-      toast.info('This test is locked. Complete previous papers to unlock.')
-      return
-    }
     setLoadingCardId(paper.id)
     try {
       const result = await getQuestions({ limit: paper.questions, examType: paper.examType, year: paper.year })
@@ -229,7 +225,11 @@ function QuizSetupContent() {
                     {paper.year}
                   </div>
                   <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1 font-mono">UPSC PRELIMS</p>
-                  <h3 className="text-2xl font-black text-gray-900 mb-8">{paper.label}</h3>
+                  <div className="flex items-baseline gap-3 mb-2">
+                    <h3 className="text-2xl font-black text-gray-900">{paper.label}</h3>
+                    <span className="text-sm font-black text-gray-400">{paper.year}</span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-semibold mb-8">Prelims · General Studies · Paper I</p>
                   <div className="grid grid-cols-3 gap-4 mb-10 mt-auto">
                     <div>
                       <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Questions</p>
@@ -246,16 +246,17 @@ function QuizSetupContent() {
                   </div>
                   <button
                     onClick={() => handleStartTest(paper)}
-                    className={`h-16 w-full rounded-2xl flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-widest transition-all ${
-                      paper.status === 'locked'
-                        ? 'bg-gray-50 text-gray-300 border border-gray-100'
-                        : paper.theme === 'black'
-                          ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
+                    disabled={loadingCardId === paper.id}
+                    className={`h-16 w-full rounded-2xl flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
+                      paper.theme === 'black'
+                        ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
+                        : paper.theme === 'gray'
+                          ? 'bg-gray-800 text-white hover:bg-gray-700 shadow-lg shadow-gray-200'
                           : 'bg-[#FF6B00] text-white hover:bg-orange-600 shadow-lg shadow-orange-100'
                     }`}
                   >
                     {loadingCardId === paper.id ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                      <>Start Test {paper.status === 'locked' ? <Lock className="h-4 w-4" /> : <ArrowRight className="h-5 w-5" />}</>
+                      <>Start Test <ArrowRight className="h-5 w-5" /></>
                     )}
                   </button>
                 </div>
