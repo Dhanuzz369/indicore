@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser, signOut } from '@/lib/appwrite/auth'
-import { getProfile, updateProfile, listTestSessions } from '@/lib/appwrite/queries'
+import { getProfile, createProfile, updateProfile, listTestSessions } from '@/lib/appwrite/queries'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
@@ -47,15 +47,29 @@ export default function ProfilePage() {
         setUserId(user.$id)
 
         // Fetch profile and sessions in parallel
-        const [profileData, sessionsData] = await Promise.all([
-          getProfile(user.$id),
-          listTestSessions({ userId: user.$id, mode: 'full_length', limit: 100 })
-        ])
+        let profileData;
+        let sessionsData;
+        
+        try {
+          const [p, s] = await Promise.all([
+            getProfile(user.$id),
+            listTestSessions({ userId: user.$id, mode: 'full_length', limit: 100 })
+          ])
+          profileData = p;
+          sessionsData = s;
+        } catch (e: any) {
+          // If profile missing (404), create it!
+          if (e.code === 404) {
+             const newProfile = await createProfile(user.$id, user.name || 'Aspirant');
+             profileData = newProfile;
+             sessionsData = await listTestSessions({ userId: user.$id, mode: 'full_length', limit: 100 })
+          } else {
+             throw e;
+          }
+        }
 
         setProfile(profileData as unknown as Profile)
-        
-        // Calculate mock stats from full length sessions
-        const fullMocks = sessionsData.documents
+        const fullMocks = sessionsData?.documents || []
         if (fullMocks.length > 0) {
           const totalMocks = fullMocks.length
           const highestScore = Math.max(...fullMocks.map(s => s.score))
