@@ -107,3 +107,21 @@ export interface QuizFilters {
   year?: number
   limit?: number
 }
+
+export interface Note {
+  $id: string
+  $createdAt?: string
+  user_id: string
+  front: string
+  back: string
+  subject: string
+  topic: string
+  source_question_id?: string
+  next_review_at: string
+  interval_days: number
+  ease_factor: number
+  review_count: number
+  created_at: string
+}
+
+export type SRSRating = 'again' | 'hard' | 'good' | 'easy'
