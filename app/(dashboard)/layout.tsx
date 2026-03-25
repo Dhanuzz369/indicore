@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getCurrentUser, signOut, clearSessionCookie } from '@/lib/appwrite/auth'
-import { getProfile } from '@/lib/appwrite/queries'
+import { getProfile, getDueNotesCount } from '@/lib/appwrite/queries'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -17,6 +17,7 @@ import {
   Trophy,
   ChevronRight,
   ClipboardList,
+  BookOpen,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Profile } from '@/types'
@@ -31,11 +32,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 const navigation = [
-  { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Practice', href: '/quiz', icon: Brain },
-  { name: 'My Tests', href: '/tests', icon: ClipboardList },
-  { name: 'Results', href: '/results', icon: BarChart3 },
-  { name: 'Profile', href: '/profile', icon: User },
+  { name: 'Home',     href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Practice', href: '/quiz',      icon: Brain },
+  { name: 'My Tests', href: '/tests',     icon: ClipboardList },
+  { name: 'Notes',    href: '/notes',     icon: BookOpen },
+  { name: 'Results',  href: '/results',   icon: BarChart3 },
+  { name: 'Profile',  href: '/profile',   icon: User },
 ]
 
 function getInitials(name: string) {
@@ -47,6 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [dueCount, setDueCount] = useState(0)
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -55,6 +58,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (!user) { router.push('/login'); return }
         const userProfile = await getProfile(user.$id)
         setProfile(userProfile as unknown as Profile)
+        try {
+          const count = await getDueNotesCount(user.$id)
+          setDueCount(count)
+        } catch { /* non-critical */ }
       } catch {
         clearSessionCookie()
         router.push('/login')
@@ -130,7 +137,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 <item.icon className="h-5 w-5 shrink-0" />
                 {item.name}
-                {isActive && <ChevronRight className="h-4 w-4 ml-auto opacity-70" />}
+                {item.name === 'Notes' && dueCount > 0 ? (
+                  <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${isActive ? 'bg-white/30 text-white' : 'bg-[#FF6B00] text-white'}`}>
+                    {dueCount > 99 ? '99+' : dueCount}
+                  </span>
+                ) : (
+                  isActive && <ChevronRight className="h-4 w-4 ml-auto opacity-70" />
+                )}
               </Link>
             )
           })}
@@ -211,16 +224,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* ── Mobile Bottom Navigation ── */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-bottom">
-          <div className="grid grid-cols-5 h-16">
+          <div className="grid grid-cols-6 h-16">
             {navigation.map(item => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="flex flex-col items-center justify-center gap-1 transition-colors"
+                  className="flex flex-col items-center justify-center gap-1 transition-colors relative"
                 >
-                  <item.icon className={`h-5 w-5 ${isActive ? 'text-[#FF6B00]' : 'text-gray-400'}`} />
+                  <div className="relative">
+                    <item.icon className={`h-5 w-5 ${isActive ? 'text-[#FF6B00]' : 'text-gray-400'}`} />
+                    {item.name === 'Notes' && dueCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 bg-[#FF6B00] rounded-full text-white text-[8px] font-black flex items-center justify-center">
+                        {dueCount > 9 ? '9+' : dueCount}
+                      </span>
+                    )}
+                  </div>
                   <span className={`text-[10px] font-medium ${isActive ? 'text-[#FF6B00]' : 'text-gray-400'}`}>
                     {item.name}
                   </span>
