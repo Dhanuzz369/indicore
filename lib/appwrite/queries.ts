@@ -350,22 +350,25 @@ export async function reportIssue(data: {
   mode: string
   description?: string
 }) {
-  try {
-    return await databases.createDocument(
-      DATABASE_ID,
-      COLLECTIONS.REPORTED_ISSUES,
-      ID.unique(),
-      {
-        user_id: data.user_id,
-        question_id: data.question_id,
-        mode: data.mode,
-        description: data.description || '',
-        reported_at: new Date().toISOString().split('.')[0] + 'Z',
-        status: 'pending'
-      }
-    )
-  } catch (err) {
-    console.error('Report issue failed:', err)
-    throw err
+  const reportedAt = new Date().toISOString().split('.')[0] + 'Z'
+
+  // Try with description field first; fall back to mode+description concat if attribute missing
+  const payloads = [
+    { user_id: data.user_id, question_id: data.question_id, mode: data.mode, description: data.description || '', reported_at: reportedAt, status: 'pending' },
+    { user_id: data.user_id, question_id: data.question_id, mode: `${data.mode}${data.description ? ' | ' + data.description : ''}`, reported_at: reportedAt, status: 'pending' },
+    { user_id: data.user_id, question_id: data.question_id, mode: data.mode, reported_at: reportedAt, status: 'pending' },
+  ]
+
+  for (const payload of payloads) {
+    try {
+      return await databases.createDocument(DATABASE_ID, COLLECTIONS.REPORTED_ISSUES, ID.unique(), payload)
+    } catch (err: any) {
+      const isSchemaError = err?.code === 400 || err?.message?.includes('Unknown attribute') || err?.message?.includes('description') || err?.message?.includes('Invalid document structure')
+      if (isSchemaError) continue
+      console.error('Report issue failed:', err)
+      throw err
+    }
   }
+
+  throw new Error('Failed to save report after all retries')
 }
