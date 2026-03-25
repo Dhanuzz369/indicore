@@ -2,7 +2,7 @@ import { Question, QuizAttempt } from '@/types'
 
 interface AnalyticsResult {
   overallTime: { targetTime: number; actualTime: number }
-  subjectStats: { subject: string; correct: number; total: number; accuracy: number }[]
+  subjectStats: { subject: string; correct: number; incorrect: number; total: number; accuracy: number; marksLost: number }[]
   timingStats: { questionText: string; timeTaken: number; targetTime: number }[]
   buttonUsageStats: {
     totalGuess: number
@@ -135,14 +135,18 @@ export function generateTestAnalytics({
     }
   }
 
-  // Process aggregated stats for recommendations
   const subjectInsights = Array.from(subjectStats.entries()).map(
-    ([subjectId, data]) => ({
-      subject: subjectId,
-      correct: data.correct,
-      total: data.total,
-      accuracy: Math.round((data.correct / data.total) * 100),
-    })
+    ([subjectId, data]) => {
+      const incorrect = data.total - data.correct
+      return {
+        subject: subjectId,
+        correct: data.correct,
+        incorrect: incorrect,
+        total: data.total,
+        accuracy: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
+        marksLost: Number((incorrect * 0.66).toFixed(2))
+      }
+    }
   )
 
   const suggestions: string[] = []

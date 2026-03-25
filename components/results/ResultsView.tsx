@@ -11,10 +11,7 @@ import {
 import type { Question } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { toast } from 'sonner'
-import {
-  ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell
-} from 'recharts'
+
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -590,34 +587,77 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </div>
           </div>
 
-          {/* Subject performance bar chart */}
-          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-7 flex flex-col">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/10 flex items-center justify-center shrink-0">
-                <Target className="h-5 w-5 text-[#FF6B00]" />
+          {/* Subject performance bar chart - NEW DESIGN */}
+          <div className="bg-[#1A1A1A] rounded-[2rem] shadow-xl p-8 flex flex-col min-h-[400px]">
+            <div className="mb-6">
+              <h3 className="text-[11px] font-black text-[#A1A1A1] uppercase tracking-[0.15em] mb-4">
+                Subject Performance — Accuracy & Marks Lost
+              </h3>
+              
+              {/* Legend matching reference */}
+              <div className="flex items-center gap-6 mb-8">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#E54B4B]" />
+                  <span className="text-[10px] font-bold text-[#A1A1A1] uppercase tracking-wider">Below 50%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#E59935]" />
+                  <span className="text-[10px] font-bold text-[#A1A1A1] uppercase tracking-wider">50-70%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#6DA42A]" />
+                  <span className="text-[10px] font-bold text-[#A1A1A1] uppercase tracking-wider">Above 70%</span>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight leading-none">Subject Performance</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Accuracy per subject</p>
+
+              {/* Subject list matching reference */}
+              <div className="space-y-6">
+                {analytics.subjectStats.map((stat: any) => {
+                  const accuracy = stat.accuracy || 0
+                  const color = accuracy >= 70 ? '#6DA42A' : accuracy >= 50 ? '#E59935' : '#E54B4B'
+                  
+                  return (
+                    <div key={stat.subject} className="flex items-center gap-4">
+                      {/* Name */}
+                      <div className="w-24 shrink-0 text-right">
+                        <span className="text-[11px] font-black text-white uppercase tracking-tight">
+                          {stat.subject.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                      
+                      {/* Progress Bar Container */}
+                      <div className="flex-1 h-8 bg-[#2A2A2A] rounded-lg overflow-hidden relative">
+                        {/* Bar fill */}
+                        <div 
+                          className="h-full transition-all duration-1000 ease-out flex items-center px-3"
+                          style={{ 
+                            width: `${Math.max(15, accuracy)}%`, 
+                            backgroundColor: color 
+                          }}
+                        >
+                          <span className="text-[11px] font-black text-white">
+                            {accuracy}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Right Stats (Badges) */}
+                      <div className="flex flex-col gap-1 w-20 shrink-0">
+                        <div className="bg-[#2A2A2A] rounded px-2 py-0.5 text-center">
+                          <span className="text-[9px] font-bold text-[#A1A1A1]">
+                            {stat.correct}/{stat.total} correct
+                          </span>
+                        </div>
+                        <div className="bg-[#3D1E1E] rounded px-2 py-0.5 text-center">
+                          <span className="text-[9px] font-bold text-[#E54B4B]">
+                            -{stat.marksLost.toFixed(2)} marks
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
-            <div className="flex-1 min-h-[280px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.subjectStats} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="subject" type="category" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 800 }} width={80} />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
-                    contentStyle={{ backgroundColor: '#FFF', border: '1px solid #F1F5F9', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold' }}
-                  />
-                  <Bar dataKey="correct" radius={[0, 4, 4, 0]} barSize={14}>
-                    {analytics.subjectStats.map((entry: any, index: number) => (
-                      <Cell key={index} fill={entry.accuracy >= 70 ? '#00E5BE' : entry.accuracy >= 40 ? '#FF6B00' : '#FF4B4B'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
             </div>
           </div>
         </div>
