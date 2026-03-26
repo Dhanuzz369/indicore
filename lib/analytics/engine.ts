@@ -69,7 +69,7 @@ export function generateTestAnalytics({
     if (!question) continue
 
     // Subject-based performance
-    const subjectId = question.subject_id
+    const subjectId = question.subject_id ?? 'Unknown'
     if (!subjectStats.has(subjectId)) {
       subjectStats.set(subjectId, { correct: 0, total: 0 })
     }

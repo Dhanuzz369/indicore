@@ -49,7 +49,7 @@ export async function createProfile(userId: string, name: string): Promise<Profi
 
 export async function getProfile(userId: string): Promise<Profile | null> {
   const sb = createClient()
-  const { data } = await sb.from('profiles').select('*').eq('id', userId).single()
+  const { data } = await sb.from('profiles').select('*').eq('id', userId).maybeSingle()
   if (!data) return null
   return { ...data, $id: data.id } as unknown as Profile
 }
@@ -197,7 +197,7 @@ export async function listAttemptsBySession(sessionId: string) {
 
 export async function getUserStats(userId: string) {
   const sb = createClient()
-  const { data } = await sb.from('user_stats').select('*').eq('user_id', userId).single()
+  const { data } = await sb.from('user_stats').select('*').eq('user_id', userId).maybeSingle()
   if (!data) return null
   return { ...data, $id: data.id }
 }
@@ -450,7 +450,7 @@ export async function deleteNote(noteId: string) {
 
 export async function getNoteById(noteId: string) {
   const sb = createClient()
-  const { data } = await sb.from('notes').select('*').eq('id', noteId).single()
+  const { data } = await sb.from('notes').select('*').eq('id', noteId).maybeSingle()
   if (!data) return null
   return mapNote(data)
 }
@@ -463,7 +463,7 @@ export async function getSkillProfile(userId: string): Promise<any | null> {
     .from('user_skill_profiles')
     .select('*')
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
   if (!data) return null
   return {
     ...data,
