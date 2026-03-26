@@ -575,11 +575,18 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               </p>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Score</p>
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Marks Scored</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-5xl font-black text-white">{score.correct}</span>
-                    <span className="text-xl font-bold text-gray-600">/{displayQuestions.length}</span>
+                    <span className="text-5xl font-black text-white">
+                      {score.marksScored ?? score.correct}
+                    </span>
+                    <span className="text-xl font-bold text-gray-600">
+                      /{score.totalMarks ?? displayQuestions.length * 2}
+                    </span>
                   </div>
+                  <p className="text-[10px] text-gray-600 mt-1">
+                    +{score.correct * 2} − {(score.wrong * (2/3)).toFixed(2)} neg
+                  </p>
                 </div>
                 <div className="text-right">
                   <span className="text-4xl font-black text-[#00E5BE]">{score.percentage}%</span>

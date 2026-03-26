@@ -24,6 +24,8 @@ interface AnalyticsResult {
     wrong: number
     total: number
     percentage: number
+    marksScored: number
+    totalMarks: number
   }
   suggestions: string[]
 }
@@ -153,7 +155,7 @@ export function generateTestAnalytics({
         incorrect: incorrect,
         total: data.total,
         accuracy: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
-        marksLost: Number((incorrect * 0.66).toFixed(2))
+        marksLost: Number((incorrect * (2 / 3)).toFixed(2))
       }
     }
   )
@@ -188,15 +190,25 @@ export function generateTestAnalytics({
       accuracy: Math.round((v.correct / v.total) * 100),
     })),
     revisionSummary,
-    score: {
-      correct: Array.from(subjectStats.values()).reduce((sum, s) => sum + s.correct, 0),
-      // Use actual attempts to count wrongs vs total questions
-      wrong: attempts.filter(a => !a.is_correct).length,
-      total: questions.length,
-      percentage: questions.length > 0 
-        ? Math.round((Array.from(subjectStats.values()).reduce((sum, s) => sum + s.correct, 0) / questions.length) * 100)
-        : 0
-    },
+    score: (() => {
+      const correct = Array.from(subjectStats.values()).reduce((sum, s) => sum + s.correct, 0)
+      const wrong = attempts.filter(a => !a.is_correct && a.selected_option).length
+      const total = questions.length
+      const MARKS_PER_Q = 2
+      const NEGATIVE = 2 / 3           // 0.666... per wrong
+      const marksScored = Number((correct * MARKS_PER_Q - wrong * NEGATIVE).toFixed(2))
+      const totalMarks = total * MARKS_PER_Q
+      return {
+        correct,
+        wrong,
+        total,
+        percentage: totalMarks > 0
+          ? Number(((marksScored / totalMarks) * 100).toFixed(2))
+          : 0,
+        marksScored,
+        totalMarks,
+      }
+    })(),
     suggestions,
   }
 }

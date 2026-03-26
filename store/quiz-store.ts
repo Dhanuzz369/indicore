@@ -43,7 +43,7 @@ interface QuizStore {
   nextQuestion: () => void
   reset: () => void
   resetQuiz: () => void
-  getScore: () => { correct: number; wrong: number; total: number; percentage: number }
+  getScore: () => { correct: number; wrong: number; total: number; percentage: number; marksScored: number; totalMarks: number }
 
   setTestMode: (val: boolean) => void
   setPracticeTimerTotal: (seconds: number) => void
@@ -247,12 +247,19 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     const { answers } = get()
     const values = Object.values(answers)
     const correct = values.filter((a) => a.isCorrect).length
+    const wrong = values.filter((a) => !a.isCorrect && a.selectedOption).length
     const total = values.length
+    const MARKS_PER_Q = 2
+    const NEGATIVE = 2 / 3
+    const marksScored = Number((correct * MARKS_PER_Q - wrong * NEGATIVE).toFixed(2))
+    const totalMarks = total * MARKS_PER_Q
     return {
       correct,
-      wrong: total - correct,
+      wrong,
       total,
-      percentage: total > 0 ? Math.round((correct / total) * 100) : 0,
+      percentage: totalMarks > 0 ? Number(((marksScored / totalMarks) * 100).toFixed(2)) : 0,
+      marksScored,
+      totalMarks,
     }
   },
 
