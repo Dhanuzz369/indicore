@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCurrentUser } from '@/lib/appwrite/auth'
-import { getNotesByUser, getDueNotes, getSubjects } from '@/lib/appwrite/queries'
+import { getCurrentUser } from '@/lib/supabase/auth'
+import { getNotesByUser, getDueNotes, getSubjects } from '@/lib/supabase/queries'
 import { NoteCard } from '@/components/notes/NoteCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { BookOpen, Plus, RotateCcw, Search } from 'lucide-react'
@@ -34,11 +34,11 @@ export default function NotesPage() {
     setLoading(true)
     try {
       const [notesRes, due] = await Promise.all([
-        getNotesByUser({ userId, subject: filterSubject, limit: 100 }),
+        getNotesByUser({ userId, subjectFilter: filterSubject === 'all' ? undefined : filterSubject, limit: 100 }),
         getDueNotes(userId),
       ])
       setNotes(notesRes.documents)
-      setDueCount(due.length)
+      setDueCount(due.documents.length)
     } catch {
       toast.error('Failed to load notes.')
     } finally {

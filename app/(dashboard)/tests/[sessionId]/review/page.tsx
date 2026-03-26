@@ -3,14 +3,14 @@ export const dynamic = 'force-dynamic'
 
 import { Suspense, useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { getTestSession, listAttemptsBySession, getQuestionsByIds } from '@/lib/appwrite/queries'
+import { getTestSession, listAttemptsBySession, getQuestionsByIds } from '@/lib/supabase/queries'
 import type { Question } from '@/types'
 import {
   CheckCircle, XCircle, Lightbulb, BookOpen, ArrowLeft, ArrowRight,
   ChevronLeft, Flag, Loader2
 } from 'lucide-react'
-import { getCurrentUser } from '@/lib/appwrite/auth'
-import { reportIssue } from '@/lib/appwrite/queries'
+import { getCurrentUser } from '@/lib/supabase/auth'
+import { reportIssue } from '@/lib/supabase/queries'
 import { toast } from 'sonner'
 
 interface AnswerData {

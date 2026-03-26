@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCurrentUser } from '@/lib/appwrite/auth'
-import { getDueNotes, updateNote } from '@/lib/appwrite/queries'
+import { getCurrentUser } from '@/lib/supabase/auth'
+import { getDueNotes, updateNote } from '@/lib/supabase/queries'
 import { computeNextReview } from '@/lib/srs/engine'
 import { FlipCard } from '@/components/notes/FlipCard'
 import { RatingButtons } from '@/components/notes/RatingButtons'
@@ -29,7 +29,7 @@ export default function ReviewPage() {
       if (!user) { router.push('/login'); return }
       try {
         const due = await getDueNotes(user.$id)
-        setCards(due)
+        setCards(due.documents)
       } catch {
         toast.error('Failed to load review cards.')
       } finally {

@@ -4,11 +4,11 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
-import { getCurrentUser } from '@/lib/appwrite/auth'
+import { getCurrentUser } from '@/lib/supabase/auth'
 import {
   saveAttempt, incrementStats, saveUserTestSummary, createTestSession,
   reportIssue, getSubjects
-} from '@/lib/appwrite/queries'
+} from '@/lib/supabase/queries'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { OptionButton } from '@/components/quiz/OptionButton'
 import { ExplanationBox } from '@/components/quiz/ExplanationBox'

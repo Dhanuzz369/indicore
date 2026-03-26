@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
 import { CheckCircle, XCircle, Lightbulb, BookOpen, ArrowLeft, ArrowRight, ChevronLeft, Flag } from 'lucide-react'
 import type { Question } from '@/types'
-import { reportIssue } from '@/lib/appwrite/queries'
-import { getCurrentUser } from '@/lib/appwrite/auth'
+import { reportIssue } from '@/lib/supabase/queries'
+import { getCurrentUser } from '@/lib/supabase/auth'
 import { toast } from 'sonner'
 
 function confLabel(tag: string | null | undefined) {

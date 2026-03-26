@@ -3,12 +3,12 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCurrentUser, signOut } from '@/lib/appwrite/auth'
+import { getCurrentUser, signOut } from '@/lib/supabase/auth'
 import {
   getProfile, createProfile, updateProfile, listTestSessions,
   uploadAvatar, getAvatarUrl, deleteAvatarFile,
-} from '@/lib/appwrite/queries'
-import { STORAGE_BUCKET_ID } from '@/lib/appwrite/config'
+} from '@/lib/supabase/queries'
+import { STORAGE_BUCKET_ID } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

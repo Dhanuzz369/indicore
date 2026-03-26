@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
-import { getTestSession, listAttemptsBySession, getQuestionsByIds } from '@/lib/appwrite/queries'
+import { getTestSession, listAttemptsBySession, getQuestionsByIds } from '@/lib/supabase/queries'
 import {
   CheckCircle, XCircle, ChevronDown, BookOpen, Clock, RefreshCw, Home,
   Lightbulb, Brain, Target, Zap, Loader2, ArrowLeft

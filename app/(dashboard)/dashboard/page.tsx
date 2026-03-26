@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCurrentUser } from '@/lib/appwrite/auth'
-import { getProfile, getUserStats, getSubjects } from '@/lib/appwrite/queries'
+import { getCurrentUser } from '@/lib/supabase/auth'
+import { getProfile, getUserStats, getSubjects } from '@/lib/supabase/queries'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Flame, Target, BookCheck, CheckCircle, XCircle,

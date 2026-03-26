@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { X, BookOpen, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createNote } from '@/lib/appwrite/queries'
-import { getCurrentUser } from '@/lib/appwrite/auth'
+import { createNote } from '@/lib/supabase/queries'
+import { getCurrentUser } from '@/lib/supabase/auth'
 import type { Subject } from '@/types'
 
 interface NoteEditorProps {
@@ -31,6 +31,7 @@ export function NoteEditor({ prefillFront, sourceQuestionId, subjects, onClose, 
     try {
       const user = await getCurrentUser()
       if (!user) { toast.error('Please log in.'); setSaving(false); return }
+      const now = new Date().toISOString()
       await createNote({
         user_id: user.$id,
         front: front.trim(),
@@ -38,6 +39,11 @@ export function NoteEditor({ prefillFront, sourceQuestionId, subjects, onClose, 
         subject: subject || 'General',
         topic: topic.trim(),
         source_question_id: sourceQuestionId,
+        created_at: now,
+        next_review_at: now,
+        interval_days: 1,
+        ease_factor: 2.5,
+        review_count: 0,
       })
       toast.success('Note saved!')
       onSaved?.()

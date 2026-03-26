@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { getNoteById, updateNote, deleteNote, getSubjects } from '@/lib/appwrite/queries'
+import { getNoteById, updateNote, deleteNote, getSubjects } from '@/lib/supabase/queries'
 import { toast } from 'sonner'
 import { ArrowLeft, Trash2, Pencil, Loader2, Save, X } from 'lucide-react'
 import type { Note, Subject } from '@/types'
@@ -29,6 +29,7 @@ export default function CardDetailPage() {
 
   useEffect(() => {
     Promise.all([getNoteById(cardId), getSubjects()]).then(([n, subRes]) => {
+      if (!n) { router.push('/notes'); return }
       setNote(n)
       setFront(n.front)
       setBack(n.back)

@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { sendPasswordRecovery } from '@/lib/appwrite/auth'
+import { sendPasswordRecovery } from '@/lib/supabase/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

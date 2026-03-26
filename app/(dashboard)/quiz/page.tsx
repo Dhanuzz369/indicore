@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getSubjects, getQuestions, getQuestionCountBySubject } from '@/lib/appwrite/queries'
-import { getCurrentUser } from '@/lib/appwrite/auth'
+import { getSubjects, getQuestions, getQuestionCountBySubject } from '@/lib/supabase/queries'
+import { getCurrentUser } from '@/lib/supabase/auth'
 import { useQuizStore } from '@/store/quiz-store'
 import { toast } from 'sonner'
 import {
