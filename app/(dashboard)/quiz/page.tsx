@@ -382,7 +382,8 @@ function QuizSetupContent() {
                 {/* Config Card */}
                 <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 space-y-10">
 
-                  {/* Question Count */}
+                  {/* Question Count — hidden when a specific difficulty is selected */}
+                  {selectedDifficulty === 'All' && (
                   <div>
                     <div className="flex items-center gap-3 mb-5">
                       <div className="h-10 w-10 bg-blue-50 rounded-2xl flex items-center justify-center">
@@ -409,6 +410,7 @@ function QuizSetupContent() {
                       ))}
                     </div>
                   </div>
+                  )}
 
                   {/* Difficulty */}
                   <div>
@@ -434,27 +436,12 @@ function QuizSetupContent() {
                     </div>
                   </div>
 
-                  {/* Timer Preview */}
-                  <div className="bg-gray-900 rounded-[2rem] p-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 bg-[#FF6B00]/20 rounded-2xl flex items-center justify-center">
-                        <Clock className="h-6 w-6 text-[#FF6B00]" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total Countdown</p>
-                        <p className="text-2xl font-black text-white font-mono">{formatTimerPreview(totalTimerSeconds)}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Per Question</p>
-                      <p className="text-lg font-black text-[#FF6B00]">1:12</p>
-                    </div>
-                  </div>
-
                   {/* Session summary */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                      <p className="text-xl font-black text-gray-900">{questionCount}</p>
+                      <p className="text-xl font-black text-gray-900">
+                        {selectedDifficulty === 'All' ? questionCount : 'All'}
+                      </p>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Questions</p>
                     </div>
                     <div className="bg-gray-50 rounded-2xl p-4 text-center">
