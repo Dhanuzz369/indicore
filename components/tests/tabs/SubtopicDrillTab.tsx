@@ -37,13 +37,13 @@ export function SubtopicDrillTab({ analytics, questions, attemptMap }: SubtopicD
   } else {
     const map = new Map<string, DrillGroup>()
     for (const q of questions) {
-      const key = q.subtopic || q.subject_id
+      const key = q.subtopic || q.subject_id || 'General'
       const attempt = attemptMap[q.$id]
       const isCorrect = attempt?.is_correct ?? false
       if (!map.has(key)) {
         map.set(key, {
           name: key,
-          subjectId: q.subject_id,
+          subjectId: q.subject_id || 'General',
           subtopicId: q.subtopic || undefined,
           total: 0,
           correct: 0,
@@ -84,10 +84,10 @@ export function SubtopicDrillTab({ analytics, questions, attemptMap }: SubtopicD
           <div className="flex-1 min-w-0 space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-bold text-gray-900 capitalize truncate">
-                {group.name.replace(/_/g, ' ')}
+                {(group.name ?? 'General').replace(/_/g, ' ')}
               </p>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 shrink-0">
-                {group.subjectId.replace(/_/g, ' ')}
+                {(group.subjectId ?? 'General').replace(/_/g, ' ')}
               </span>
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-500">
