@@ -376,7 +376,7 @@ function mapNote(d: Record<string, any>): Note {
   return { ...d, $id: d.id, $createdAt: d.created_at } as unknown as Note
 }
 
-export async function createNote(data: Omit<Note, '$id' | '$createdAt'>) {
+export async function createNote(data: Pick<Note, 'user_id' | 'front' | 'back' | 'subject' | 'topic'> & Partial<Note>) {
   const sb = createClient()
   const { data: doc, error } = await sb.from('notes').insert(data).select().single()
   if (error) throw error
