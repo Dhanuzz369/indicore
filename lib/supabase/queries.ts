@@ -58,8 +58,7 @@ export async function updateProfile(userId: string, updates: Record<string, unkn
   const sb = createClient()
   const { data, error } = await sb
     .from('profiles')
-    .update(updates)
-    .eq('id', userId)
+    .upsert({ id: userId, ...updates }, { onConflict: 'id' })
     .select()
     .single()
   if (error) throw error
