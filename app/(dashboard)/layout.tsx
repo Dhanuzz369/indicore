@@ -42,7 +42,8 @@ const navigation = [
   { name: 'Profile',      href: '/profile',         icon: User },
 ]
 
-function getInitials(name: string) {
+function getInitials(name: string | null | undefined) {
+  if (!name) return 'U'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
