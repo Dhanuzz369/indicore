@@ -71,9 +71,26 @@ export async function getSubjects() {
   const sb = createClient()
   const { data, error } = await sb.from('subjects').select('*').order('name')
   if (error) throw error
-  // Map `name` → `Name` to match existing Subject type
   return {
     documents: (data ?? []).map(d => ({ ...d, $id: d.id, Name: d.name })),
+  }
+}
+
+// Single query: subjects + question counts via Postgres aggregation (replaces N+1 calls)
+export async function getSubjectsWithCounts() {
+  const sb = createClient()
+  const { data, error } = await sb
+    .from('subjects')
+    .select('*, questions(count)')
+    .order('name')
+  if (error) throw error
+  return {
+    documents: (data ?? []).map(d => ({
+      ...d,
+      $id: d.id,
+      Name: d.name,
+      count: (d.questions as unknown as { count: number }[])?.[0]?.count ?? 0,
+    })),
   }
 }
 

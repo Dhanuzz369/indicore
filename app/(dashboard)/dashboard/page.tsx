@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
-import { getProfile, getUserStats, getSubjects } from '@/lib/supabase/queries'
+import { getProfile, getUserStats, getSubjectsWithCounts } from '@/lib/supabase/queries'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Flame, Target, BookCheck, CheckCircle, XCircle,
@@ -155,10 +155,19 @@ export default function DashboardPage() {
     try {
       const user = await getCurrentUser()
       if (!user) throw new Error('Not authenticated')
+      // Subjects are static — serve from cache after first load
+      const cachedSubjects = sessionStorage.getItem('subjects_with_counts')
+      const subjectsPromise = cachedSubjects
+        ? Promise.resolve({ documents: JSON.parse(cachedSubjects) })
+        : getSubjectsWithCounts().then(r => {
+            sessionStorage.setItem('subjects_with_counts', JSON.stringify(r.documents))
+            return r
+          })
+
       const [profileData, statsData, subjectsData] = await Promise.all([
         getProfile(user.$id),
         getUserStats(user.$id),
-        getSubjects(),
+        subjectsPromise,
       ])
       setProfile(profileData as unknown as Profile)
       setStats(statsData as unknown as UserStats)

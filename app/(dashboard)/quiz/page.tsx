@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getSubjects, getQuestions, getQuestionCountBySubject } from '@/lib/supabase/queries'
+import { getSubjectsWithCounts, getQuestions } from '@/lib/supabase/queries'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { useQuizStore } from '@/store/quiz-store'
 import { toast } from 'sonner'
@@ -82,15 +82,17 @@ function QuizSetupContent() {
     })
     const fetchSubjects = async () => {
       try {
-        const result = await getSubjects()
-        const subjectsData = result.documents as unknown as Subject[]
-        const withCounts = await Promise.all(
-          subjectsData.map(async subj => ({
-            ...subj,
-            count: await getQuestionCountBySubject(subj.$id),
-          }))
-        )
-        setSubjects(withCounts)
+        // Cache subjects in sessionStorage — they never change between sessions
+        const cached = sessionStorage.getItem('subjects_with_counts')
+        if (cached) {
+          setSubjects(JSON.parse(cached))
+          setLoadingSubjects(false)
+          return
+        }
+        const result = await getSubjectsWithCounts()
+        const docs = result.documents as unknown as SubjectWithCount[]
+        sessionStorage.setItem('subjects_with_counts', JSON.stringify(docs))
+        setSubjects(docs)
       } catch {
         toast.error('Failed to load subjects')
       } finally {
