@@ -378,7 +378,7 @@ export default function TestSessionPage() {
             selection_history: JSON.stringify({ q_id: qId, selections: ans.selectionHistory || [], final_answer: ans.selectedOption, correct_answer: questions.find(q => q.$id === qId)?.correct_option })
           }
         })
-        const analytics = generateTestAnalytics({ questions, attempts: attemptsToAnalyze, totalTestTime: elapsedSeconds })
+        const analytics = generateTestAnalytics({ questions, attempts: attemptsToAnalyze, totalTestTime: elapsedSeconds, subjects })
 
         // ── New V1 analytics (for intelligence engine) ──
         let sessionDocId = ''

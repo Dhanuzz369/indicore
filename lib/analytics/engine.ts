@@ -34,11 +34,19 @@ export function generateTestAnalytics({
   questions,
   attempts,
   totalTestTime,
+  subjects,
 }: {
   questions: Question[]
   attempts: PartialAttempt[]
   totalTestTime: number
+  subjects?: { $id: string; Name: string }[]
 }): AnalyticsResult {
+  // Build UUID → name lookup so stats show "History" not a UUID
+  const subjectNameMap = new Map<string, string>()
+  if (subjects) {
+    for (const s of subjects) subjectNameMap.set(s.$id, s.Name)
+  }
+
   const subjectStats = new Map<string, { correct: number; total: number }>()
   const timingStats: {
     questionText: string
@@ -68,8 +76,9 @@ export function generateTestAnalytics({
     const question = questions.find((q) => q.$id === attempt.question_id)
     if (!question) continue
 
-    // Subject-based performance
-    const subjectId = question.subject_id ?? 'Unknown'
+    // Subject-based performance — resolve UUID to name if subjects were passed
+    const rawId = question.subject_id ?? 'Unknown'
+    const subjectId = subjectNameMap.get(rawId) ?? rawId
     if (!subjectStats.has(subjectId)) {
       subjectStats.set(subjectId, { correct: 0, total: 0 })
     }
