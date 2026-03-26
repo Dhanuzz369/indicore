@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
-import { getTestSession, listAttemptsBySession, getQuestionsByIds } from '@/lib/supabase/queries'
+import { getTestSession, listAttemptsBySession, getQuestionsByIds, getSubjects } from '@/lib/supabase/queries'
 import {
   CheckCircle, XCircle, ChevronDown, BookOpen, Clock, RefreshCw, Home,
   Lightbulb, Brain, Target, Zap, Loader2, ArrowLeft
@@ -65,7 +65,7 @@ function SubjectPerformanceCard({
             {accuracy}%
           </div>
           <div>
-            <h3 className="text-base font-black text-gray-900 uppercase tracking-tight">{subject.replace(/_/g, ' ')}</h3>
+            <h3 className="text-base font-black text-gray-900 uppercase tracking-tight">{(subject ?? 'Unknown').replace(/_/g, ' ')}</h3>
             <p className="text-xs text-gray-400 font-bold uppercase">{correct} / {total} Correct</p>
           </div>
         </div>
@@ -230,6 +230,16 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
   const [isRehydrating, setIsRehydrating] = useState(false)
   const [storedAnalytics, setStoredAnalytics] = useState<any>(null)
+  const [subjectMap, setSubjectMap] = useState<Record<string, string>>({})
+
+  // Load subjects once for UUID → name resolution
+  useEffect(() => {
+    getSubjects().then(res => {
+      const map: Record<string, string> = {}
+      for (const s of res.documents as any[]) map[s.$id] = s.Name
+      setSubjectMap(map)
+    }).catch(() => {})
+  }, [])
 
   // ── Which data source to display ──
   const displayQuestions  = replayMode ? (localData?.questions  ?? []) : storeQuestions
@@ -412,6 +422,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   }, [sessionId, replayMode, storeQuestions.length, setQuestions, setAnswers, setConfidenceForQuestion, setTestMode, setPaperLabel, setElapsed, setConfidenceMap])
 
   // ─── ANALYTICS ───────────────────────────────────────────────
+  const subjectsList = useMemo(
+    () => Object.entries(subjectMap).map(([id, name]) => ({ $id: id, Name: name })),
+    [subjectMap]
+  )
+
   const generatedAnalytics = useMemo(() =>
     generateTestAnalytics({
       questions: displayQuestions,
@@ -431,11 +446,24 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
         }
       }),
       totalTestTime: displayElapsed,
+      subjects: subjectsList,
     }),
-    [displayQuestions, displayAnswers, displayConfMap, displayElapsed]
+    [displayQuestions, displayAnswers, displayConfMap, displayElapsed, subjectsList]
   )
 
-  const analytics = (storedAnalytics?.subjectStats ? storedAnalytics : null) || generatedAnalytics
+  // Resolve UUID → name in storedAnalytics if needed
+  const resolvedStoredAnalytics = useMemo(() => {
+    if (!storedAnalytics?.subjectStats || Object.keys(subjectMap).length === 0) return storedAnalytics
+    return {
+      ...storedAnalytics,
+      subjectStats: storedAnalytics.subjectStats.map((s: any) => ({
+        ...s,
+        subject: subjectMap[s.subject] ?? s.subject ?? 'Unknown',
+      })),
+    }
+  }, [storedAnalytics, subjectMap])
+
+  const analytics = (resolvedStoredAnalytics?.subjectStats ? resolvedStoredAnalytics : null) || generatedAnalytics
   const score = analytics.score || getScore()
 
   const handleQuestionClick = (index: number) => {
@@ -631,7 +659,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                       {/* Name */}
                       <div className="w-24 shrink-0 text-right">
                         <span className="text-[11px] font-black text-white uppercase tracking-tight">
-                          {stat.subject.replace(/_/g, ' ')}
+                          {(stat.subject ?? 'Unknown').replace(/_/g, ' ')}
                         </span>
                       </div>
                       

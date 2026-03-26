@@ -44,8 +44,11 @@ export async function signOut() {
 // Adds $id shim so all pages using user.$id continue to work.
 export async function getCurrentUser() {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  // getSession() reads from the signed cookie — no network call, no 504 risk.
+  // RLS on Supabase tables enforces real security; client-side auth is for UX only.
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user) return null
+  const user = session.user
   return {
     ...user,
     $id: user.id,
