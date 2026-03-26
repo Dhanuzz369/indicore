@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { getCurrentUser } from '@/lib/appwrite/auth'
 import { listTestSessions } from '@/lib/appwrite/queries'
 import type { TestSession } from '@/types'
@@ -86,18 +87,25 @@ export default function TestsPage() {
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 space-y-6">
 
         {/* ── Header ── */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#FF6B00] rounded-xl flex items-center justify-center shadow-md shadow-orange-100">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-[#FF6B00] rounded-xl flex items-center justify-center shadow-md shadow-orange-100 shrink-0">
               <ClipboardList className="h-5 w-5 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-2xl font-black text-gray-900 tracking-tight">My Tests</h1>
               <p className="text-sm text-gray-500 font-medium">
-                Review your previous attempts, analytics and improvement areas.
+                Review your previous attempts and improvement areas.
               </p>
             </div>
           </div>
+          <Link
+            href="/tests/mistakes"
+            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors"
+          >
+            <BookOpen className="h-4 w-4" />
+            All Mistakes
+          </Link>
         </div>
 
         {/* ── Filters ── */}
