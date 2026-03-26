@@ -74,33 +74,62 @@ function SessionDetailContent() {
         setSession(sess)
         setSubjects(subsRes.documents as unknown as Subject[])
 
-        // Build attempt map
+        // ── Parse snapshot once — used for both questions and attempt fallback ──
+        let snapParsed: { questions?: Question[]; answers?: Record<string, any> } | null = null
+        if (sess.snapshot) {
+          try { snapParsed = JSON.parse(sess.snapshot) } catch {}
+        }
+
+        // ── Build attempt map ──
+        // Priority 1: attempts saved with session_id (most accurate, has time_taken etc.)
         const aMap: Record<string, QuizAttempt> = {}
         for (const a of attemptsRes.documents as unknown as QuizAttempt[]) {
           aMap[a.question_id] = a
         }
+
+        // Priority 2: if session_id wasn't stored on attempts, reconstruct from snapshot.answers
+        if (Object.keys(aMap).length === 0 && snapParsed?.answers) {
+          for (const [qId, ans] of Object.entries(snapParsed.answers)) {
+            aMap[qId] = {
+              $id: qId,
+              question_id: qId,
+              user_id: '',
+              selected_option: ans.selectedOption ?? '',
+              is_correct: ans.isCorrect ?? false,
+              confidence_tag: ans.confidenceTag ?? null,
+              time_taken_seconds: ans.timeTaken ?? null,
+            } as unknown as QuizAttempt
+          }
+        }
         setAttemptMap(aMap)
 
-        // Get questions from snapshot or DB
+        // ── Load questions ──
+        // Priority 1: snapshot.questions (full objects, no extra fetch needed)
         let qs: Question[] = []
-        const snapRaw = sess.snapshot
-        if (snapRaw) {
-          try {
-            const snap = JSON.parse(snapRaw)
-            if (Array.isArray(snap.questions) && snap.questions.length > 0) {
-              qs = snap.questions as Question[]
-            }
-          } catch { /* snapshot parse failed, fall through */ }
+        if (Array.isArray(snapParsed?.questions) && snapParsed!.questions!.length > 0) {
+          qs = snapParsed!.questions!
         }
+
+        // Priority 2: session.question_ids JSON array → fetch from DB
+        if (qs.length === 0 && sess.question_ids) {
+          try {
+            const ids: string[] = JSON.parse(sess.question_ids)
+            if (ids.length > 0) {
+              const qRes = await getQuestionsByIds(ids)
+              qs = qRes.documents as unknown as Question[]
+            }
+          } catch {}
+        }
+
+        // Priority 3: question IDs from attempts → fetch from DB
         if (qs.length === 0) {
-          const qIds = (attemptsRes.documents as unknown as QuizAttempt[])
-            .map(a => a.question_id)
-            .filter(Boolean)
+          const qIds = Object.keys(aMap).filter(Boolean)
           if (qIds.length > 0) {
             const qRes = await getQuestionsByIds(qIds)
             qs = qRes.documents as unknown as Question[]
           }
         }
+
         setQuestions(qs)
 
         // Parse analytics (prefer session.analytics, fallback session.results_history)
