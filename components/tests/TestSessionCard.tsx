@@ -4,7 +4,7 @@ import type { TestSession } from '@/types'
 import { formatDuration, formatDateTime, formatAvgTime } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Clock, CheckCircle, XCircle, MinusCircle, BookOpen, BarChart2, AlertTriangle } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, MinusCircle, BarChart2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 
 interface ParsedAnalytics {
@@ -96,18 +96,12 @@ export function TestSessionCard({ session }: TestSessionCardProps) {
         </div>
       )}
 
-      {/* Action buttons */}
-      <div className="px-6 py-4 border-t border-gray-50 flex items-center gap-3">
-        <Link href={`/tests/${session.$id}/results`} className="flex-1">
-          <Button variant="outline" size="sm" className="w-full gap-2 font-semibold hover:border-[#FF6B00]/40 hover:text-[#FF6B00]">
-            <BookOpen className="h-4 w-4" />
-            View Results
-          </Button>
-        </Link>
-        <Link href={`/tests/${session.$id}/analytics`} className="flex-1">
+      {/* Action button */}
+      <div className="px-6 py-4 border-t border-gray-50">
+        <Link href={`/tests/${session.$id}`} className="block w-full">
           <Button size="sm" className="w-full gap-2 bg-[#FF6B00] hover:bg-[#FF8C00] font-semibold">
             <BarChart2 className="h-4 w-4" />
-            View Analytics
+            View Details
           </Button>
         </Link>
       </div>

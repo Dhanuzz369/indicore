@@ -50,8 +50,9 @@ export default function CardDetailPage() {
       setNote(updated)
       setEditing(false)
       toast.success('Note updated.')
-    } catch {
-      toast.error('Failed to update note.')
+    } catch (err: any) {
+      console.error('[CardDetail] update failed:', err)
+      toast.error(err?.message || 'Failed to update note.')
     } finally {
       setSaving(false)
     }

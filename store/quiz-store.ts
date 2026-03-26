@@ -8,8 +8,9 @@ interface AnswerRecord {
   used5050: boolean
   isGuess: boolean
   usedAreYouSure: boolean
-  confidenceTag?: 'guess' | 'sure' | 'fifty_fifty' | null
-  selectionHistory?: { option: string, timestamp: string }[]
+  confidenceTag: 'guess' | 'sure' | 'fifty_fifty' | 'normal'
+  selectionHistory: { events: { t: number; type: string; option?: string; from?: string; to?: string }[]; change_count: number }
+  questionViewedAt?: number  // timestamp when question was first viewed (ms)
 }
 
 interface QuizStore {
@@ -64,6 +65,8 @@ interface QuizStore {
   updateTimeForAnswer: (questionId: string, timeTaken: number) => void
   setAnswers: (answers: Record<string, AnswerRecord>) => void
   setConfidenceMap: (map: Record<string, 'fifty_fifty' | 'guess' | 'sure'>) => void
+  recordQuestionViewed: (questionId: string) => void
+  recordAnswerChange: (questionId: string, from: string, to: string) => void
 }
 
 export const useQuizStore = create<QuizStore>((set, get) => ({
@@ -106,26 +109,51 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     const isCorrect = selected === correct
     set((state) => {
       const existingAns = state.answers[questionId]
-      const newHistory = existingAns?.selectionHistory ? [...existingAns.selectionHistory] : []
-      newHistory.push({ option: selected, timestamp: new Date().toISOString() })
-      
-      let confidenceTag: 'guess' | 'sure' | 'fifty_fifty' | null = null
-      if (used5050 || existingAns?.used5050) confidenceTag = 'fifty_fifty'
-      else if (isGuess || existingAns?.isGuess) confidenceTag = 'guess'
-      else if (usedAreYouSure || existingAns?.usedAreYouSure) confidenceTag = 'sure'
-      
+      const now = Math.floor(Date.now() / 1000)
+      const viewedAt = state.answers[questionId]?.questionViewedAt
+        ? Math.floor(state.answers[questionId].questionViewedAt! / 1000)
+        : now - timeTaken
+
+      // Build new event-stream history
+      const existingEvents = existingAns?.selectionHistory?.events ?? []
+      const prevSelected = existingAns?.selectedOption
+      const t = now - viewedAt
+
+      const newEvents = [...existingEvents]
+      if (prevSelected && prevSelected !== selected) {
+        newEvents.push({ t, type: 'change', from: prevSelected, to: selected })
+      } else if (!prevSelected) {
+        newEvents.push({ t, type: 'select', option: selected })
+      }
+      newEvents.push({ t: t + 1, type: 'submit', option: selected })
+
+      const prevChangeCount = existingAns?.selectionHistory?.change_count ?? 0
+      const newChangeCount = prevSelected && prevSelected !== selected
+        ? prevChangeCount + 1
+        : prevChangeCount
+
+      // Priority: sure > fifty_fifty > guess > normal
+      let confidenceTag: 'guess' | 'sure' | 'fifty_fifty' | 'normal' = 'normal'
+      const hadSure = usedAreYouSure || existingAns?.usedAreYouSure || false
+      const hadFF = used5050 || existingAns?.used5050 || false
+      const hadGuess = isGuess || existingAns?.isGuess || false
+      if (hadSure) confidenceTag = 'sure'
+      else if (hadFF) confidenceTag = 'fifty_fifty'
+      else if (hadGuess) confidenceTag = 'guess'
+
       return {
         answers: {
           ...state.answers,
-          [questionId]: { 
-            selectedOption: selected, 
-            isCorrect, 
-            timeTaken, 
-            used5050: used5050 || existingAns?.used5050 || false, 
-            isGuess: isGuess || existingAns?.isGuess || false, 
-            usedAreYouSure: usedAreYouSure || existingAns?.usedAreYouSure || false,
+          [questionId]: {
+            selectedOption: selected,
+            isCorrect,
+            timeTaken,
+            used5050: hadFF,
+            isGuess: hadGuess,
+            usedAreYouSure: hadSure,
             confidenceTag,
-            selectionHistory: newHistory
+            selectionHistory: { events: newEvents, change_count: newChangeCount },
+            questionViewedAt: existingAns?.questionViewedAt,
           },
         },
         isAnswered: false,
@@ -317,4 +345,50 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     }),
   setAnswers: (answers) => set({ answers }),
   setConfidenceMap: (confidenceMap) => set({ confidenceMap }),
+
+  recordQuestionViewed: (questionId: string) =>
+    set((state) => {
+      if (state.answers[questionId]?.questionViewedAt) return state  // already recorded
+      const now = Date.now()
+      const existingAns = state.answers[questionId]
+      return {
+        answers: {
+          ...state.answers,
+          [questionId]: existingAns
+            ? { ...existingAns, questionViewedAt: now }
+            : {
+                selectedOption: '',
+                isCorrect: false,
+                timeTaken: 0,
+                used5050: false,
+                isGuess: false,
+                usedAreYouSure: false,
+                confidenceTag: 'normal' as const,
+                selectionHistory: { events: [{ t: 0, type: 'view' }], change_count: 0 },
+                questionViewedAt: now,
+              },
+        },
+      }
+    }),
+
+  recordAnswerChange: (questionId: string, from: string, to: string) =>
+    set((state) => {
+      const existingAns = state.answers[questionId]
+      if (!existingAns) return state
+      const viewedAt = existingAns.questionViewedAt
+        ? Math.floor(existingAns.questionViewedAt / 1000)
+        : Math.floor(Date.now() / 1000)
+      const t = Math.floor(Date.now() / 1000) - viewedAt
+      const events = [...(existingAns.selectionHistory?.events ?? []), { t, type: 'change', from, to }]
+      const prevCount = existingAns.selectionHistory?.change_count ?? 0
+      return {
+        answers: {
+          ...state.answers,
+          [questionId]: {
+            ...existingAns,
+            selectionHistory: { events, change_count: prevCount + 1 },
+          },
+        },
+      }
+    }),
 }))
