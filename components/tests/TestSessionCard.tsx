@@ -98,10 +98,10 @@ export function TestSessionCard({ session }: TestSessionCardProps) {
 
       {/* Action button */}
       <div className="px-6 py-4 border-t border-gray-50">
-        <Link href={`/tests/${session.$id}`} className="block w-full">
+        <Link href={`/tests/${session.$id}?tab=overview`} className="block w-full">
           <Button size="sm" className="w-full gap-2 bg-[#FF6B00] hover:bg-[#FF8C00] font-semibold">
             <BarChart2 className="h-4 w-4" />
-            View Details
+            View Analytics
           </Button>
         </Link>
       </div>
