@@ -10,11 +10,17 @@ interface QuestionReviewCardProps {
   userAnswer: string | null   // null = skipped
   isCorrect: boolean
   wasSkipped: boolean
-  confidenceTag?: string | null
+  confidenceTag?: 'sure' | 'fifty_fifty' | 'guess' | 'normal' | null
   timeTaken?: number | null
   subjectName?: string        // human-readable name, falls back to question.subject_id
   subjects?: Subject[]        // for NoteEditor
   showSaveNote?: boolean
+}
+
+const CONFIDENCE_LABELS: Record<string, string> = {
+  sure: 'Sure',
+  fifty_fifty: '50/50',
+  guess: 'Guess',
 }
 
 export function QuestionReviewCard({
@@ -47,10 +53,8 @@ export function QuestionReviewCard({
     return map[opt] ? `${opt}. ${map[opt]}` : opt
   }
 
-  const confidenceLabel: Record<string, string> = {
-    sure: 'Sure',
-    fifty_fifty: '50/50',
-    guess: 'Guess',
+  if (process.env.NODE_ENV === 'development' && showSaveNote && subjects.length === 0) {
+    console.warn('[QuestionReviewCard] showSaveNote is true but subjects array is empty — Save as Note button will be hidden')
   }
 
   return (
@@ -72,9 +76,9 @@ export function QuestionReviewCard({
             Skipped
           </span>
         )}
-        {confidenceTag && confidenceTag !== 'normal' && confidenceLabel[confidenceTag] && (
+        {confidenceTag && confidenceTag !== 'normal' && CONFIDENCE_LABELS[confidenceTag] && (
           <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
-            {confidenceLabel[confidenceTag]}
+            {CONFIDENCE_LABELS[confidenceTag]}
           </span>
         )}
         {timeTaken != null && timeTaken > 0 && (
