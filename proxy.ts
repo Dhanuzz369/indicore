@@ -25,8 +25,9 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired — required by @supabase/ssr
-  const { data: { user } } = await supabase.auth.getUser()
+  // getSession() reads from the signed cookie — no network call, no latency.
+  // (getUser() hits the Supabase auth server on every request and causes timeouts.)
+  const { data: { session } } = await supabase.auth.getSession()
   const { pathname } = request.nextUrl
 
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup')
@@ -34,15 +35,18 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/quiz') ||
     pathname.startsWith('/profile') ||
-    pathname.startsWith('/results')
+    pathname.startsWith('/results') ||
+    pathname.startsWith('/tests') ||
+    pathname.startsWith('/notes') ||
+    pathname.startsWith('/intelligence')
 
-  if (isProtectedRoute && !user) {
+  if (isProtectedRoute && !session) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  if (isAuthRoute && user) {
+  if (isAuthRoute && session) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
@@ -50,7 +54,17 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
+  // Only run middleware on routes that need auth — skip static assets and API routes
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp)$).*)',
+    '/dashboard(.*)',
+    '/quiz(.*)',
+    '/profile(.*)',
+    '/results(.*)',
+    '/tests(.*)',
+    '/notes(.*)',
+    '/intelligence(.*)',
+    '/onboarding(.*)',
+    '/login',
+    '/signup',
   ],
 }
