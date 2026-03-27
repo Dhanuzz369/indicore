@@ -106,7 +106,7 @@ function QuizSetupContent() {
     const fetchSubjects = async () => {
       try {
         // Cache subjects in sessionStorage — they never change between sessions
-        const cached = sessionStorage.getItem('subjects_with_counts')
+        const cached = sessionStorage.getItem('subjects_with_counts_v2')
         if (cached) {
           setSubjects(JSON.parse(cached))
           setLoadingSubjects(false)
@@ -114,7 +114,7 @@ function QuizSetupContent() {
         }
         const result = await getSubjectsWithCounts()
         const docs = result.documents as unknown as SubjectWithCount[]
-        sessionStorage.setItem('subjects_with_counts', JSON.stringify(docs))
+        sessionStorage.setItem('subjects_with_counts_v2', JSON.stringify(docs))
         setSubjects(docs)
       } catch {
         toast.error('Failed to load subjects')
