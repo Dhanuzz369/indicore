@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getSubjectsWithCounts, getQuestions } from '@/lib/supabase/queries'
+import { getSubjectsWithCounts, getQuestions, listMocks, getSubjectsWithMockCounts } from '@/lib/supabase/queries'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { useQuizStore } from '@/store/quiz-store'
 import { toast } from 'sonner'
@@ -11,8 +11,17 @@ import {
   Loader2, ArrowRight, LayoutGrid, FileText, Sparkles, X,
   Clock, Zap, Target, ChevronRight, Search,
 } from 'lucide-react'
-import type { Question, Subject } from '@/types'
+import type { Question, Subject, Mock } from '@/types'
 import { Skeleton } from '@/components/ui/skeleton'
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 const PAPER_OPTIONS = [
   { examType: "UPSC_PRE", year: 2024, label: "GS Paper I", status: "active", theme: "orange", questions: 100, time: "2 Hr", marks: 200, id: "p1" },
@@ -62,7 +71,9 @@ function QuizSetupContent() {
   const tabParam = searchParams.get('tab')
   const { setQuestions, setTestMode, setPaperLabel, setPracticeTimerTotal } = useQuizStore()
 
-  const [activeTab, setActiveTab] = useState<'full' | 'subject'>(tabParam === 'subject' ? 'subject' : 'full')
+  const [activeTab, setActiveTab] = useState<'mock' | 'full' | 'subject'>(
+    tabParam === 'full' ? 'full' : tabParam === 'subject' ? 'subject' : 'mock'
+  )
   const [loadingCardId, setLoadingCardId] = useState<string | null>(null)
 
   type SubjectWithCount = Subject & { count: number }
@@ -75,6 +86,18 @@ function QuizSetupContent() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('All')
   const [questionCount, setQuestionCount] = useState(20)
   const [startLoading, setStartLoading] = useState(false)
+
+  // Mock tab state
+  type MockSubjectWithCount = Subject & { count: number }
+  const [mocks, setMocks] = useState<Mock[]>([])
+  const [loadingMocks, setLoadingMocks] = useState(true)
+  const [loadingMockId, setLoadingMockId] = useState<string | null>(null)
+  const [mockSubjects, setMockSubjects] = useState<MockSubjectWithCount[]>([])
+  const [loadingMockSubjects, setLoadingMockSubjects] = useState(true)
+  const [mockConfigSubject, setMockConfigSubject] = useState<MockSubjectWithCount | null>(null)
+  const [mockSelectedDifficulty, setMockSelectedDifficulty] = useState<Difficulty>('All')
+  const [mockQuestionCount, setMockQuestionCount] = useState(20)
+  const [mockStartLoading, setMockStartLoading] = useState(false)
 
   useEffect(() => {
     getCurrentUser().then(user => {
@@ -100,6 +123,28 @@ function QuizSetupContent() {
       }
     }
     fetchSubjects()
+    const fetchMocks = async () => {
+      try {
+        const result = await listMocks()
+        setMocks(result.documents)
+      } catch {
+        toast.error('Failed to load mocks')
+      } finally {
+        setLoadingMocks(false)
+      }
+    }
+    const fetchMockSubjects = async () => {
+      try {
+        const result = await getSubjectsWithMockCounts()
+        setMockSubjects(result.documents as unknown as MockSubjectWithCount[])
+      } catch {
+        toast.error('Failed to load mock subjects')
+      } finally {
+        setLoadingMockSubjects(false)
+      }
+    }
+    fetchMocks()
+    fetchMockSubjects()
   }, [])
 
   // ── Full Length Test ──
@@ -120,6 +165,39 @@ function QuizSetupContent() {
     } catch {
       toast.error('Failed to start test')
       setLoadingCardId(null)
+    }
+  }
+
+  // ── Full Mock — randomise per subject weights and start ──
+  const handleStartMock = async (mock: Mock) => {
+    setLoadingMockId(mock.$id)
+    try {
+      useQuizStore.getState().resetQuiz()
+      const allQuestions: Question[] = []
+      for (const weight of mock.subject_weights) {
+        const result = await getQuestions({
+          examType: 'INDICORE_MOCK',
+          subjectId: weight.subjectId,
+          limit: weight.count * 2,
+        })
+        const batch = result.documents as unknown as Question[]
+        const shuffled = shuffleArray(batch)
+        allQuestions.push(...shuffled.slice(0, weight.count))
+      }
+      if (allQuestions.length === 0) {
+        toast.error('No mock questions available yet. Upload questions first.')
+        setLoadingMockId(null)
+        return
+      }
+      const finalQuestions = shuffleArray(allQuestions)
+      setQuestions(finalQuestions)
+      setTestMode(true)
+      setPracticeTimerTotal(0)
+      setPaperLabel(mock.name)
+      router.push('/quiz/session?id=' + crypto.randomUUID())
+    } catch {
+      toast.error('Failed to start mock test')
+      setLoadingMockId(null)
     }
   }
 
@@ -164,6 +242,42 @@ function QuizSetupContent() {
     }
   }
 
+  // ── Subject-wise Mock — begin after config ──
+  const handleStartMockPractice = async () => {
+    if (!mockConfigSubject) return
+    setMockStartLoading(true)
+    try {
+      const filters: Parameters<typeof getQuestions>[0] = {
+        examType: 'INDICORE_MOCK',
+        subjectId: mockConfigSubject.$id,
+      }
+      if (mockSelectedDifficulty !== 'All') {
+        filters.difficulty = mockSelectedDifficulty.toLowerCase()
+      } else {
+        filters.limit = mockQuestionCount * 2
+      }
+      const result = await getQuestions(filters)
+      if (!result.documents?.length) {
+        toast.error('No mock questions found. Try a different difficulty.')
+        setMockStartLoading(false)
+        return
+      }
+      useQuizStore.getState().resetQuiz()
+      const shuffled = shuffleArray(result.documents as unknown as Question[])
+      const finalQs = mockSelectedDifficulty === 'All'
+        ? shuffled.slice(0, mockQuestionCount)
+        : shuffled
+      setQuestions(finalQs)
+      setTestMode(true)
+      setPracticeTimerTotal(finalQs.length * SECONDS_PER_QUESTION)
+      setPaperLabel(`${mockConfigSubject.Name} · Mock · ${mockSelectedDifficulty === 'All' ? 'All' : mockSelectedDifficulty} · ${finalQs.length}Q`)
+      router.push('/quiz/session?id=' + crypto.randomUUID())
+    } catch {
+      toast.error('Failed to start mock practice')
+      setMockStartLoading(false)
+    }
+  }
+
   const totalTimerSeconds = questionCount * SECONDS_PER_QUESTION
 
   return (
@@ -176,7 +290,7 @@ function QuizSetupContent() {
             <LayoutGrid className="h-6 w-6" />
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
-            {activeTab === 'full' ? 'Practice Selection' : 'Practice Lab'}
+            {activeTab === 'full' ? 'PYQ Tests' : activeTab === 'mock' ? 'Mock Tests' : 'Practice Lab'}
           </h1>
         </div>
         <div className="flex items-center gap-3">
@@ -193,10 +307,16 @@ function QuizSetupContent() {
       <div className="max-w-3xl mx-auto px-6 mt-4">
         <div className="bg-gray-100 p-1.5 rounded-[2rem] flex h-16">
           <button
+            onClick={() => { setActiveTab('mock'); setMockConfigSubject(null) }}
+            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'mock' ? 'bg-[#FF6B00] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Mock Test
+          </button>
+          <button
             onClick={() => { setActiveTab('full'); setConfigSubject(null) }}
             className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'full' ? 'bg-[#FF6B00] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            Full Length Test
+            PYQ
           </button>
           <button
             onClick={() => { setActiveTab('subject'); setConfigSubject(null) }}
@@ -208,6 +328,231 @@ function QuizSetupContent() {
       </div>
 
       <main className="max-w-7xl mx-auto px-6 mt-16">
+
+        {/* ── MOCK TEST VIEW ── */}
+        {activeTab === 'mock' && (
+          <div className="space-y-12">
+
+            {/* Full Mocks */}
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                <h2 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase">INDICORE MOCK.</h2>
+                <div className="flex bg-gray-100 p-1.5 rounded-full h-10 px-3 w-fit">
+                  <span className="text-[10px] font-black text-white bg-black rounded-full px-5 uppercase tracking-tighter flex items-center">Full Length</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {loadingMocks
+                  ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-[2.5rem]" />)
+                  : mocks.length === 0
+                    ? (
+                      <div className="col-span-3 bg-white rounded-[2.5rem] border border-gray-100 p-10 text-center">
+                        <p className="text-sm font-bold text-gray-500">Mock questions coming soon</p>
+                        <p className="text-xs text-gray-400 mt-1">Upload mock questions with exam_type = INDICORE_MOCK to unlock</p>
+                      </div>
+                    )
+                    : mocks.map((mock, idx) => {
+                        const theme = idx === 0 ? 'orange' : idx === 1 ? 'black' : 'gray'
+                        const weightLabel = mock.subject_weights
+                          .map(w => {
+                            const s = subjects.find(s => s.$id === w.subjectId) || mockSubjects.find(s => s.$id === w.subjectId)
+                            const shortName = s ? s.Name.split(' ')[0] : w.subjectId.slice(0, 4)
+                            return `${shortName} ${w.count}`
+                          })
+                          .join(' · ')
+                        return (
+                          <div key={mock.$id} className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 group hover:shadow-xl hover:border-orange-100 transition-all flex flex-col">
+                            <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1 font-mono">INDICORE MOCK</p>
+                            <h3 className="text-2xl font-black text-gray-900 mb-1">{mock.name}</h3>
+                            <p className="text-xs text-gray-400 font-semibold mb-3">{mock.description}</p>
+                            <p className="text-[10px] font-bold text-gray-400 mb-6 leading-relaxed">{weightLabel}</p>
+                            <div className="grid grid-cols-3 gap-4 mb-8 mt-auto">
+                              <div>
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Questions</p>
+                                <p className="text-sm font-black text-gray-900">100</p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Duration</p>
+                                <p className="text-sm font-black text-gray-900">2 Hr</p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Marks</p>
+                                <p className="text-sm font-black text-gray-900">200</p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleStartMock(mock)}
+                              disabled={loadingMockId === mock.$id}
+                              className={`h-16 w-full rounded-2xl flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
+                                theme === 'black'
+                                  ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
+                                  : theme === 'gray'
+                                    ? 'bg-gray-800 text-white hover:bg-gray-700 shadow-lg shadow-gray-200'
+                                    : 'bg-[#FF6B00] text-white hover:bg-orange-600 shadow-lg shadow-orange-100'
+                              }`}
+                            >
+                              {loadingMockId === mock.$id ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                                <>Attempt Test <ArrowRight className="h-5 w-5" /></>
+                              )}
+                            </button>
+                          </div>
+                        )
+                      })}
+              </div>
+            </div>
+
+            {/* Subject-wise Mock */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Subject-wise Mock</h3>
+                <div className="h-px flex-1 bg-gray-100" />
+              </div>
+
+              {/* Config panel */}
+              {mockConfigSubject ? (
+                <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <button
+                    onClick={() => setMockConfigSubject(null)}
+                    className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-gray-900 mb-8 transition-colors"
+                  >
+                    <X className="h-4 w-4" /> Back to subjects
+                  </button>
+                  {(() => {
+                    const accent = getSubjectAccent(mockConfigSubject.Name)
+                    return (
+                      <div className={`${accent.bg} rounded-[2.5rem] p-8 mb-8 flex items-center gap-6 border-2`} style={{ borderColor: accent.color + '30' }}>
+                        <div className="text-5xl">{accent.icon}</div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: accent.color }}>Mock Practice</p>
+                          <h2 className="text-3xl font-black text-gray-900">{mockConfigSubject.Name}</h2>
+                          <p className="text-sm text-gray-500 font-semibold mt-1">{mockConfigSubject.count} mock questions available</p>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                  <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 space-y-10">
+                    {mockSelectedDifficulty === 'All' && (
+                      <div>
+                        <div className="flex items-center gap-3 mb-5">
+                          <div className="h-10 w-10 bg-blue-50 rounded-2xl flex items-center justify-center">
+                            <Target className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-gray-900">Questions</p>
+                            <p className="text-xs text-gray-400">How many questions to practice</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 flex-wrap">
+                          {QUESTION_COUNT_OPTIONS.map(n => (
+                            <button
+                              key={n}
+                              onClick={() => setMockQuestionCount(n)}
+                              className={`px-5 py-3 rounded-2xl font-black text-sm transition-all border-2 ${
+                                mockQuestionCount === n
+                                  ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-100 scale-105'
+                                  : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                              }`}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="h-10 w-10 bg-purple-50 rounded-2xl flex items-center justify-center">
+                          <Zap className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-gray-900">Difficulty</p>
+                          <p className="text-xs text-gray-400">Filter questions by difficulty level</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 flex-wrap">
+                        {DIFFICULTY_OPTIONS.map(d => (
+                          <button
+                            key={d}
+                            onClick={() => setMockSelectedDifficulty(d)}
+                            className={getDifficultyStyle(d, mockSelectedDifficulty === d)}
+                          >
+                            {d === 'Easy' ? '🟢' : d === 'Medium' ? '🟡' : d === 'Hard' ? '🔴' : '⚡'} {d}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                        <p className="text-xl font-black text-gray-900">{mockSelectedDifficulty === 'All' ? mockQuestionCount : 'All'}</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Questions</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                        <p className="text-xl font-black text-gray-900">{formatTimerPreview(mockQuestionCount * SECONDS_PER_QUESTION)}</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Timer</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                        <p className={`text-xl font-black ${
+                          mockSelectedDifficulty === 'Easy' ? 'text-green-600'
+                          : mockSelectedDifficulty === 'Medium' ? 'text-amber-500'
+                          : mockSelectedDifficulty === 'Hard' ? 'text-red-500'
+                          : 'text-gray-900'
+                        }`}>{mockSelectedDifficulty}</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Difficulty</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleStartMockPractice}
+                      disabled={mockStartLoading}
+                      className="w-full h-20 bg-gradient-to-r from-[#FF6B00] to-orange-500 rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-orange-100 hover:scale-[1.01] transition-all active:scale-[0.98] disabled:opacity-60"
+                    >
+                      {mockStartLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>Begin Practice <ArrowRight className="h-6 w-6" /></>}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {loadingMockSubjects
+                    ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-[2.5rem]" />)
+                    : mockSubjects.length === 0
+                      ? (
+                        <div className="col-span-3 bg-white rounded-[2.5rem] border border-gray-100 p-8 text-center">
+                          <p className="text-sm font-bold text-gray-500">No subject mock questions yet</p>
+                          <p className="text-xs text-gray-400 mt-1">Upload questions with exam_type = INDICORE_MOCK to see subjects here</p>
+                        </div>
+                      )
+                      : mockSubjects.map(subj => {
+                          const accent = getSubjectAccent(subj.Name)
+                          return (
+                            <div
+                              key={subj.$id}
+                              className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 hover:shadow-xl hover:border-orange-50 transition-all group flex flex-col cursor-pointer"
+                              onClick={() => { setMockConfigSubject(subj); setMockSelectedDifficulty('All'); setMockQuestionCount(20) }}
+                            >
+                              <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: accent.color }} />
+                              <div className="flex items-start justify-between mb-8">
+                                <div className={`h-16 w-16 ${accent.bg} rounded-3xl flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform`}>
+                                  {accent.icon}
+                                </div>
+                                <div className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full ${accent.bg} ${accent.text}`}>
+                                  Mock
+                                </div>
+                              </div>
+                              <h3 className="text-2xl font-black text-gray-900 mb-2">{subj.Name}</h3>
+                              <p className="text-[11px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-2">
+                                <FileText className="h-3 w-3" /> {subj.count} mock questions
+                              </p>
+                              <div className="mt-10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#FF6B00]">
+                                Configure &amp; Start <ChevronRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
+                              </div>
+                            </div>
+                          )
+                        })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* ── FULL LENGTH TEST VIEW ── */}
         {activeTab === 'full' && (
