@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { getSkillProfile, getSessionCount } from '@/lib/supabase/queries'
-import { computeReadinessScore } from '@/lib/intelligence/skill-model'
 import { Loader2, Brain, TrendingDown, AlertTriangle, Zap, BookOpen, Lightbulb, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SkillProfile, SubjectScore, SubtopicRating, BehaviorSignals, Recommendation } from '@/types'
@@ -16,7 +15,6 @@ export default function IntelligencePage() {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<SkillProfile | null>(null)
   const [sessionCount, setSessionCount] = useState(0)
-  const [readiness, setReadiness] = useState(0)
   const [subjects, setSubjects] = useState<SubjectScore[]>([])
   const [subtopics, setSubtopics] = useState<SubtopicRating[]>([])
   const [behavior, setBehavior] = useState<BehaviorSignals | null>(null)
@@ -34,7 +32,6 @@ export default function IntelligencePage() {
         setSessionCount(count)
         if (!prof) { setLoading(false); return }
         setProfile(prof)
-        setReadiness(computeReadinessScore(prof))
         try { setSubjects(JSON.parse(prof.subject_scores_json)) } catch {}
         try {
           const ratings: SubtopicRating[] = JSON.parse(prof.subtopic_scores_json)
@@ -199,7 +196,7 @@ export default function IntelligencePage() {
             <h2 className="font-black text-gray-900 text-base">Confused Topics</h2>
             {confusedTopics.length > BATCH_SIZE && (
               <span className="text-xs font-semibold text-gray-400 ml-auto">
-                Batch {(batchIndex % Math.ceil(confusedTopics.length / BATCH_SIZE)) + 1} of {Math.ceil(confusedTopics.length / BATCH_SIZE)} · rotates every 3 tests
+                {Math.floor(batchStart / BATCH_SIZE) + 1} of {Math.ceil(confusedTopics.length / BATCH_SIZE)} · rotates every 3 tests
               </span>
             )}
           </div>
@@ -215,12 +212,9 @@ export default function IntelligencePage() {
                 <div key={st.subtopicId} className="bg-orange-50 rounded-xl p-4 border border-orange-100">
                   <p className="text-sm font-black text-gray-900 truncate">{st.subtopicId}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{st.subjectId}</p>
-                  <div className="flex items-center justify-between mt-3">
+                  <div className="mt-3">
                     <span className="text-lg font-black text-orange-600">
                       {st.wrong_count ?? 0}/{st.attempts} wrong
-                    </span>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                      {st.attempts} attempts
                     </span>
                   </div>
                 </div>
