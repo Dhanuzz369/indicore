@@ -98,15 +98,20 @@ function SubjectPerformanceCard({
                   : confTag === 'fifty_fifty' ? 'ring-2 ring-purple-400'
                   : confTag === 'guess' ? 'ring-2 ring-yellow-400'
                   : ''
+                const wasRevised = (answer?.selectionHistory?.change_count ?? 0) > 0
                 return (
-                  <button
-                    key={q.$id}
-                    title={`Q${globalIndex + 1} — ${isSkipped ? 'Not Answered' : isCorrect ? 'Correct' : 'Incorrect'}${confTag ? ` (${confLabel(confTag)})` : ''} — Took ${formatTime(answer?.timeTaken)}`}
-                    onClick={() => onQuestionClick(globalIndex)}
-                    className={`h-10 w-10 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${statusColor} ${confDot}`}
-                  >
-                    {globalIndex + 1}
-                  </button>
+                  <div key={q.$id} className="relative">
+                    <button
+                      title={`Q${globalIndex + 1} — ${isSkipped ? 'Not Answered' : isCorrect ? 'Correct' : 'Incorrect'}${confTag ? ` (${confLabel(confTag)})` : ''}${wasRevised ? ' · Revised' : ''} — Took ${formatTime(answer?.timeTaken)}`}
+                      onClick={() => onQuestionClick(globalIndex)}
+                      className={`h-10 w-10 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${statusColor} ${confDot}`}
+                    >
+                      {globalIndex + 1}
+                    </button>
+                    {wasRevised && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-orange-400 rounded-full border border-white" />
+                    )}
+                  </div>
                 )
               })}
             </div>
@@ -117,6 +122,7 @@ function SubjectPerformanceCard({
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-emerald-400" />Sure</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-purple-400" />50:50</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-yellow-400" />Guess</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 inline-block" />Revised</span>
             </div>
           </div>
         </div>
