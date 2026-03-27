@@ -14,6 +14,20 @@ export interface Subject {
   color?: string
 }
 
+export interface MockSubjectWeight {
+  subjectId: string
+  count: number
+}
+
+export interface Mock {
+  $id: string
+  name: string
+  description: string | null
+  subject_weights: MockSubjectWeight[]
+  time_minutes: number
+  is_active: boolean
+}
+
 export interface Question {
   $id: string
   subject_id: string
