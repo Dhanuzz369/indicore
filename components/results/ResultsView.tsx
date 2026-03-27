@@ -8,7 +8,7 @@ import {
   CheckCircle, XCircle, ChevronDown, BookOpen, Clock, RefreshCw, Home,
   Lightbulb, Brain, Target, Zap, Loader2, ArrowLeft
 } from 'lucide-react'
-import type { Question } from '@/types'
+import type { Question, SelectionEvent } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { toast } from 'sonner'
 
@@ -515,6 +515,34 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
       { ...ans, confidenceTag: displayConfMap[qId] || ans.confidenceTag || null }
     ])
   )
+
+  // ─── Revision summary ──────────────────────────────────────
+  const revisionSummary = useMemo(() => {
+    let totalRevised = 0
+    let changedCorrectToWrong = 0
+    let changedWrongToCorrect = 0
+
+    for (const q of displayQuestions) {
+      const answer = displayAnswers[q.$id] as any
+      if (!answer) continue
+      const changeCount: number = answer.selectionHistory?.change_count ?? 0
+      if (changeCount === 0) continue
+
+      totalRevised++
+
+      const events: SelectionEvent[] = answer.selectionHistory?.events ?? []
+      const firstSelect = events.find((e: SelectionEvent) => e.type === 'select')
+      if (firstSelect?.option) {
+        const firstWasCorrect = firstSelect.option === q.correct_option
+        if (firstWasCorrect && !answer.isCorrect) changedCorrectToWrong++
+        if (!firstWasCorrect && answer.isCorrect) changedWrongToCorrect++
+      }
+    }
+
+    return totalRevised > 0
+      ? { totalRevised, changedCorrectToWrong, changedWrongToCorrect }
+      : null
+  }, [displayQuestions, displayAnswers])
 
   // ─── Main render ─────────────────────────────────────────────
   return (
