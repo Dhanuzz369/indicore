@@ -6,49 +6,10 @@ import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { getSkillProfile, getSessionCount } from '@/lib/supabase/queries'
 import { computeReadinessScore } from '@/lib/intelligence/skill-model'
-import { Loader2, Brain, TrendingDown, Clock, AlertTriangle, Zap, BookOpen, ChevronRight, Lightbulb } from 'lucide-react'
+import { Loader2, Brain, TrendingDown, AlertTriangle, Zap, BookOpen, Lightbulb, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SkillProfile, SubjectScore, SubtopicRating, BehaviorSignals, Recommendation } from '@/types'
 
-function ReadinessMeter({ score }: { score: number }) {
-  const color = score >= 70 ? 'text-emerald-500' : score >= 45 ? 'text-orange-500' : 'text-red-500'
-  const bg = score >= 70 ? 'bg-emerald-500' : score >= 45 ? 'bg-[#FF6B00]' : 'bg-red-500'
-  const label = score >= 70 ? 'Strong' : score >= 45 ? 'Developing' : 'Needs Work'
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-4">
-      <div className="relative w-36 h-36">
-        <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-          <circle cx="60" cy="60" r="50" fill="none" stroke="#F3F4F6" strokeWidth="10" />
-          <circle
-            cx="60" cy="60" r="50" fill="none"
-            stroke={score >= 70 ? '#10B981' : score >= 45 ? '#FF6B00' : '#EF4444'}
-            strokeWidth="10"
-            strokeDasharray={`${(score / 100) * 314} 314`}
-            strokeLinecap="round"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`text-4xl font-black ${color}`}>{score}</span>
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">/ 100</span>
-        </div>
-      </div>
-      <div className="text-center">
-        <p className="font-black text-gray-900 text-lg">Readiness Score</p>
-        <span className={`text-xs font-black uppercase tracking-widest px-2.5 py-1 rounded-full mt-1 inline-block ${score >= 70 ? 'bg-emerald-50 text-emerald-600' : score >= 45 ? 'bg-orange-50 text-orange-600' : 'bg-red-50 text-red-600'}`}>{label}</span>
-      </div>
-    </div>
-  )
-}
-
-function StatCard({ label, value, sub, warn }: { label: string; value: string; sub?: string; warn?: boolean }) {
-  return (
-    <div className={`bg-white rounded-2xl border ${warn ? 'border-red-100' : 'border-gray-100'} shadow-sm p-5`}>
-      <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">{label}</p>
-      <p className={`text-2xl font-black ${warn ? 'text-red-500' : 'text-gray-900'}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 font-medium mt-1">{sub}</p>}
-    </div>
-  )
-}
 
 export default function IntelligencePage() {
   const router = useRouter()
@@ -132,11 +93,34 @@ export default function IntelligencePage() {
     )
   }
 
-  const weakSubjects = [...subjects].sort((a, b) => a.accuracy - b.accuracy).slice(0, 3)
-  const weakSubtopics = subtopics.slice(0, 4)
+  // Subjects below 50% accuracy — shown in Weaker Subjects frame
+  const weakSubjects = subjects.filter(s => s.accuracy < 50).sort((a, b) => a.accuracy - b.accuracy)
+
+  // Confused topics: wrong 3+ times out of 5+ attempts
+  const confusedTopics = subtopics
+    .filter(st => (st.wrong_count ?? 0) >= 3 && st.attempts >= 5)
+    .sort((a, b) => (b.wrong_count ?? 0) - (a.wrong_count ?? 0))
+
+  // Rotational batch: advances every 3 sessions, shows 4 cards at a time
+  const BATCH_SIZE = 4
+  const batchIndex = Math.floor(Math.max(0, sessionCount - 3) / 3)
+  const batchStart = confusedTopics.length > 0
+    ? (batchIndex * BATCH_SIZE) % confusedTopics.length
+    : 0
+  // Wrap-around slice: take 4 starting from batchStart, wrapping if near end
+  const confusedBatch = confusedTopics.length > 0
+    ? Array.from({ length: Math.min(BATCH_SIZE, confusedTopics.length) }, (_, i) =>
+        confusedTopics[(batchStart + i) % confusedTopics.length]
+      )
+    : []
+
   const revise = recommendations.filter(r => r.type === 'revise')
   const practice = recommendations.filter(r => r.type === 'practice')
   const speedDrills = recommendations.filter(r => r.type === 'speed_drill')
+
+  // Sure But Wrong from behavior signals
+  const sureButWrongRate = behavior?.sureButWrongRate ?? 0
+  const sureButWrongHigh = sureButWrongRate > 25
 
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
@@ -153,37 +137,39 @@ export default function IntelligencePage() {
           </div>
         </div>
 
-        {/* Readiness + Stats row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="sm:col-span-2 lg:col-span-1">
-            <ReadinessMeter score={readiness} />
-          </div>
-          <StatCard
-            label="Sure But Wrong"
-            value={behavior ? `${behavior.sureButWrongRate.toFixed(0)}%` : '—'}
-            sub="of confident answers were incorrect"
-            warn={(behavior?.sureButWrongRate ?? 0) > 25}
-          />
-          <StatCard
-            label="Avg Time / Question"
-            value={behavior ? `${Math.round(behavior.avgTimePerQuestion)}s` : '—'}
-            sub="target: 120s"
-            warn={(behavior?.avgTimePerQuestion ?? 0) > 150}
-          />
-          <StatCard
-            label="Sessions Analysed"
-            value={String(behavior?.totalSessions ?? sessionCount)}
-            sub="ELO ratings updated"
-          />
-        </div>
-
-        {/* Weak Subjects */}
-        {weakSubjects.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <TrendingDown className="h-4 w-4 text-red-500" />
-              <h2 className="font-black text-gray-900 text-base">Weakest Subjects</h2>
+        {/* Sure But Wrong — slim banner */}
+        {behavior && (
+          <div className={`rounded-2xl border p-5 flex items-center gap-4 ${sureButWrongHigh ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100 shadow-sm'}`}>
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${sureButWrongHigh ? 'bg-red-100' : 'bg-orange-50'}`}>
+              <AlertCircle className={`h-5 w-5 ${sureButWrongHigh ? 'text-red-500' : 'text-orange-500'}`} />
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sure But Wrong</p>
+              <p className={`text-2xl font-black leading-tight ${sureButWrongHigh ? 'text-red-500' : 'text-gray-900'}`}>
+                {sureButWrongRate.toFixed(0)}%
+              </p>
+            </div>
+            <p className="text-xs text-gray-400 font-medium text-right max-w-[160px] leading-relaxed">
+              {sureButWrongHigh
+                ? 'High — you are overconfident on wrong answers'
+                : 'of confident answers were incorrect'}
+            </p>
+          </div>
+        )}
+
+        {/* Weaker Subjects — <50% accuracy */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <TrendingDown className="h-4 w-4 text-red-500" />
+            <h2 className="font-black text-gray-900 text-base">Weaker Subjects</h2>
+            <span className="text-xs font-semibold text-gray-400 ml-auto">Below 50% accuracy</span>
+          </div>
+          {weakSubjects.length === 0 ? (
+            <div className="text-center py-6">
+              <p className="text-sm font-bold text-emerald-600">All subjects above 50% — strong work!</p>
+              <p className="text-xs text-gray-400 mt-1">Keep taking tests to track subject trends</p>
+            </div>
+          ) : (
             <div className="space-y-3">
               {weakSubjects.map(sub => (
                 <div key={sub.subjectId} className="flex items-center gap-4">
@@ -194,62 +180,54 @@ export default function IntelligencePage() {
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all ${sub.accuracy < 40 ? 'bg-red-500' : sub.accuracy < 60 ? 'bg-orange-400' : 'bg-emerald-500'}`}
+                        className={`h-full rounded-full transition-all ${sub.accuracy < 30 ? 'bg-red-500' : 'bg-orange-400'}`}
                         style={{ width: `${sub.accuracy}%` }}
                       />
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-gray-400 shrink-0">ELO {sub.avgRating}</span>
+                  <span className="text-xs font-bold text-gray-400 shrink-0">{sub.attempts} attempts</span>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Weak Subtopics */}
-        {weakSubtopics.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <AlertTriangle className="h-4 w-4 text-orange-500" />
-              <h2 className="font-black text-gray-900 text-base">Confused Topics</h2>
-              <span className="text-xs font-semibold text-gray-400 ml-auto">Lowest ELO ratings</span>
+        {/* Confused Topics — rotational batch */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <h2 className="font-black text-gray-900 text-base">Confused Topics</h2>
+            {confusedTopics.length > BATCH_SIZE && (
+              <span className="text-xs font-semibold text-gray-400 ml-auto">
+                Batch {(batchIndex % Math.ceil(confusedTopics.length / BATCH_SIZE)) + 1} of {Math.ceil(confusedTopics.length / BATCH_SIZE)} · rotates every 3 tests
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 font-medium mb-5">Wrong 3+ times out of 5+ attempts</p>
+          {confusedBatch.length === 0 ? (
+            <div className="text-center py-6">
+              <p className="text-sm font-bold text-gray-500">No confused topics yet</p>
+              <p className="text-xs text-gray-400 mt-1">A topic appears here when you get it wrong 3+ times out of 5 attempts</p>
             </div>
+          ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {weakSubtopics.map(st => (
+              {confusedBatch.map(st => (
                 <div key={st.subtopicId} className="bg-orange-50 rounded-xl p-4 border border-orange-100">
                   <p className="text-sm font-black text-gray-900 truncate">{st.subtopicId}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{st.subjectId}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-lg font-black text-orange-600">{st.rating}</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{st.attempts} attempts</span>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-lg font-black text-orange-600">
+                      {st.wrong_count ?? 0}/{st.attempts} wrong
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      {st.attempts} attempts
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Confidence Errors */}
-        {behavior && (behavior.sureButWrongRate > 0 || behavior.guessRate > 0) && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-              <h2 className="font-black text-gray-900 text-base">Confidence Mistakes</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className={`rounded-xl p-4 ${behavior.sureButWrongRate > 25 ? 'bg-red-50 border border-red-100' : 'bg-gray-50 border border-gray-100'}`}>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Sure but Wrong</p>
-                <p className={`text-3xl font-black mt-1 ${behavior.sureButWrongRate > 25 ? 'text-red-500' : 'text-gray-700'}`}>{behavior.sureButWrongRate.toFixed(0)}%</p>
-                <p className="text-xs text-gray-500 mt-1">of confident answers were incorrect</p>
-              </div>
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Guess Dependency</p>
-                <p className="text-3xl font-black text-gray-700 mt-1">{behavior.guessRate.toFixed(0)}%</p>
-                <p className="text-xs text-gray-500 mt-1">of answers marked as guesses</p>
-              </div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Action Plan */}
         {recommendations.length > 0 && (
