@@ -60,6 +60,8 @@ export function updateSkillProfile(input: SkillUpdateInput): SkillUpdateResult {
       subjectId: st.subjectId,
       rating: DEFAULT_RATING,
       attempts: 0,
+      correct_count: 0,
+      wrong_count: 0,
       lastUpdated: new Date().toISOString(),
     }
 
@@ -90,6 +92,8 @@ export function updateSkillProfile(input: SkillUpdateInput): SkillUpdateResult {
       subjectId: st.subjectId,
       rating,
       attempts: existing.attempts + answered,
+      correct_count: (existing.correct_count ?? 0) + st.correct,
+      wrong_count: (existing.wrong_count ?? 0) + st.incorrect,
       lastUpdated: new Date().toISOString(),
     })
   }
