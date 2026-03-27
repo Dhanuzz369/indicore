@@ -174,15 +174,21 @@ function QuizSetupContent() {
     try {
       useQuizStore.getState().resetQuiz()
       const allQuestions: Question[] = []
-      for (const weight of mock.subject_weights) {
-        const result = await getQuestions({
-          examType: 'INDICORE_MOCK',
-          subjectId: weight.subjectId,
-          limit: weight.count * 2,
-        })
-        const batch = result.documents as unknown as Question[]
-        const shuffled = shuffleArray(batch)
-        allQuestions.push(...shuffled.slice(0, weight.count))
+      const batches = await Promise.all(
+        mock.subject_weights.map(weight =>
+          getQuestions({
+            examType: 'INDICORE_MOCK',
+            subjectId: weight.subjectId,
+            limit: weight.count * 2,
+          }).then(result => {
+            const batch = result.documents as unknown as Question[]
+            const shuffled = shuffleArray(batch)
+            return shuffled.slice(0, weight.count)
+          })
+        )
+      )
+      for (const batch of batches) {
+        allQuestions.push(...batch)
       }
       if (allQuestions.length === 0) {
         toast.error('No mock questions available yet. Upload questions first.')
@@ -250,11 +256,10 @@ function QuizSetupContent() {
       const filters: Parameters<typeof getQuestions>[0] = {
         examType: 'INDICORE_MOCK',
         subjectId: mockConfigSubject.$id,
+        limit: mockQuestionCount * 2,
       }
       if (mockSelectedDifficulty !== 'All') {
         filters.difficulty = mockSelectedDifficulty.toLowerCase()
-      } else {
-        filters.limit = mockQuestionCount * 2
       }
       const result = await getQuestions(filters)
       if (!result.documents?.length) {
@@ -307,7 +312,7 @@ function QuizSetupContent() {
       <div className="max-w-3xl mx-auto px-6 mt-4">
         <div className="bg-gray-100 p-1.5 rounded-[2rem] flex h-16">
           <button
-            onClick={() => { setActiveTab('mock'); setMockConfigSubject(null) }}
+            onClick={() => { setActiveTab('mock'); setMockConfigSubject(null); setMockSelectedDifficulty('All'); setMockQuestionCount(20) }}
             className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'mock' ? 'bg-[#FF6B00] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Mock Test

@@ -141,9 +141,15 @@ export async function listMocks(): Promise<{ documents: Mock[] }> {
     documents: (data ?? []).map(d => ({
       ...d,
       $id: d.id,
-      subject_weights: Array.isArray(d.subject_weights)
-        ? d.subject_weights
-        : JSON.parse(d.subject_weights as unknown as string),
+      subject_weights: (() => {
+        if (Array.isArray(d.subject_weights)) return d.subject_weights
+        try {
+          const parsed = JSON.parse(d.subject_weights as unknown as string)
+          return Array.isArray(parsed) ? parsed : []
+        } catch {
+          return []
+        }
+      })(),
     })) as Mock[],
   }
 }
