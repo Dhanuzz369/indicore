@@ -1,6 +1,6 @@
 // lib/supabase/queries.ts
 import { createClient } from './client'
-import type { Profile, Subject, Question, QuizAttempt, UserStats, UserTestSummary, TestSession, Note } from '@/types'
+import type { Profile, Subject, Question, QuizAttempt, UserStats, UserTestSummary, TestSession, Note, Mock } from '@/types'
 
 // ── AVATAR STORAGE ────────────────────────────────────────────────────────────
 
@@ -125,6 +125,52 @@ export async function getQuestionsByIds(ids: string[]) {
   const { data, error } = await sb.from('questions').select('*').in('id', ids)
   if (error) throw error
   return { documents: (data ?? []).map(d => ({ ...d, $id: d.id })) }
+}
+
+// ── MOCKS ─────────────────────────────────────────────────────────────────────
+
+export async function listMocks(): Promise<{ documents: Mock[] }> {
+  const sb = createClient()
+  const { data, error } = await sb
+    .from('mocks')
+    .select('*')
+    .eq('is_active', true)
+    .order('name')
+  if (error) throw error
+  return {
+    documents: (data ?? []).map(d => ({
+      ...d,
+      $id: d.id,
+      subject_weights: Array.isArray(d.subject_weights)
+        ? d.subject_weights
+        : JSON.parse(d.subject_weights as unknown as string),
+    })) as Mock[],
+  }
+}
+
+// Returns subjects that have at least one INDICORE_MOCK question, with counts.
+export async function getSubjectsWithMockCounts() {
+  const sb = createClient()
+  const [subjectsRes, questionsRes] = await Promise.all([
+    sb.from('subjects').select('*').order('name'),
+    sb.from('questions')
+      .select('subject_id')
+      .eq('exam_type', 'INDICORE_MOCK')
+      .eq('is_active', true),
+  ])
+  if (subjectsRes.error) throw subjectsRes.error
+  if (questionsRes.error) throw questionsRes.error
+
+  const countMap = new Map<string, number>()
+  for (const q of questionsRes.data ?? []) {
+    countMap.set(q.subject_id, (countMap.get(q.subject_id) ?? 0) + 1)
+  }
+
+  return {
+    documents: (subjectsRes.data ?? [])
+      .map(d => ({ ...d, $id: d.id, Name: d.name, count: countMap.get(d.id) ?? 0 }))
+      .filter(d => d.count > 0),
+  }
 }
 
 export async function getQuestionCountBySubject(subjectId: string): Promise<number> {
