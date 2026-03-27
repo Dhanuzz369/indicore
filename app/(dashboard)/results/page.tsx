@@ -9,7 +9,8 @@ import { Loader2 } from 'lucide-react'
 function ResultsContent() {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session') ?? ''
-  return <ResultsView sessionId={sessionId} replayMode={false} />
+  const replayMode = searchParams.get('replay') === 'true'
+  return <ResultsView sessionId={sessionId} replayMode={replayMode} />
 }
 
 export default function ResultsPage() {
