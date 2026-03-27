@@ -735,6 +735,38 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           </div>
         </div>
 
+        {/* ── Revision banner ── */}
+        {revisionSummary && (
+          <div className={`rounded-2xl px-6 py-5 flex flex-col gap-2 border-l-4 bg-gray-900 text-white ${
+            revisionSummary.changedCorrectToWrong > revisionSummary.changedWrongToCorrect
+              ? 'border-amber-500'
+              : 'border-emerald-500'
+          }`}>
+            <p className="text-sm font-black uppercase tracking-widest text-gray-300">
+              Answer Revision
+            </p>
+            <p className="text-base font-bold text-white">
+              You revised{' '}
+              <span className="text-[#FF6B00] font-black">{revisionSummary.totalRevised}</span>{' '}
+              answer{revisionSummary.totalRevised !== 1 ? 's' : ''} during this test.
+            </p>
+            {revisionSummary.changedCorrectToWrong > 0 && (
+              <p className="text-sm font-medium text-amber-300">
+                ⚠ In{' '}
+                <span className="font-black">{revisionSummary.changedCorrectToWrong}</span>{' '}
+                of those, you changed a correct answer to a wrong one.
+              </p>
+            )}
+            {revisionSummary.changedWrongToCorrect > 0 && (
+              <p className="text-sm font-medium text-emerald-300">
+                ✓ You caught yourself and corrected{' '}
+                <span className="font-black">{revisionSummary.changedWrongToCorrect}</span>{' '}
+                wrong answer{revisionSummary.changedWrongToCorrect !== 1 ? 's' : ''}.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* ── Confidence panels ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-[2rem] border border-emerald-100 shadow-sm p-8 flex flex-col">
