@@ -211,8 +211,8 @@ export interface SubtopicRating {
   subjectId: string
   rating: number          // ELO rating, starts at 1200
   attempts: number
-  correct_count: number   // cumulative correct answers across all sessions
-  wrong_count: number     // cumulative wrong answers across all sessions
+  correct_count?: number  // cumulative correct answers across all sessions
+  wrong_count?: number    // cumulative wrong answers across all sessions
   lastUpdated: string     // ISO
 }
 
