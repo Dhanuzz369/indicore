@@ -323,7 +323,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             used5050: !!att.used_5050,
             isGuess: !!(att.is_guess || att.used_guess),
             usedAreYouSure: !!att.used_areyousure,
-            selectionHistory: att.selection_history ? JSON.parse(att.selection_history).selections : [],
+            selectionHistory: att.selection_history ? JSON.parse(att.selection_history) : { events: [], change_count: 0 },
           }
           if (att.confidence_tag) reconstructedConfMap[att.question_id] = att.confidence_tag
         })
@@ -405,7 +405,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             used5050: !!att.used_5050,
             isGuess: !!(att.is_guess || att.used_guess),
             usedAreYouSure: !!att.used_areyousure,
-            selectionHistory: att.selection_history ? JSON.parse(att.selection_history).selections : [],
+            selectionHistory: att.selection_history ? JSON.parse(att.selection_history) : { events: [], change_count: 0 },
           }
           if (att.confidence_tag) setConfidenceForQuestion(att.question_id, att.confidence_tag)
         })
@@ -523,7 +523,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
     let changedWrongToCorrect = 0
 
     for (const q of displayQuestions) {
-      const answer = displayAnswers[q.$id] as any
+      const answer = displayAnswers[q.$id]
       if (!answer) continue
       const changeCount: number = answer.selectionHistory?.change_count ?? 0
       if (changeCount === 0) continue
