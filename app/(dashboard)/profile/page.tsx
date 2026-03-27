@@ -61,9 +61,10 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState({
     totalTests: 0,
-    highestScore: 0,
+    highestScore: 0,       // actual marks (not %)
+    highestScoreMax: 0,    // max possible marks for that test
     avgAccuracy: 0,
-    totalCorrect: 0,
+    avgAttemptsPerTest: 0,
     totalAttempted: 0,
   })
 
@@ -110,17 +111,31 @@ export default function ProfilePage() {
 
         setProfile(profileData)
 
-        const allSessions = sessionsData.documents
-        if (allSessions.length > 0) {
-          const totalTests = allSessions.length
-          const highestScore = Math.max(...allSessions.map(s => s.score))
-          const totalCorrect = allSessions.reduce((acc, s) => acc + s.correct, 0)
-          const totalAttempted = allSessions.reduce((acc, s) => acc + s.attempted, 0)
+        // Only full-length tests for profile stats
+        const fullLengthSessions = sessionsData.documents.filter(s => s.mode === 'full_length')
+        if (fullLengthSessions.length > 0) {
+          const totalTests = fullLengthSessions.length
+          const totalCorrect = fullLengthSessions.reduce((acc, s) => acc + (s.correct ?? 0), 0)
+          const totalWrong = fullLengthSessions.reduce((acc, s) => acc + (s.incorrect ?? 0), 0)
+          const totalAttempted = fullLengthSessions.reduce((acc, s) => acc + (s.attempted ?? 0), 0)
           const avgAccuracy = totalAttempted > 0
             ? Math.round((totalCorrect / totalAttempted) * 100)
             : 0
+          const avgAttemptsPerTest = Math.round(totalAttempted / totalTests)
 
-          setStats({ totalTests, highestScore, avgAccuracy, totalCorrect, totalAttempted })
+          // Actual UPSC marks per session: correct×2 − wrong×(2/3)
+          let highestScore = 0
+          let highestScoreMax = 0
+          fullLengthSessions.forEach(s => {
+            const marks = parseFloat(((s.correct ?? 0) * 2 - (s.incorrect ?? 0) * (2 / 3)).toFixed(2))
+            const max = (s.total_questions ?? 0) * 2
+            if (marks > highestScore) {
+              highestScore = marks
+              highestScoreMax = max
+            }
+          })
+
+          setStats({ totalTests, highestScore, highestScoreMax, avgAccuracy, avgAttemptsPerTest, totalAttempted })
         }
       } catch (error) {
         toast.error('Failed to load profile')
@@ -341,10 +356,15 @@ export default function ProfilePage() {
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Best Score</p>
             <p className="text-2xl font-black text-gray-900">
-              {stats.highestScore > 0 ? `${stats.highestScore.toFixed(0)}%` : '—'}
+              {stats.highestScore > 0
+                ? `${stats.highestScore.toFixed(2)}`
+                : '—'}
             </p>
+            {stats.highestScore > 0 && stats.highestScoreMax > 0 && (
+              <p className="text-[11px] font-bold text-gray-400 mt-1">out of {stats.highestScoreMax}</p>
+            )}
             <p className="text-[11px] font-bold text-orange-600 mt-2 uppercase">
-              {stats.totalTests > 0 ? `${stats.totalTests} tests` : 'No tests yet'}
+              {stats.totalTests > 0 ? `${stats.totalTests} full tests` : 'No full tests yet'}
             </p>
           </div>
         </div>
@@ -366,9 +386,12 @@ export default function ProfilePage() {
             <div className="h-10 w-10 bg-emerald-500 rounded-full flex items-center justify-center mb-4">
               <CheckCircle2 className="h-5 w-5 text-white" />
             </div>
-            <p className="text-4xl font-black text-emerald-900 leading-none">
-              {stats.highestScore > 0 ? `${stats.highestScore.toFixed(0)}%` : '—'}
+            <p className="text-3xl font-black text-emerald-900 leading-none">
+              {stats.highestScore > 0 ? stats.highestScore.toFixed(2) : '—'}
             </p>
+            {stats.highestScoreMax > 0 && (
+              <p className="text-xs font-bold text-emerald-400 mt-1">/ {stats.highestScoreMax}</p>
+            )}
             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mt-3">
               Highest Score
             </p>
@@ -388,11 +411,13 @@ export default function ProfilePage() {
 
           <div className="bg-rose-50/50 rounded-[2rem] p-6 border border-rose-100/50 flex flex-col">
             <div className="h-10 w-10 bg-rose-500 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle2 className="h-5 w-5 text-white" />
+              <Target className="h-5 w-5 text-white" />
             </div>
-            <p className="text-4xl font-black text-rose-900 leading-none">{stats.totalCorrect}</p>
-            <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mt-3">
-              Total Correct
+            <p className="text-4xl font-black text-rose-900 leading-none">
+              {stats.avgAttemptsPerTest > 0 ? stats.avgAttemptsPerTest : '—'}
+            </p>
+            <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mt-3 leading-tight">
+              Avg Attempts<br />per Test
             </p>
           </div>
 
