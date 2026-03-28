@@ -647,7 +647,7 @@ export default function TestSessionPage() {
       <button
         onClick={() => { setShowMobilePalette(false); setShowSubmitDialog(true) }}
         disabled={answeredCount === 0 || isSubmitted || isSaving}
-        className="w-full bg-[#FF6B00] hover:bg-[#FF8C00] text-white py-2.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+        className="w-full bg-[#4A90E2] hover:bg-[#3a7fd4] text-white py-2.5 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit Test'}
       </button>
@@ -692,8 +692,8 @@ export default function TestSessionPage() {
           <div className={`font-mono font-black shrink-0 text-sm md:text-base flex items-center gap-1.5 px-3 py-1.5 rounded-xl border shadow-sm transition-colors ${
             isTimeCritical ? 'bg-red-50 border-red-200 animate-pulse' : 'bg-white border-gray-200'
           }`}>
-            <span className={countdownTotal > 0 ? (isTimeCritical ? 'text-red-600' : 'text-[#FF6B00]') : 'text-[#FF6B00]'}>⏱</span>
-            <span className={countdownTotal > 0 ? (isTimeCritical ? 'text-red-700 font-black' : 'text-red-600') : 'text-[#FF6B00]'}>{timerDisplay}</span>
+            <span className={countdownTotal > 0 ? (isTimeCritical ? 'text-red-600' : 'text-[#4A90E2]') : 'text-[#4A90E2]'}>⏱</span>
+            <span className={countdownTotal > 0 ? (isTimeCritical ? 'text-red-700 font-black' : 'text-red-600') : 'text-[#4A90E2]'}>{timerDisplay}</span>
             {countdownTotal > 0 && (
               <span className={`text-[10px] uppercase font-bold tracking-widest ml-0.5 px-1.5 py-0.5 rounded ${isTimeCritical ? 'text-red-600 bg-red-100' : 'text-red-500 bg-red-50'}`}>Left</span>
             )}
@@ -726,7 +726,7 @@ export default function TestSessionPage() {
                   <span className="text-green-600 font-semibold">{correctCount} correct</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#FF6B00] rounded-full transition-all duration-500"
+                  <div className="h-full bg-[#4A90E2] rounded-full transition-all duration-500"
                     style={{ width: `${((currentIndex + 1) / total) * 100}%` }} />
                 </div>
               </div>
@@ -735,7 +735,7 @@ export default function TestSessionPage() {
             {/* Question number + mark tag + Report Flag */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="bg-[#FF6B00] text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
+                <span className="bg-[#4A90E2] text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
                   Q.{currentIndex + 1}
                 </span>
                 {testMode && isMarkedCurrent && (
@@ -748,7 +748,7 @@ export default function TestSessionPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowNoteModal(true)}
-                  className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-[#FF6B00] transition-colors bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm"
+                  className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-[#4A90E2] transition-colors bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm"
                   title="Save this question as a note"
                 >
                   <BookOpen className="h-3 w-3" />
@@ -786,7 +786,7 @@ export default function TestSessionPage() {
 
             {/* Confidence Tracking — shown AFTER option is selected in both modes */}
             {(!!currentAnswer && !isSubmitted) && (
-              <div className="bg-orange-50/50 border border-orange-100 p-4 rounded-xl mt-4">
+              <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl mt-4">
                 <p className="text-sm font-semibold text-gray-800 text-center mb-3">
                   {testMode && currentAnswer
                     ? 'How confident were you about this answer?'
@@ -873,7 +873,7 @@ export default function TestSessionPage() {
 
                 <button
                   onClick={() => clearResponse(currentQuestion.$id)}
-                  className="flex-1 bg-white border-2 border-orange-200 text-orange-600 hover:bg-orange-50 flex items-center justify-center gap-1.5 font-bold text-[11px] md:text-sm py-2 px-2 md:px-3 rounded-lg transition-colors"
+                  className="flex-1 bg-white border-2 border-blue-200 text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-1.5 font-bold text-[11px] md:text-sm py-2 px-2 md:px-3 rounded-lg transition-colors"
                 >
                   <span className="hidden lg:inline">Clear Response</span>
                   <span className="lg:hidden">Clear</span>
@@ -910,7 +910,7 @@ export default function TestSessionPage() {
               )}
             </div>
             <button
-              className="bg-[#FF6B00] hover:bg-[#FF8C00] text-white px-6 py-2 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 flex items-center gap-2 shrink-0"
+              className="bg-[#4A90E2] hover:bg-[#3a7fd4] text-white px-6 py-2 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 flex items-center gap-2 shrink-0"
               disabled={answeredCount === 0 || isSubmitted || isSaving}
               onClick={() => setShowSubmitDialog(true)}
             >
@@ -957,7 +957,7 @@ export default function TestSessionPage() {
               <AlertDialogCancel>Review Answers</AlertDialogCancel>
               <AlertDialogAction
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.preventDefault(); handleConfirmSubmit() }}
-                className="bg-[#FF6B00] hover:bg-[#FF8C00]"
+                className="bg-[#4A90E2] hover:bg-[#3a7fd4]"
               >
                 Submit Test
               </AlertDialogAction>
@@ -1010,7 +1010,7 @@ export default function TestSessionPage() {
                 onChange={e => setReportDescription(e.target.value)}
                 placeholder="e.g. Wrong answer key, typo in question, missing option, factual error..."
                 rows={4}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] resize-none transition-all"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2] resize-none transition-all"
               />
               <p className="text-[10px] text-gray-400 mt-1.5 font-medium">{reportDescription.length} characters</p>
             </div>
