@@ -123,15 +123,15 @@ export default function FeaturesSection() {
   const reduced = useReducedMotion()
 
   return (
-    <section id="features" ref={ref} className="py-32 px-6 md:px-8 max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+    <section id="features" ref={ref} className="py-16 sm:py-20 md:py-32 px-6 md:px-8 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-24 items-center">
         {/* Left — accordion */}
         <div>
           <m.h2
             initial={{ opacity: 0, y: reduced ? 0 : 30 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6 }}
-            className="text-4xl font-black text-[#1A1C1C] tracking-tight mb-10"
+            className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1A1C1C] tracking-tight mb-10"
           >
             Precision Tools for<br />High-Stakes Exams
           </m.h2>
@@ -144,7 +144,7 @@ export default function FeaturesSection() {
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 onClick={() => setOpen(i)}
-                className={`p-7 rounded-2xl cursor-pointer transition-all duration-300 ${
+                className={`p-5 sm:p-7 rounded-2xl cursor-pointer transition-all duration-300 ${
                   open === i
                     ? 'bg-white shadow-lg shadow-black/5 border-l-4 border-[#4A90E2]'
                     : 'hover:bg-white/60 border-l-4 border-transparent'

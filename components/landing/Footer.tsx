@@ -7,7 +7,7 @@ const resourceLinks = ['Study Planner', 'UPSC Guide', 'Success Stories', 'Knowle
 export default function Footer() {
   return (
     <footer className="bg-white border-t border-stone-200 pt-20 pb-12">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-16">
         {/* Brand */}
         <div>
           <div className="text-2xl font-black text-[#1A1C1C] mb-5">Indicore</div>

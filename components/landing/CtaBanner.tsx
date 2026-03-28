@@ -26,7 +26,7 @@ export default function CtaBanner() {
     <section className="px-6 md:px-8 max-w-7xl mx-auto mb-32 mt-16">
       <div
         ref={ref}
-        className="relative rounded-[3rem] overflow-hidden p-14 md:p-24 text-center text-white"
+        className="relative rounded-[3rem] overflow-hidden p-8 sm:p-12 md:p-24 text-center text-white"
         style={{ background: 'linear-gradient(135deg, #4A90E2 0%, #A2C2E8 100%)' }}
       >
         {/* Animated blobs */}
@@ -51,7 +51,7 @@ export default function CtaBanner() {
 
         {/* Content */}
         <div className="relative z-10">
-          <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight max-w-4xl mx-auto flex flex-wrap justify-center gap-x-[0.25em]">
+          <h2 className="text-2xl sm:text-3xl md:text-6xl font-black mb-8 leading-tight max-w-4xl mx-auto flex flex-wrap justify-center gap-x-[0.25em]">
             {WORDS.map((word, i) => (
               <m.span
                 key={i}
@@ -81,7 +81,7 @@ export default function CtaBanner() {
           >
             <Link
               href="/signup"
-              className="inline-block bg-white text-[#4A90E2] px-12 py-5 rounded-full font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-2xl hover:shadow-white/30"
+              className="inline-block bg-white text-[#4A90E2] px-8 py-4 sm:px-12 sm:py-5 rounded-full font-black text-base sm:text-lg hover:scale-105 active:scale-95 transition-all shadow-2xl hover:shadow-white/30"
             >
               Start Practising Now
             </Link>

@@ -31,18 +31,18 @@ export default function TestimonialsSection() {
   const reduced = useReducedMotion()
 
   return (
-    <section id="testimonials" ref={ref} className="py-32 bg-[#F4F3F2]">
+    <section id="testimonials" ref={ref} className="py-16 sm:py-20 md:py-32 bg-[#F4F3F2]">
       <div className="max-w-7xl mx-auto px-6 md:px-8">
         <m.h2
           initial={{ opacity: 0, y: reduced ? 0 : 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-4xl font-black text-[#1A1C1C] text-center mb-20 tracking-tight"
+          className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1A1C1C] text-center mb-12 sm:mb-16 md:mb-20 tracking-tight"
         >
           Voices of Success
         </m.h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 md:gap-8">
           {testimonials.map((t, i) => (
             <m.div
               key={i}

@@ -51,7 +51,7 @@ export default function HeroSection() {
         </m.span>
 
         {/* Headline — word stagger */}
-        <h1 className="text-6xl md:text-8xl lg:text-9xl font-black leading-[1.0] tracking-tighter mb-8 flex flex-wrap justify-center gap-x-[0.25em]">
+        <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black leading-[1.0] tracking-tighter mb-8 flex flex-wrap justify-center gap-x-[0.25em]">
           {WORDS.map((word, i) => (
             <m.span
               key={i}
@@ -75,7 +75,7 @@ export default function HeroSection() {
           variants={fadeUp(WORDS.length * 0.08 + 0.2)}
           initial="hidden"
           animate="visible"
-          className="text-lg md:text-xl text-[#43494D] max-w-2xl mx-auto mb-10 leading-relaxed"
+          className="text-base sm:text-lg md:text-xl text-[#43494D] max-w-2xl mx-auto mb-10 leading-relaxed"
         >
           Experience an editorial-first approach to competitive exams. Advanced analytics
           meets distraction-free studying for the modern scholar.
