@@ -322,8 +322,7 @@ function QuizSetupContent() {
                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">
                       INDICORE MOCK
                     </p>
-                    <h3 className="text-2xl font-black text-gray-900 mb-1">{mock.name}</h3>
-                    <p className="text-xs text-gray-400 font-semibold mb-6">{mock.description}</p>
+                    <h3 className="text-2xl font-black text-gray-900 mb-6">{mock.name}</h3>
                     <div className="grid grid-cols-3 gap-4 mb-8 mt-auto">
                       <div>
                         <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Questions</p>
