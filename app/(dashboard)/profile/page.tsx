@@ -273,25 +273,25 @@ export default function ProfilePage() {
             onClick={() => router.back()}
             className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <ChevronLeft className="h-6 w-6 text-[#FF6B00]" />
+            <ChevronLeft className="h-6 w-6 text-[#4A90E2]" />
           </button>
           <h1 className="text-sm font-black tracking-[0.2em] text-gray-900 uppercase">Profile</h1>
           <button
             onClick={openEditModal}
             className="p-2 -mr-2 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <Settings className="h-6 w-6 text-[#FF6B00]" />
+            <Settings className="h-6 w-6 text-[#4A90E2]" />
           </button>
         </div>
 
         {/* AVATAR + NAME */}
         <div className="flex flex-col items-center pt-8 pb-10">
           <div className="relative">
-            <div className="h-32 w-32 md:h-40 md:w-40 rounded-full p-1 bg-gradient-to-tr from-[#FF6B00] to-orange-400">
+            <div className="h-32 w-32 md:h-40 md:w-40 rounded-full p-1 bg-gradient-to-tr from-[#4A90E2] to-blue-400">
               <div className="h-full w-full rounded-full bg-white p-1">
                 <div className="h-full w-full rounded-full bg-[#F5F5F7] flex items-center justify-center overflow-hidden">
                   {avatarUploading ? (
-                    <Loader2 className="h-8 w-8 text-[#FF6B00] animate-spin" />
+                    <Loader2 className="h-8 w-8 text-[#4A90E2] animate-spin" />
                   ) : (
                     <img
                       src={avatarSrc}
@@ -305,7 +305,7 @@ export default function ProfilePage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={avatarUploading}
-              className="absolute bottom-1 right-1 md:bottom-2 md:right-2 h-9 w-9 md:h-11 md:w-11 bg-[#FF6B00] border-4 border-white rounded-full flex items-center justify-center text-white shadow-lg hover:bg-[#FF8C00] transition-colors disabled:opacity-50"
+              className="absolute bottom-1 right-1 md:bottom-2 md:right-2 h-9 w-9 md:h-11 md:w-11 bg-[#4A90E2] border-4 border-white rounded-full flex items-center justify-center text-white shadow-lg hover:bg-[#3a7fd4] transition-colors disabled:opacity-50"
             >
               {avatarUploading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -343,16 +343,16 @@ export default function ProfilePage() {
         {/* MASTERY & BEST SCORE */}
         <div className="grid grid-cols-2 gap-4 px-6 mb-8">
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm flex flex-col items-center text-center">
-            <div className="h-12 w-12 bg-orange-50 rounded-2xl flex items-center justify-center mb-4">
-              <Trophy className="h-6 w-6 text-orange-700" />
+            <div className="h-12 w-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
+              <Trophy className="h-6 w-6 text-blue-700" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Mastery</p>
             <p className="text-2xl font-black text-gray-900">{mastery.title}</p>
-            <p className="text-[11px] font-bold text-orange-600 mt-2 uppercase">{mastery.level}</p>
+            <p className="text-[11px] font-bold text-blue-600 mt-2 uppercase">{mastery.level}</p>
           </div>
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm flex flex-col items-center text-center">
-            <div className="h-12 w-12 bg-orange-50 rounded-2xl flex items-center justify-center mb-4">
-              <BarChart3 className="h-6 w-6 text-orange-700" />
+            <div className="h-12 w-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
+              <BarChart3 className="h-6 w-6 text-blue-700" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Best Score</p>
             <p className="text-2xl font-black text-gray-900">
@@ -363,7 +363,7 @@ export default function ProfilePage() {
             {stats.highestScore > 0 && stats.highestScoreMax > 0 && (
               <p className="text-[11px] font-bold text-gray-400 mt-1">out of {stats.highestScoreMax}</p>
             )}
-            <p className="text-[11px] font-bold text-orange-600 mt-2 uppercase">
+            <p className="text-[11px] font-bold text-blue-600 mt-2 uppercase">
               {stats.totalTests > 0 ? `${stats.totalTests} full tests` : 'No full tests yet'}
             </p>
           </div>
@@ -432,7 +432,7 @@ export default function ProfilePage() {
             <div className="divide-y divide-gray-50">
               <PreferenceItem icon={<ShieldCheck className="h-5 w-5 text-gray-400" />} label="Account Security" />
               <PreferenceItem icon={<Bell className="h-5 w-5 text-gray-400" />} label="Notification Preferences" />
-              <PreferenceItem icon={<Crown className="h-5 w-5 text-orange-700" />} label="Subscription" badge="Plus" />
+              <PreferenceItem icon={<Crown className="h-5 w-5 text-blue-700" />} label="Subscription" badge="Plus" />
               <PreferenceItem icon={<HelpCircle className="h-5 w-5 text-gray-400" />} label="Help & Support" />
             </div>
           </div>
@@ -440,7 +440,7 @@ export default function ProfilePage() {
           {/* SIGN OUT */}
           <button
             onClick={handleSignOut}
-            className="w-full h-20 bg-gradient-to-r from-[#FF6B00] to-orange-500 rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-orange-100 hover:scale-[1.01] hover:shadow-orange-200 transition-all active:scale-[0.98]"
+            className="w-full h-20 bg-gradient-to-r from-[#4A90E2] to-[#3a7fd4] rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-blue-100 hover:scale-[1.01] hover:shadow-blue-200 transition-all active:scale-[0.98]"
           >
             Sign Out
             <LogOut className="h-6 w-6" />
@@ -526,7 +526,7 @@ export default function ProfilePage() {
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-[#FF6B00] hover:bg-[#FF8C00] rounded-xl"
+                className="flex-1 bg-[#4A90E2] hover:bg-[#3a7fd4] rounded-xl"
                 onClick={handleSaveProfile}
                 disabled={saving}
               >
@@ -548,7 +548,7 @@ function PreferenceItem({ icon, label, badge }: { icon: React.ReactNode; label: 
         <div className="flex items-center gap-2">
           <span className="text-sm font-black text-gray-700">{label}</span>
           {badge && (
-            <span className="bg-orange-50 text-orange-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">
+            <span className="bg-blue-50 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">
               {badge}
             </span>
           )}
