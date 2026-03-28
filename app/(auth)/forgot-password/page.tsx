@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#FF6B00] to-[#FF8C00] p-12 flex-col justify-between text-white">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#4A90E2] to-[#3a7fd4] p-12 flex-col justify-between text-white">
         <div>
           <div className="flex items-center gap-3 mb-8">
             <Trophy className="h-10 w-10" />
@@ -64,12 +64,12 @@ export default function ForgotPasswordPage() {
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="space-y-1">
             <div className="flex items-center gap-2 lg:hidden mb-4">
-              <Trophy className="h-8 w-8 text-[#FF6B00]" />
+              <Trophy className="h-8 w-8 text-[#4A90E2]" />
               <span className="text-2xl font-bold">Indicore</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#FF6B00]/10 rounded-xl flex items-center justify-center">
-                <KeyRound className="h-5 w-5 text-[#FF6B00]" />
+              <div className="w-10 h-10 bg-[#4A90E2]/10 rounded-xl flex items-center justify-center">
+                <KeyRound className="h-5 w-5 text-[#4A90E2]" />
               </div>
               <div>
                 <CardTitle className="text-2xl font-bold">Reset your password</CardTitle>
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
                 <Button
                   id="send-reset-btn"
                   type="submit"
-                  className="w-full bg-[#FF6B00] hover:bg-[#FF8C00]"
+                  className="w-full bg-[#4A90E2] hover:bg-[#3a7fd4]"
                   disabled={loading}
                   size="lg"
                 >
@@ -128,7 +128,7 @@ export default function ForgotPasswordPage() {
           <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">
               Remembered it?{' '}
-              <Link href="/login" className="font-semibold text-[#FF6B00] hover:underline">
+              <Link href="/login" className="font-semibold text-[#4A90E2] hover:underline">
                 Back to Sign in
               </Link>
             </p>

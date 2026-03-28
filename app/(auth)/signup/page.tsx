@@ -88,7 +88,7 @@ export default function SignupPage() {
       {/* ─────────────────────────────────────────────────────────────────
           LEFT DECORATIVE PANEL (Hidden on mobile)
           ───────────────────────────────────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#FF6B00] to-[#FF8C00] p-12 flex-col justify-between text-white">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#4A90E2] to-[#3a7fd4] p-12 flex-col justify-between text-white">
         <div>
           <div className="flex items-center gap-3 mb-8">
             <Trophy className="h-10 w-10" />
@@ -115,7 +115,7 @@ export default function SignupPage() {
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="space-y-1">
             <div className="flex items-center gap-2 lg:hidden mb-4">
-              <Trophy className="h-8 w-8 text-[#FF6B00]" />
+              <Trophy className="h-8 w-8 text-[#4A90E2]" />
               <span className="text-2xl font-bold">Indicore</span>
             </div>
             <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
@@ -224,7 +224,7 @@ export default function SignupPage() {
               {/* Sign Up Button */}
               <Button
                 type="submit"
-                className="w-full bg-[#FF6B00] hover:bg-[#FF8C00]"
+                className="w-full bg-[#4A90E2] hover:bg-[#3a7fd4]"
                 disabled={loading}
                 size="lg"
               >
@@ -294,7 +294,7 @@ export default function SignupPage() {
           <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/login" className="font-medium text-[#FF6B00] hover:underline">
+              <Link href="/login" className="font-medium text-[#4A90E2] hover:underline">
                 Log in
               </Link>
             </p>

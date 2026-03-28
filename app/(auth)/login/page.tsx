@@ -76,7 +76,7 @@ export default function LoginPage() {
       {/* ─────────────────────────────────────────────────────────────────
           LEFT DECORATIVE PANEL (Hidden on mobile)
           ───────────────────────────────────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#FF6B00] to-[#FF8C00] p-12 flex-col justify-between text-white">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#4A90E2] to-[#3a7fd4] p-12 flex-col justify-between text-white">
         <div>
           <div className="flex items-center gap-3 mb-8">
             <Trophy className="h-10 w-10" />
@@ -101,7 +101,7 @@ export default function LoginPage() {
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="space-y-1">
             <div className="flex items-center gap-2 lg:hidden mb-4">
-              <Trophy className="h-8 w-8 text-[#FF6B00]" />
+              <Trophy className="h-8 w-8 text-[#4A90E2]" />
               <span className="text-2xl font-bold">Indicore</span>
             </div>
             <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
@@ -137,7 +137,7 @@ export default function LoginPage() {
                   <Label htmlFor="password">Password</Label>
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-[#FF6B00] hover:underline"
+                    className="text-sm text-[#4A90E2] hover:underline"
                   >
                     Forgot password?
                   </Link>
@@ -172,7 +172,7 @@ export default function LoginPage() {
               {/* Login Button */}
               <Button
                 type="submit"
-                className="w-full bg-[#FF6B00] hover:bg-[#FF8C00]"
+                className="w-full bg-[#4A90E2] hover:bg-[#3a7fd4]"
                 disabled={loading}
                 size="lg"
               >
@@ -242,7 +242,7 @@ export default function LoginPage() {
           <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="font-medium text-[#FF6B00] hover:underline">
+              <Link href="/signup" className="font-medium text-[#4A90E2] hover:underline">
                 Sign up
               </Link>
             </p>
