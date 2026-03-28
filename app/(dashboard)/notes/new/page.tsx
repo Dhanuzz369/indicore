@@ -8,9 +8,11 @@ import { getSubjects, createNote } from '@/lib/supabase/queries'
 import { toast } from 'sonner'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import type { Subject } from '@/types'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 export default function NewNotePage() {
   const router = useRouter()
+  const { track } = useAnalytics()
   const [userId, setUserId] = useState('')
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [front, setFront] = useState('')
@@ -37,6 +39,7 @@ export default function NewNotePage() {
     try {
       await createNote({ user_id: userId, front: front.trim(), back: back.trim(), subject: subject || 'General', topic: topic.trim() })
       toast.success('Note saved!')
+      track('note_created')
       router.push('/notes')
     } catch (err: any) {
       console.error('[NewNote] save failed:', err)

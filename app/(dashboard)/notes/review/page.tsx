@@ -11,11 +11,13 @@ import { RatingButtons } from '@/components/notes/RatingButtons'
 import { Loader2, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Note, SRSRating } from '@/types'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 type RatingCount = { again: number; hard: number; good: number; easy: number }
 
 export default function ReviewPage() {
   const router = useRouter()
+  const { track } = useAnalytics()
   const [cards, setCards] = useState<Note[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
@@ -31,6 +33,7 @@ export default function ReviewPage() {
       try {
         const due = await getDueNotes(user.$id)
         setCards(due.documents)
+        track('note_review_started', { due_count: due.documents.length })
       } catch {
         toast.error('Failed to load review cards.')
       } finally {
@@ -53,6 +56,7 @@ export default function ReviewPage() {
       })
       setCounts(prev => ({ ...prev, [rating]: prev[rating] + 1 }))
       setRated(true)
+      track('note_rated', { rating: rating as string })
     } catch {
       toast.error('Failed to save rating.')
     } finally {
