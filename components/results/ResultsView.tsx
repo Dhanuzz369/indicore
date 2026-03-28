@@ -601,117 +601,117 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
         {/* ── Score + Subject bar chart ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Dark score card */}
-          <div className="bg-[#111111] rounded-[2rem] overflow-hidden flex flex-col">
+          {/* Score card */}
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
             <div className="p-7 flex-1">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">
                 {displayPaperLabel || 'Mock Analysis'} · {displayQuestions.length} Qs
               </p>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Marks Scored</p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Marks Scored</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-5xl font-black text-white">
+                    <span className="text-5xl font-black text-gray-900">
                       {score.marksScored ?? score.correct}
                     </span>
-                    <span className="text-xl font-bold text-gray-600">
+                    <span className="text-xl font-bold text-gray-400">
                       /{score.totalMarks ?? displayQuestions.length * 2}
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-600 mt-1">
+                  <p className="text-[10px] text-gray-400 mt-1">
                     +{score.correct * 2} − {(score.wrong * (2/3)).toFixed(2)} neg
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-4xl font-black text-[#00E5BE]">{score.percentage}%</span>
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-0.5">accuracy</p>
+                  <span className="text-4xl font-black text-[#FF6B00]">{score.percentage}%</span>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">accuracy</p>
                 </div>
               </div>
               <div className="mt-5">
-                <div className="flex justify-between text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">
+                <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
                   <span>{Object.keys(displayAnswers).length} of {displayQuestions.length} attempted</span>
                 </div>
-                <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#00E5BE] rounded-full transition-all duration-1000"
+                    className="h-full bg-[#FF6B00] rounded-full transition-all duration-1000"
                     style={{ width: `${(Object.keys(displayAnswers).length / displayQuestions.length) * 100}%` }}
                   />
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 border-t border-white/5">
-              <div className="py-4 text-center border-r border-white/5">
-                <p className="text-xl font-black text-emerald-400">{score.correct}</p>
-                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-0.5">Correct</p>
+            <div className="grid grid-cols-3 border-t border-gray-100">
+              <div className="py-4 text-center border-r border-gray-100">
+                <p className="text-xl font-black text-emerald-600">{score.correct}</p>
+                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mt-0.5">Correct</p>
               </div>
-              <div className="py-4 text-center border-r border-white/5">
-                <p className="text-xl font-black text-red-400">{score.wrong}</p>
-                <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mt-0.5">Wrong</p>
+              <div className="py-4 text-center border-r border-gray-100">
+                <p className="text-xl font-black text-red-600">{score.wrong}</p>
+                <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mt-0.5">Wrong</p>
               </div>
               <div className="py-4 text-center">
-                <p className="text-xl font-black text-gray-500">{displayQuestions.length - Object.keys(displayAnswers).length}</p>
-                <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-0.5">Skipped</p>
+                <p className="text-xl font-black text-gray-400">{displayQuestions.length - Object.keys(displayAnswers).length}</p>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Skipped</p>
               </div>
             </div>
-            <div className="flex items-center justify-between px-6 py-4 border-t border-white/5">
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                 {Math.floor(displayElapsed / 3600)}h {Math.floor((displayElapsed % 3600) / 60)}m
               </div>
               <button
                 onClick={() => handleQuestionClick(0)}
-                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+                className="bg-[#FF6B00]/10 hover:bg-[#FF6B00]/20 text-[#FF6B00] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors"
               >
                 <Clock className="h-3 w-3" /> Review Test
               </button>
             </div>
           </div>
 
-          {/* Subject performance bar chart - NEW DESIGN */}
-          <div className="bg-[#1A1A1A] rounded-[2rem] shadow-xl p-8 flex flex-col min-h-[400px]">
+          {/* Subject performance bar chart */}
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 flex flex-col min-h-[400px]">
             <div className="mb-6">
-              <h3 className="text-[11px] font-black text-[#A1A1A1] uppercase tracking-[0.15em] mb-4">
+              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.15em] mb-4">
                 Subject Performance — Accuracy & Marks Lost
               </h3>
-              
-              {/* Legend matching reference */}
+
+              {/* Legend */}
               <div className="flex items-center gap-6 mb-8">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#E54B4B]" />
-                  <span className="text-[10px] font-bold text-[#A1A1A1] uppercase tracking-wider">Below 50%</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Below 50%</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#E59935]" />
-                  <span className="text-[10px] font-bold text-[#A1A1A1] uppercase tracking-wider">50-70%</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">50-70%</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#6DA42A]" />
-                  <span className="text-[10px] font-bold text-[#A1A1A1] uppercase tracking-wider">Above 70%</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Above 70%</span>
                 </div>
               </div>
 
-              {/* Subject list matching reference */}
+              {/* Subject list */}
               <div className="space-y-6">
                 {analytics.subjectStats.map((stat: any) => {
                   const accuracy = stat.accuracy || 0
                   const color = accuracy >= 70 ? '#6DA42A' : accuracy >= 50 ? '#E59935' : '#E54B4B'
-                  
+
                   return (
                     <div key={stat.subject} className="flex items-center gap-4">
                       {/* Name */}
                       <div className="w-24 shrink-0 text-right">
-                        <span className="text-[11px] font-black text-white uppercase tracking-tight">
+                        <span className="text-[11px] font-black text-gray-900 uppercase tracking-tight">
                           {(stat.subject ?? 'Unknown').replace(/_/g, ' ')}
                         </span>
                       </div>
-                      
+
                       {/* Progress Bar Container */}
-                      <div className="flex-1 h-8 bg-[#2A2A2A] rounded-lg overflow-hidden relative">
+                      <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden relative">
                         {/* Bar fill */}
-                        <div 
+                        <div
                           className="h-full transition-all duration-1000 ease-out flex items-center px-3"
-                          style={{ 
-                            width: `${Math.max(15, accuracy)}%`, 
-                            backgroundColor: color 
+                          style={{
+                            width: `${Math.max(15, accuracy)}%`,
+                            backgroundColor: color
                           }}
                         >
                           <span className="text-[11px] font-black text-white">
@@ -719,16 +719,16 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Right Stats (Badges) */}
                       <div className="flex flex-col gap-1 w-20 shrink-0">
-                        <div className="bg-[#2A2A2A] rounded px-2 py-0.5 text-center">
-                          <span className="text-[9px] font-bold text-[#A1A1A1]">
+                        <div className="bg-gray-100 rounded px-2 py-0.5 text-center">
+                          <span className="text-[9px] font-bold text-gray-600">
                             {stat.correct}/{stat.total} correct
                           </span>
                         </div>
-                        <div className="bg-[#3D1E1E] rounded px-2 py-0.5 text-center">
-                          <span className="text-[9px] font-bold text-[#E54B4B]">
+                        <div className="bg-red-50 rounded px-2 py-0.5 text-center">
+                          <span className="text-[9px] font-bold text-red-600">
                             -{stat.marksLost.toFixed(2)} marks
                           </span>
                         </div>
@@ -819,18 +819,22 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </div>
           </div>
           <div className="space-y-4">
-            {analytics.subjectStats.map((stat: any) => (
-              <SubjectPerformanceCard
-                key={stat.subject}
-                subject={stat.subject}
-                correct={stat.correct}
-                total={stat.total}
-                accuracy={stat.accuracy}
-                questions={displayQuestions}
-                answers={mergedAnswers}
-                onQuestionClick={handleQuestionClick}
-              />
-            ))}
+            {analytics.subjectStats.map((stat: any) => {
+              // stat.subject is the resolved name; filter questions by UUID
+              const subjectUUID = Object.keys(subjectMap).find(id => subjectMap[id] === stat.subject) ?? stat.subject
+              return (
+                <SubjectPerformanceCard
+                  key={stat.subject}
+                  subject={subjectUUID}
+                  correct={stat.correct}
+                  total={stat.total}
+                  accuracy={stat.accuracy}
+                  questions={displayQuestions}
+                  answers={mergedAnswers}
+                  onQuestionClick={handleQuestionClick}
+                />
+              )
+            })}
           </div>
         </div>
 

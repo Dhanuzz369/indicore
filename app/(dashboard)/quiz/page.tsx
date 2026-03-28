@@ -283,6 +283,34 @@ function QuizSetupContent() {
     }
   }
 
+  // ── Subject-wise Mock — Full Length (load all available questions) ──
+  const handleStartMockFullLength = async () => {
+    if (!mockConfigSubject) return
+    setMockStartLoading(true)
+    try {
+      const result = await getQuestions({
+        examType: 'INDICORE_MOCK',
+        subjectId: mockConfigSubject.$id,
+        limit: mockConfigSubject.count + 50, // fetch all + buffer
+      })
+      if (!result.documents?.length) {
+        toast.error('No mock questions found for this subject.')
+        setMockStartLoading(false)
+        return
+      }
+      useQuizStore.getState().resetQuiz()
+      const finalQs = shuffleArray(result.documents as unknown as Question[])
+      setQuestions(finalQs)
+      setTestMode(true)
+      setPracticeTimerTotal(0) // full-length timer
+      setPaperLabel(`${mockConfigSubject.Name} · Full Mock · ${finalQs.length}Q`)
+      router.push('/quiz/session?id=' + crypto.randomUUID())
+    } catch {
+      toast.error('Failed to start full mock')
+      setMockStartLoading(false)
+    }
+  }
+
   const totalTimerSeconds = questionCount * SECONDS_PER_QUESTION
 
   return (
@@ -350,14 +378,14 @@ function QuizSetupContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loadingMocks
                   ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-[2.5rem]" />)
-                  : mocks.length === 0
+                  : mocks.filter(m => m.subject_weights.length > 1).length === 0
                     ? (
                       <div className="col-span-3 bg-white rounded-[2.5rem] border border-gray-100 p-10 text-center">
-                        <p className="text-sm font-bold text-gray-500">Mock questions coming soon</p>
-                        <p className="text-xs text-gray-400 mt-1">Upload mock questions with exam_type = INDICORE_MOCK to unlock</p>
+                        <p className="text-sm font-bold text-gray-500">Full-length mocks coming soon</p>
+                        <p className="text-xs text-gray-400 mt-1">Multi-subject mock tests will appear here once configured</p>
                       </div>
                     )
-                    : mocks.map((mock, idx) => {
+                    : mocks.filter(m => m.subject_weights.length > 1).map((mock, idx) => {
                         const theme = idx === 0 ? 'orange' : idx === 1 ? 'black' : 'gray'
                         const weightLabel = mock.subject_weights
                           .map(w => {
@@ -506,13 +534,26 @@ function QuizSetupContent() {
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Difficulty</p>
                       </div>
                     </div>
-                    <button
-                      onClick={handleStartMockPractice}
-                      disabled={mockStartLoading}
-                      className="w-full h-20 bg-gradient-to-r from-[#FF6B00] to-orange-500 rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-orange-100 hover:scale-[1.01] transition-all active:scale-[0.98] disabled:opacity-60"
-                    >
-                      {mockStartLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>Begin Practice <ArrowRight className="h-6 w-6" /></>}
-                    </button>
+                    <div className="space-y-3">
+                      <button
+                        onClick={handleStartMockPractice}
+                        disabled={mockStartLoading}
+                        className="w-full h-20 bg-gradient-to-r from-[#FF6B00] to-orange-500 rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-orange-100 hover:scale-[1.01] transition-all active:scale-[0.98] disabled:opacity-60"
+                      >
+                        {mockStartLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>Begin Practice <ArrowRight className="h-6 w-6" /></>}
+                      </button>
+
+                      {mockConfigSubject.count > 50 && (
+                        <button
+                          onClick={handleStartMockFullLength}
+                          disabled={mockStartLoading}
+                          className="w-full h-14 bg-gray-900 rounded-[2rem] flex items-center justify-center gap-3 text-white font-black text-[11px] tracking-widest uppercase hover:bg-gray-800 transition-all active:scale-[0.98] disabled:opacity-60"
+                        >
+                          <Clock className="h-4 w-4 text-[#FF6B00]" />
+                          Full Length Test · All {mockConfigSubject.count} Questions
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -547,7 +588,12 @@ function QuizSetupContent() {
                               <p className="text-[11px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-2">
                                 <FileText className="h-3 w-3" /> {subj.count} mock questions
                               </p>
-                              <div className="mt-10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#FF6B00]">
+                              {subj.count > 50 && (
+                                <p className="text-[10px] font-black text-[#FF6B00] uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                                  <Clock className="h-3 w-3" /> Full length test available
+                                </p>
+                              )}
+                              <div className="mt-8 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#FF6B00]">
                                 Configure &amp; Start <ChevronRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
                               </div>
                             </div>
