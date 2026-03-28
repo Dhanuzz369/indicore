@@ -19,6 +19,7 @@ import { ReviewAllTab } from '@/components/tests/tabs/ReviewAllTab'
 import type { ReviewItem } from '@/components/tests/tabs/ReviewAllTab'
 import { SubtopicDrillTab } from '@/components/tests/tabs/SubtopicDrillTab'
 import type { TestSession, Question, QuizAttempt, Subject, TestAnalyticsV1 } from '@/types'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 type TabName = 'overview' | 'wrong-answers' | 'review-all' | 'subtopic-drill'
 
@@ -55,6 +56,8 @@ function SessionDetailContent() {
   const sessionId = params.sessionId as string
   const activeTab = (searchParams.get('tab') || 'overview') as TabName
 
+  const { track } = useAnalytics()
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [session, setSession] = useState<TestSession | null>(null)
@@ -72,6 +75,7 @@ function SessionDetailContent() {
           getSubjects(),
         ])
         setSession(sess)
+        track('test_reviewed', { session_id: sessionId, mode: sess.mode ?? 'unknown' })
         setSubjects(subsRes.documents as unknown as Subject[])
 
         // ── Parse snapshot once — used for both questions and attempt fallback ──
