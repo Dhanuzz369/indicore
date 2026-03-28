@@ -31,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 const navigation = [
   { name: 'Home',         href: '/dashboard',      icon: LayoutDashboard },
@@ -53,6 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [dueCount, setDueCount] = useState(0)
+  const { identify, reset } = useAnalytics()
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -61,6 +63,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (!user) { router.push('/login'); return }
         const userProfile = await getProfile(user.$id)
         setProfile(userProfile as unknown as Profile)
+        identify(user.$id, {
+          email: user.email ?? '',
+          name: (userProfile as any)?.full_name ?? '',
+          exam_type: (userProfile as any)?.target_exam ?? '',
+        })
         try {
           const count = await getDueNotesCount(user.$id)
           setDueCount(count)
@@ -76,6 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [router])
 
   const handleSignOut = async () => {
+    reset()
     try {
       await signOut()
       toast.success('Signed out successfully')
