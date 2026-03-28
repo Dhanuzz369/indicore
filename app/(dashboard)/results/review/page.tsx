@@ -40,7 +40,7 @@ function ReviewContent() {
           <p className="text-gray-500">No quiz data found.</p>
           <button
             onClick={() => router.push('/results')}
-            className="bg-[#FF6B00] text-white px-6 py-2.5 rounded-xl font-bold text-sm"
+            className="bg-[#4A90E2] text-white px-6 py-2.5 rounded-xl font-bold text-sm"
           >
             Back to Results
           </button>
@@ -146,7 +146,7 @@ function ReviewContent() {
 
           {/* Question number badge */}
           <div className="flex items-center gap-3">
-            <span className="bg-[#FF6B00] text-white px-4 py-1.5 rounded-xl font-black text-sm shadow-sm shadow-orange-200">
+            <span className="bg-[#4A90E2] text-white px-4 py-1.5 rounded-xl font-black text-sm shadow-sm shadow-blue-200">
               Q.{safeIndex + 1}
             </span>
             {question.difficulty && (
@@ -226,11 +226,11 @@ function ReviewContent() {
 
           {/* Subtopic */}
           {(question.subtopic || (question.tags && question.tags[0])) && (
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-center gap-3">
-              <BookOpen className="h-4 w-4 text-orange-600 shrink-0" />
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center gap-3">
+              <BookOpen className="h-4 w-4 text-blue-600 shrink-0" />
               <div>
-                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Sub-Topic</p>
-                <p className="text-sm font-semibold text-orange-900 mt-0.5">{question.subtopic || question.tags[0]}</p>
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Sub-Topic</p>
+                <p className="text-sm font-semibold text-blue-900 mt-0.5">{question.subtopic || question.tags[0]}</p>
               </div>
             </div>
           )}
@@ -272,7 +272,7 @@ function ReviewContent() {
             </button>
             <button
               onClick={() => router.push('/results')}
-              className="flex-1 flex items-center justify-center py-3 rounded-xl bg-[#FF6B00] text-white font-bold text-sm hover:bg-[#FF8C00] transition-colors"
+              className="flex-1 flex items-center justify-center py-3 rounded-xl bg-[#4A90E2] text-white font-bold text-sm hover:bg-[#3a7fd4] transition-colors"
             >
               Back to Analytics
             </button>
@@ -305,7 +305,7 @@ function ReviewContent() {
                   <button
                     key={q.$id}
                     onClick={() => goTo(idx)}
-                    className={`h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${colorCls} ${isCurrent ? 'ring-2 ring-offset-1 ring-[#FF6B00] scale-110' : ''}`}
+                    className={`h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${colorCls} ${isCurrent ? 'ring-2 ring-offset-1 ring-[#4A90E2] scale-110' : ''}`}
                   >
                     {idx + 1}
                   </button>
@@ -338,7 +338,7 @@ function ReviewContent() {
               <button
                 key={q.$id}
                 onClick={() => goTo(idx)}
-                className={`shrink-0 h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs transition-all ${colorCls} ${isCurrent ? 'ring-2 ring-offset-1 ring-[#FF6B00] scale-110' : ''}`}
+                className={`shrink-0 h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs transition-all ${colorCls} ${isCurrent ? 'ring-2 ring-offset-1 ring-[#4A90E2] scale-110' : ''}`}
               >
                 {idx + 1}
               </button>

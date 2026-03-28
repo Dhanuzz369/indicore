@@ -180,7 +180,7 @@ function SessionDetailContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 text-[#FF6B00] animate-spin" />
+        <Loader2 className="h-8 w-8 text-[#4A90E2] animate-spin" />
       </div>
     )
   }
@@ -193,7 +193,7 @@ function SessionDetailContent() {
           <p className="text-sm text-gray-500">{error}</p>
           <Link
             href="/tests"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FF6B00] text-white text-sm font-bold hover:bg-[#FF8C00] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#4A90E2] text-white text-sm font-bold hover:bg-[#3a7fd4] transition-colors"
           >
             Back to Tests
           </Link>
@@ -234,7 +234,7 @@ function SessionDetailContent() {
                 onClick={() => setTab(tab.key)}
                 className={`shrink-0 px-4 py-2.5 text-xs font-black uppercase tracking-wide border-b-2 transition-colors ${
                   activeTab === tab.key
-                    ? 'border-[#FF6B00] text-[#FF6B00]'
+                    ? 'border-[#4A90E2] text-[#4A90E2]'
                     : 'border-transparent text-gray-400 hover:text-gray-600'
                 }`}
               >
@@ -273,7 +273,7 @@ export default function SessionDetailPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 text-[#FF6B00] animate-spin" />
+          <Loader2 className="h-8 w-8 text-[#4A90E2] animate-spin" />
         </div>
       }
     >

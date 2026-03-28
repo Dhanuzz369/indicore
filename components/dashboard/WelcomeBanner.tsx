@@ -30,7 +30,7 @@ export function WelcomeBanner({ profile, stats }: WelcomeBannerProps) {
     : 0
 
   return (
-    <Card className="bg-gradient-to-r from-[#FF6B00] to-[#FF8C00] text-white border-none shadow-lg">
+    <Card className="bg-gradient-to-r from-[#4A90E2] to-[#3a7fd4] text-white border-none shadow-lg">
       <div className="p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-2xl md:text-3xl font-bold">
@@ -50,7 +50,7 @@ export function WelcomeBanner({ profile, stats }: WelcomeBannerProps) {
 
         <Button
           onClick={() => router.push('/quiz')}
-          className="bg-white text-[#FF6B00] hover:bg-gray-50 font-semibold"
+          className="bg-white text-[#4A90E2] hover:bg-gray-50 font-semibold"
           size="lg"
         >
           Start Practice

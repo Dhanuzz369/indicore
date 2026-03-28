@@ -67,7 +67,7 @@ export default function NewNotePage() {
               onChange={e => setFront(e.target.value)}
               rows={4}
               placeholder="What is the question or concept?"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] resize-none"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2] resize-none"
             />
           </div>
 
@@ -78,7 +78,7 @@ export default function NewNotePage() {
               onChange={e => setBack(e.target.value)}
               rows={5}
               placeholder="Your own explanation, key points, or memory hook..."
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] resize-none"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2] resize-none"
             />
           </div>
 
@@ -88,7 +88,7 @@ export default function NewNotePage() {
               <select
                 value={subject}
                 onChange={e => setSubject(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00]"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2]"
               >
                 {subjects.map(s => <option key={s.$id} value={s.Name}>{s.Name}</option>)}
                 {subjects.length === 0 && <option value="General">General</option>}
@@ -100,7 +100,7 @@ export default function NewNotePage() {
                 value={topic}
                 onChange={e => setTopic(e.target.value)}
                 placeholder="e.g. Mughal Empire"
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00]"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2]"
               />
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function NewNotePage() {
           <button
             onClick={handleSave}
             disabled={saving || !front.trim() || !back.trim()}
-            className="w-full h-14 rounded-2xl bg-[#FF6B00] hover:bg-[#FF8C00] text-white font-black text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-100 mt-2"
+            className="w-full h-14 rounded-2xl bg-[#4A90E2] hover:bg-[#3a7fd4] text-white font-black text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-100 mt-2"
           >
             {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Save Note'}
           </button>

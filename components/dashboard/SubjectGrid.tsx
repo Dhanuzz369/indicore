@@ -34,13 +34,13 @@ export function SubjectGrid({ subjects }: SubjectGridProps) {
             {/* Left colored border */}
             <div
               className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
-              style={{ backgroundColor: subject.color || '#FF6B00' }}
+              style={{ backgroundColor: subject.color || '#4A90E2' }}
             />
 
             <div className="space-y-2">
               <h3 className="font-semibold text-base">{subject.Name}</h3>
 
-              <div className="flex items-center text-sm text-[#FF6B00] group-hover:translate-x-1 transition-transform">
+              <div className="flex items-center text-sm text-[#4A90E2] group-hover:translate-x-1 transition-transform">
                 <span>Practice</span>
                 <ArrowRight className="h-4 w-4 ml-1" />
               </div>
