@@ -105,7 +105,11 @@ export async function getQuestions(params: {
   offset?: number
 }) {
   const sb = createClient()
-  let q = sb.from('questions').select('*').eq('is_active', true)
+  // INDICORE_MOCK questions are admin-curated — is_active may be NULL on bulk upload.
+  // Include both true and NULL. For all other exam types keep the active-only filter.
+  let q = params.examType === 'INDICORE_MOCK'
+    ? sb.from('questions').select('*').or('is_active.eq.true,is_active.is.null')
+    : sb.from('questions').select('*').eq('is_active', true)
   if (params.examType && params.examType !== 'all') q = q.eq('exam_type', params.examType)
   if (params.subjectId) q = q.eq('subject_id', params.subjectId)
   if (params.year) q = q.eq('year', params.year)
@@ -159,10 +163,11 @@ export async function getSubjectsWithMockCounts() {
   const sb = createClient()
   const [subjectsRes, questionsRes] = await Promise.all([
     sb.from('subjects').select('*').order('name'),
+    // Include is_active = true and NULL — bulk-uploaded questions may not have is_active set
     sb.from('questions')
       .select('subject_id')
       .eq('exam_type', 'INDICORE_MOCK')
-      .eq('is_active', true),
+      .or('is_active.eq.true,is_active.is.null'),
   ])
   if (subjectsRes.error) throw subjectsRes.error
   if (questionsRes.error) throw questionsRes.error
