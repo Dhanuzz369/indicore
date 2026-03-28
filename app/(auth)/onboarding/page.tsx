@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Loader2, Trophy, ArrowRight } from 'lucide-react'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 // ─────────────────────────────────────────────────────────────────
 // EXAM OPTIONS
@@ -29,6 +30,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [selectedExam, setSelectedExam] = useState<string>('')
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
+  const { track } = useAnalytics()
 
   // ─────────────────────────────────────────────────────────────────
   // ON MOUNT: Verify Appwrite session & set our indicore_session cookie
@@ -111,6 +113,7 @@ export default function OnboardingPage() {
       })
 
       toast.success('Profile setup complete!')
+      track('onboarding_completed', { exam_type: selectedExam })
       router.push('/dashboard')
     } catch (error) {
       console.error('Onboarding error:', error)
