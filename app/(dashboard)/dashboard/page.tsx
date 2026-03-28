@@ -2,7 +2,6 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { getProfile, getUserStats, getSubjectsWithCounts } from '@/lib/supabase/queries'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -87,7 +86,6 @@ const SLIDES = [
 ]
 
 function OfferingsCarousel() {
-  const router = useRouter()
   const [current, setCurrent] = useState(0)
   const pausedRef = useRef(false)
 
@@ -138,14 +136,14 @@ function OfferingsCarousel() {
 
             {/* CTA */}
             <div className="relative z-10">
-              <button
-                onClick={() => router.push(slide.href)}
-                className="flex items-center gap-2 bg-white font-black text-sm px-6 py-2.5 rounded-2xl hover:opacity-90 transition-opacity shadow-sm"
+              <Link
+                href={slide.href}
+                className="inline-flex items-center gap-2 bg-white font-black text-sm px-6 py-2.5 rounded-2xl hover:opacity-90 transition-opacity shadow-sm"
                 style={{ color: slide.bg }}
               >
                 {slide.cta}
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Link>
             </div>
           </div>
         ))}
