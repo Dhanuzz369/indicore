@@ -30,6 +30,7 @@ import { Loader2, ChevronLeft, ChevronRight, Bookmark, PanelRight, X, House, Fla
 import { toast } from 'sonner'
 import type { Subject } from '@/types'
 import { NoteEditor } from '@/components/notes/NoteEditor'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 // ─────────────────────────────────────────────────────────────────
 // Question palette color logic for Full Length Test
@@ -140,6 +141,8 @@ export default function TestSessionPage() {
     clearResponse,
     updateTimeForAnswer,
   } = useQuizStore()
+
+  const { track } = useAnalytics()
 
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -400,6 +403,12 @@ export default function TestSessionPage() {
         const totalWrong = Object.values(answers).filter(a => !a.isCorrect).length
         const numAttempted = Object.keys(answers).length
         const scorePercent = numAttempted > 0 ? Math.round((totalCorrect / questions.length) * 100) : 0
+        track('quiz_submitted', {
+          mode: testMode ? 'full_length' : 'practice',
+          total_questions: questions.length,
+          correct: totalCorrect,
+          score_pct: scorePercent,
+        })
         const submittedAt = new Date().toISOString()
         const startedAt = startTime ? new Date(startTime).toISOString() : submittedAt
 
