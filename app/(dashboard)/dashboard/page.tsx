@@ -134,16 +134,12 @@ function OfferingsCarousel() {
               <p className="text-white/70 text-xs md:text-sm font-semibold">{slide.tagline}</p>
             </div>
 
-            {/* CTA */}
+            {/* Decorative CTA pill — non-navigating */}
             <div className="relative z-10">
-              <Link
-                href={slide.href}
-                className="inline-flex items-center gap-1.5 bg-white font-black text-xs md:text-sm px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl hover:opacity-90 transition-opacity shadow-sm"
-                style={{ color: slide.bg }}
-              >
+              <span className="inline-flex items-center gap-1.5 bg-white/20 text-white font-black text-xs md:text-sm px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl border border-white/30">
                 {slide.cta}
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </span>
             </div>
           </div>
         ))}

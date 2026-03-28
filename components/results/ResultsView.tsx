@@ -55,6 +55,18 @@ function SubjectPerformanceCard({
   const [isExpanded, setIsExpanded] = useState(false)
   const subjectQuestions = questions.filter(q => q.subject_id === subject)
 
+  // Collect unique subtopics from wrong answers for "Areas to revisit"
+  const areasToRevisit = useMemo(() => {
+    const seen = new Set<string>()
+    for (const q of subjectQuestions) {
+      const ans = answers[q.$id]
+      if (ans && ans.isCorrect === false && q.subtopic) {
+        seen.add(q.subtopic)
+      }
+    }
+    return Array.from(seen).slice(0, 6) // max 6 chips
+  }, [subjectQuestions, answers])
+
   return (
     <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
       <div
@@ -125,6 +137,25 @@ function SubjectPerformanceCard({
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-yellow-400" />Guess</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" />Revised</span>
             </div>
+
+            {/* Areas to revisit */}
+            {areasToRevisit.length > 0 && (
+              <div className="mt-5 pt-4 border-t border-gray-100">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">
+                  Areas to revisit
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {areasToRevisit.map(area => (
+                    <span
+                      key={area}
+                      className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold"
+                    >
+                      {area}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -556,7 +587,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
     <div className="min-h-screen bg-[#F8F9FC] pb-24">
       {/* ── Header ── */}
       <div className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-[#4A90E2] p-2 rounded-xl shadow-lg shadow-blue-200">
               <Brain className="h-5 w-5 text-white" />
@@ -598,7 +629,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-6 mt-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-3 md:px-6 mt-5 md:mt-8 space-y-6 md:space-y-8">
 
         {/* ── Score + Subject bar chart ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -668,70 +699,83 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           </div>
 
           {/* Subject performance bar chart */}
-          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 flex flex-col min-h-[400px]">
-            <div className="mb-6">
-              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.15em] mb-4">
-                Subject Performance — Accuracy & Marks Lost
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 md:p-8 flex flex-col">
+            <div className="mb-4 md:mb-6">
+              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.15em] mb-3 md:mb-4">
+                Subject Performance — Accuracy &amp; Marks Lost
               </h3>
 
               {/* Legend */}
-              <div className="flex items-center gap-6 mb-8">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#E54B4B]" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Below 50%</span>
+              <div className="flex items-center gap-3 md:gap-6 mb-5 md:mb-8 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#E54B4B]" />
+                  <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">Below 50%</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#E59935]" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">50-70%</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#E59935]" />
+                  <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">50-70%</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#6DA42A]" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Above 70%</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#6DA42A]" />
+                  <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">Above 70%</span>
                 </div>
               </div>
 
-              {/* Subject list */}
-              <div className="space-y-6">
+              {/* Subject list — stacked on mobile, inline on desktop */}
+              <div className="space-y-4 md:space-y-6">
                 {analytics.subjectStats.map((stat: any) => {
                   const accuracy = stat.accuracy || 0
                   const color = accuracy >= 70 ? '#6DA42A' : accuracy >= 50 ? '#E59935' : '#E54B4B'
+                  const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
 
                   return (
-                    <div key={stat.subject} className="flex items-center gap-4">
-                      {/* Name */}
-                      <div className="w-24 shrink-0 text-right">
+                    <div key={stat.subject}>
+                      {/* Mobile: name + badges in one row, bar full-width below */}
+                      <div className="flex items-center justify-between mb-1.5 md:hidden">
                         <span className="text-[11px] font-black text-gray-900 uppercase tracking-tight">
-                          {(stat.subject ?? 'Unknown').replace(/_/g, ' ')}
+                          {subjectName}
                         </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                            {stat.correct}/{stat.total}
+                          </span>
+                          <span className="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
+                            -{stat.marksLost.toFixed(1)}m
+                          </span>
+                        </div>
                       </div>
-
-                      {/* Progress Bar Container */}
-                      <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden relative">
-                        {/* Bar fill */}
+                      {/* Mobile: full-width bar */}
+                      <div className="md:hidden h-8 bg-gray-100 rounded-lg overflow-hidden">
                         <div
                           className="h-full transition-all duration-1000 ease-out flex items-center px-3"
-                          style={{
-                            width: `${Math.max(15, accuracy)}%`,
-                            backgroundColor: color
-                          }}
+                          style={{ width: `${Math.max(12, accuracy)}%`, backgroundColor: color }}
                         >
-                          <span className="text-[11px] font-black text-white">
-                            {accuracy}%
-                          </span>
+                          <span className="text-[11px] font-black text-white whitespace-nowrap">{accuracy}%</span>
                         </div>
                       </div>
 
-                      {/* Right Stats (Badges) */}
-                      <div className="flex flex-col gap-1 w-20 shrink-0">
-                        <div className="bg-gray-100 rounded px-2 py-0.5 text-center">
-                          <span className="text-[9px] font-bold text-gray-600">
-                            {stat.correct}/{stat.total} correct
+                      {/* Desktop: horizontal row */}
+                      <div className="hidden md:flex items-center gap-4">
+                        <div className="w-24 shrink-0 text-right">
+                          <span className="text-[11px] font-black text-gray-900 uppercase tracking-tight">
+                            {subjectName}
                           </span>
                         </div>
-                        <div className="bg-red-50 rounded px-2 py-0.5 text-center">
-                          <span className="text-[9px] font-bold text-red-600">
-                            -{stat.marksLost.toFixed(2)} marks
-                          </span>
+                        <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
+                          <div
+                            className="h-full transition-all duration-1000 ease-out flex items-center px-3"
+                            style={{ width: `${Math.max(15, accuracy)}%`, backgroundColor: color }}
+                          >
+                            <span className="text-[11px] font-black text-white">{accuracy}%</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1 w-20 shrink-0">
+                          <div className="bg-gray-100 rounded px-2 py-0.5 text-center">
+                            <span className="text-[9px] font-bold text-gray-600">{stat.correct}/{stat.total} correct</span>
+                          </div>
+                          <div className="bg-red-50 rounded px-2 py-0.5 text-center">
+                            <span className="text-[9px] font-bold text-red-600">-{stat.marksLost.toFixed(2)} marks</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -776,37 +820,37 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
         {/* ── Confidence panels ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-[2rem] border border-emerald-100 shadow-sm p-8 flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-emerald-600" />
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-emerald-100 shadow-sm p-5 md:p-8 flex flex-col">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-emerald-50 flex items-center justify-center">
+                <CheckCircle className="h-5 md:h-6 w-5 md:w-6 text-emerald-600" />
               </div>
               <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">Mastery</span>
             </div>
-            <h4 className="text-xl font-black text-gray-900 mb-2">Sure Items</h4>
-            <p className="text-xs text-gray-500 font-medium mb-6 leading-relaxed">Questions you answered with absolute confidence. These reflect your core strengths.</p>
+            <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">Sure Items</h4>
+            <p className="text-xs text-gray-500 font-medium mb-4 md:mb-6 leading-relaxed">Questions you answered with absolute confidence. These reflect your core strengths.</p>
             <TaggedQuestionsDropdown tag="sure" title="Review Sure Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
           </div>
-          <div className="bg-white rounded-[2rem] border border-blue-100 shadow-sm p-8 flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
-                <Brain className="h-6 w-6 text-blue-600" />
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-8 flex flex-col">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center">
+                <Brain className="h-5 md:h-6 w-5 md:w-6 text-blue-600" />
               </div>
               <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Learning</span>
             </div>
-            <h4 className="text-xl font-black text-gray-900 mb-2">50:50 Logic</h4>
-            <p className="text-xs text-gray-500 font-medium mb-6 leading-relaxed">Questions where you narrowed it down but were hesitant. This is where your edge lies.</p>
+            <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">50:50 Logic</h4>
+            <p className="text-xs text-gray-500 font-medium mb-4 md:mb-6 leading-relaxed">Questions where you narrowed it down but were hesitant. This is where your edge lies.</p>
             <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
           </div>
-          <div className="bg-white rounded-[2rem] border border-blue-100 shadow-sm p-8 flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
-                <Zap className="h-6 w-6 text-blue-600" />
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-8 flex flex-col">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center">
+                <Zap className="h-5 md:h-6 w-5 md:w-6 text-blue-600" />
               </div>
               <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Luck Factor</span>
             </div>
-            <h4 className="text-xl font-black text-gray-900 mb-2">Calculated Guesses</h4>
-            <p className="text-xs text-gray-500 font-medium mb-6 leading-relaxed">Pure guesses. Analyzing these helps you understand your subconscious processing.</p>
+            <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">Calculated Guesses</h4>
+            <p className="text-xs text-gray-500 font-medium mb-4 md:mb-6 leading-relaxed">Pure guesses. Analyzing these helps you understand your subconscious processing.</p>
             <TaggedQuestionsDropdown tag="guess" title="Review Guess Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
           </div>
         </div>
@@ -842,7 +886,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
         {/* ── Strategy suggestions ── */}
         {analytics.suggestions.length > 0 && (
-          <div className="bg-gray-900 rounded-[3rem] p-10 text-white relative overflow-hidden">
+          <div className="bg-gray-900 rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 p-10 opacity-10"><Lightbulb className="h-40 w-40" /></div>
             <div className="relative z-10">
               <h3 className="text-xl font-black uppercase tracking-widest mb-6 flex items-center gap-3">
