@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import type { Question, Subject, Mock, TestSession } from '@/types'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -73,6 +74,7 @@ function QuizSetupContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
   const { setQuestions, setTestMode, setPaperLabel, setPracticeTimerTotal } = useQuizStore()
+  const { track } = useAnalytics()
 
   const [activeTab, setActiveTab] = useState<'mock' | 'full' | 'subject'>(
     tabParam === 'full' ? 'full' : tabParam === 'subject' ? 'subject' : 'mock'
@@ -209,6 +211,7 @@ function QuizSetupContent() {
       setTestMode(true)
       setPracticeTimerTotal(0)
       setPaperLabel(mock.name)
+      track('mock_test_started', { mock_id: mock.$id, mock_title: mock.name })
       router.push('/quiz/session?id=' + crypto.randomUUID())
     } catch {
       toast.error('Failed to start mock test')
@@ -230,6 +233,7 @@ function QuizSetupContent() {
       setTestMode(true)
       setPracticeTimerTotal(0)
       setPaperLabel((session.paper_label ?? 'Mock') + ' · Retake')
+      track('test_retaken', { session_id: session.$id })
       router.push('/quiz/session?id=' + crypto.randomUUID())
     } catch {
       toast.error('Failed to start retake')
@@ -267,6 +271,10 @@ function QuizSetupContent() {
       setTestMode(true)
       setPracticeTimerTotal(qs.length * SECONDS_PER_QUESTION)
       setPaperLabel(`${configSubject.Name} · ${selectedDifficulty === 'All' ? 'All' : selectedDifficulty} · ${qs.length}Q`)
+      track('subject_practice_started', {
+        subject_name: configSubject.Name,
+        question_count: qs.length,
+      })
       router.push('/quiz/session?id=' + crypto.randomUUID())
     } catch {
       toast.error('Failed to start practice')
