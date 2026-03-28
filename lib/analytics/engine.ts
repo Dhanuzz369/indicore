@@ -2,7 +2,7 @@ import { Question, QuizAttempt } from '@/types'
 
 interface AnalyticsResult {
   overallTime: { targetTime: number; actualTime: number }
-  subjectStats: { subject: string; correct: number; incorrect: number; total: number; accuracy: number; marksLost: number }[]
+  subjectStats: { subject: string; correct: number; incorrect: number; total: number; attempted: number; accuracy: number; marksLost: number }[]
   timingStats: { questionText: string; timeTaken: number; targetTime: number }[]
   buttonUsageStats: {
     totalGuess: number
@@ -37,11 +37,15 @@ export function generateTestAnalytics({
   attempts,
   totalTestTime,
   subjects,
+  practiceMode = false,
 }: {
   questions: Question[]
   attempts: PartialAttempt[]
   totalTestTime: number
   subjects?: { $id: string; Name: string }[]
+  /** true = subject-wise practice (accuracy = correct/attempted*100)
+   *  false = full-length mock (marks-based UPSC scoring) */
+  practiceMode?: boolean
 }): AnalyticsResult {
   // Build UUID → name lookup so stats show "History" not a UUID
   const subjectNameMap = new Map<string, string>()
@@ -49,7 +53,8 @@ export function generateTestAnalytics({
     for (const s of subjects) subjectNameMap.set(s.$id, s.Name)
   }
 
-  const subjectStats = new Map<string, { correct: number; total: number }>()
+  // track total (all attempts), attempted (answered, selected_option truthy), correct
+  const subjectStats = new Map<string, { correct: number; attempted: number; total: number }>()
   const timingStats: {
     questionText: string
     timeTaken: number
@@ -82,11 +87,17 @@ export function generateTestAnalytics({
     const rawId = question.subject_id ?? 'Unknown'
     const subjectId = subjectNameMap.get(rawId) ?? rawId
     if (!subjectStats.has(subjectId)) {
-      subjectStats.set(subjectId, { correct: 0, total: 0 })
+      subjectStats.set(subjectId, { correct: 0, attempted: 0, total: 0 })
     }
     const subjectStat = subjectStats.get(subjectId)!
     subjectStat.total += 1
-    if (attempt.is_correct) subjectStat.correct += 1
+    // Only count as "attempted" when the user actually selected an option
+    // (viewed-not-answered entries have selectedOption = '' and must NOT inflate denominator)
+    const wasAnswered = !!attempt.selected_option
+    if (wasAnswered) {
+      subjectStat.attempted += 1
+      if (attempt.is_correct) subjectStat.correct += 1
+    }
 
     // Timing stats
     timingStats.push({
@@ -148,14 +159,18 @@ export function generateTestAnalytics({
 
   const subjectInsights = Array.from(subjectStats.entries()).map(
     ([subjectId, data]) => {
-      const incorrect = data.total - data.correct
+      // attempted = questions where user actually selected an answer (not skipped/viewed-only)
+      const attempted  = data.attempted
+      const incorrect  = attempted - data.correct
       return {
         subject: subjectId,
         correct: data.correct,
-        incorrect: incorrect,
-        total: data.total,
-        accuracy: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
-        marksLost: Number((incorrect * (2 / 3)).toFixed(2))
+        incorrect,
+        total: attempted,          // display as "X / Y Correct" — Y is attempted, not total Qs
+        attempted,
+        // Accuracy = (correct / attempted) * 100  [user-specified formula]
+        accuracy: attempted > 0 ? Math.round((data.correct / attempted) * 100) : 0,
+        marksLost: Number((incorrect * (2 / 3)).toFixed(2)),
       }
     }
   )
@@ -191,22 +206,28 @@ export function generateTestAnalytics({
     })),
     revisionSummary,
     score: (() => {
-      const correct = Array.from(subjectStats.values()).reduce((sum, s) => sum + s.correct, 0)
-      const wrong = attempts.filter(a => !a.is_correct && a.selected_option).length
-      const total = questions.length
+      const correct  = Array.from(subjectStats.values()).reduce((sum, s) => sum + s.correct, 0)
+      // Only truly-answered attempts count as wrong (no empty-string selected_option)
+      const wrong    = attempts.filter(a => !!a.selected_option && !a.is_correct).length
+      const answered = attempts.filter(a => !!a.selected_option).length  // total answered
+      const total    = questions.length                                   // total in test
       const MARKS_PER_Q = 2
-      const NEGATIVE = 2 / 3           // 0.666... per wrong
+      const NEGATIVE    = 2 / 3      // 0.666... per wrong (UPSC)
       const marksScored = Number((correct * MARKS_PER_Q - wrong * NEGATIVE).toFixed(2))
-      const totalMarks = total * MARKS_PER_Q
+
+      // Full-length mock: percentage = marks scored / total possible marks (UPSC model)
+      // Practice/subject-wise: percentage = correct / attempted * 100 (user's formula)
+      const percentage = practiceMode
+        ? answered > 0 ? Number(((correct / answered) * 100).toFixed(2)) : 0
+        : total   > 0 ? Number(((marksScored / (total * MARKS_PER_Q)) * 100).toFixed(2)) : 0
+
       return {
         correct,
         wrong,
-        total,
-        percentage: totalMarks > 0
-          ? Number(((marksScored / totalMarks) * 100).toFixed(2))
-          : 0,
+        total: practiceMode ? answered : total,   // display total = attempted in practice mode
+        percentage,
         marksScored,
-        totalMarks,
+        totalMarks: practiceMode ? answered * MARKS_PER_Q : total * MARKS_PER_Q,
       }
     })(),
     suggestions,

@@ -244,23 +244,24 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   }),
 
   getScore: () => {
-    const { answers } = get()
+    const { answers, testMode, questions } = get()
     const values = Object.values(answers)
-    const correct = values.filter((a) => a.isCorrect).length
-    const wrong = values.filter((a) => !a.isCorrect && a.selectedOption).length
-    const total = values.length
+    // Only count answers where user actually selected an option (not viewed-not-answered)
+    const answered = values.filter((a) => !!a.selectedOption)
+    const correct  = answered.filter((a) => a.isCorrect).length
+    const wrong    = answered.filter((a) => !a.isCorrect).length
+    // Full-length: total = all questions (UPSC totalMarks base)
+    // Practice: total = attempted questions (accuracy base)
+    const total    = testMode ? questions.length : answered.length
     const MARKS_PER_Q = 2
-    const NEGATIVE = 2 / 3
+    const NEGATIVE    = 2 / 3
     const marksScored = Number((correct * MARKS_PER_Q - wrong * NEGATIVE).toFixed(2))
-    const totalMarks = total * MARKS_PER_Q
-    return {
-      correct,
-      wrong,
-      total,
-      percentage: totalMarks > 0 ? Number(((marksScored / totalMarks) * 100).toFixed(2)) : 0,
-      marksScored,
-      totalMarks,
-    }
+    const totalMarks  = total * MARKS_PER_Q
+    // Full-length: marks-based %; Practice: accuracy = correct/attempted*100
+    const percentage = testMode
+      ? totalMarks > 0 ? Number(((marksScored / totalMarks) * 100).toFixed(2)) : 0
+      : answered.length > 0 ? Number(((correct / answered.length) * 100).toFixed(2)) : 0
+    return { correct, wrong, total, percentage, marksScored, totalMarks }
   },
 
   setTestMode: (val: boolean) => set({ testMode: val }),

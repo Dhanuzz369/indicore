@@ -235,6 +235,7 @@ interface LocalData {
   confidenceMap: Record<string, string>
   elapsedSeconds: number
   paperLabel: string
+  isFullLength: boolean
 }
 
 // ─── Props ─────────────────────────────────────────────────────
@@ -256,6 +257,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
     confidenceMap: storeConfidenceMap,
     elapsedSeconds: storeElapsed,
     paperLabel: storePaperLabel,
+    testMode: storeTestMode,
     getScore,
     reset,
     // live rehydration setters
@@ -319,6 +321,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 confidenceMap: snap.confidenceMap ?? {},
                 elapsedSeconds: snap.elapsedSeconds ?? session.total_time_seconds,
                 paperLabel: snap.paperLabel ?? session.paper_label,
+                isFullLength: session.mode === 'full_length',
               })
               return
             }
@@ -335,6 +338,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             confidenceMap: {},
             elapsedSeconds: session.total_time_seconds ?? 0,
             paperLabel: session.paper_label ?? 'Practice Session',
+            isFullLength: session.mode === 'full_length',
           })
           return
         }
@@ -372,6 +376,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           confidenceMap: reconstructedConfMap,
           elapsedSeconds: session.total_time_seconds,
           paperLabel: session.paper_label,
+          isFullLength: session.mode === 'full_length',
         })
       } catch (e: any) {
         console.error('Replay load failed:', e)
@@ -465,6 +470,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
     [subjectMap]
   )
 
+  // Determine whether this is a full-length mock or practice session
+  // live mode: use testMode from store; replay mode: use isFullLength from localData
+  const isFullLength = replayMode ? (localData?.isFullLength ?? false) : storeTestMode
+
   const generatedAnalytics = useMemo(() =>
     generateTestAnalytics({
       questions: displayQuestions,
@@ -485,8 +494,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
       }),
       totalTestTime: displayElapsed,
       subjects: subjectsList,
+      practiceMode: !isFullLength,
     }),
-    [displayQuestions, displayAnswers, displayConfMap, displayElapsed, subjectsList]
+    [displayQuestions, displayAnswers, displayConfMap, displayElapsed, subjectsList, isFullLength]
   )
 
   // Resolve UUID → name in storedAnalytics if needed
