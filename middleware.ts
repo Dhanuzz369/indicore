@@ -1,9 +1,8 @@
-// proxy.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -26,7 +25,7 @@ export async function proxy(request: NextRequest) {
   )
 
   // getSession() reads from the signed cookie — no network call, no latency.
-  // (getUser() hits the Supabase auth server on every request and causes timeouts.)
+  // RLS on Supabase tables enforces real data-level security.
   const { data: { session } } = await supabase.auth.getSession()
   const { pathname } = request.nextUrl
 
@@ -38,7 +37,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/results') ||
     pathname.startsWith('/tests') ||
     pathname.startsWith('/notes') ||
-    pathname.startsWith('/intelligence')
+    pathname.startsWith('/intelligence') ||
+    pathname.startsWith('/onboarding')
 
   if (isProtectedRoute && !session) {
     const loginUrl = new URL('/login', request.url)
@@ -54,7 +54,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Only run middleware on routes that need auth — skip static assets and API routes
   matcher: [
     '/dashboard(.*)',
     '/quiz(.*)',

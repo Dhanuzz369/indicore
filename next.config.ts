@@ -1,7 +1,48 @@
 import type { NextConfig } from "next";
 
+const securityHeaders = [
+  // Prevent clickjacking — only allow embedding from same origin
+  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+  // Prevent MIME type sniffing
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  // Enforce HTTPS for 2 years, include subdomains
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  // Limit referrer information sent to third parties
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  // Restrict browser feature access
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+  },
+  // Content Security Policy
+  // unsafe-inline needed for Tailwind CSS; unsafe-eval needed for Three.js
+  // connect-src allows Supabase REST + Realtime WebSocket connections
+  {
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://indicoreupsc.in https://indicore-seven.vercel.app",
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; '),
+  },
+]
+
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+    ]
+  },
+}
 
 export default nextConfig;

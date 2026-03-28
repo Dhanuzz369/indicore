@@ -382,10 +382,15 @@ export async function createTestSession(data: Omit<TestSession, '$id'>): Promise
 
 export async function getTestSession(sessionId: string): Promise<TestSession> {
   const sb = createClient()
+  // Always scope to the authenticated user — prevents cross-user session access
+  // even if Supabase RLS is misconfigured
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session?.user) throw new Error('Not authenticated')
   const { data, error } = await sb
     .from('test_sessions')
     .select('*')
     .eq('id', sessionId)
+    .eq('user_id', session.user.id)
     .single()
   if (error) throw error
   return mapSession(data)
