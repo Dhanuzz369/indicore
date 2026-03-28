@@ -25,7 +25,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://indicoreupsc.in https://indicore-seven.vercel.app",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://indicoreupsc.in https://indicore-seven.vercel.app https://us.i.posthog.com https://us-assets.i.posthog.com",
       "frame-src 'none'",
       "object-src 'none'",
       "base-uri 'self'",
