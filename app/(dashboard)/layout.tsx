@@ -93,8 +93,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-[#FF6B00]/20 flex items-center justify-center mx-auto">
-            <Trophy className="h-6 w-6 text-[#FF6B00]" />
+          <div className="w-12 h-12 rounded-full bg-[#4A90E2]/20 flex items-center justify-center mx-auto">
+            <Trophy className="h-6 w-6 text-[#4A90E2]" />
           </div>
           <div className="space-y-2">
             <Skeleton className="h-4 w-32 mx-auto" />
@@ -118,7 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-gray-100">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#FF6B00] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#4A90E2] flex items-center justify-center">
               <Trophy className="h-4 w-4 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900">Indicore</span>
@@ -134,14 +134,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.name}
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
-                    ? 'bg-[#FF6B00] text-white shadow-sm'
+                    ? 'bg-[#4A90E2] text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
                 {item.name}
                 {item.name === 'Notes' && dueCount > 0 ? (
-                  <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${isActive ? 'bg-white/30 text-white' : 'bg-[#FF6B00] text-white'}`}>
+                  <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${isActive ? 'bg-white/30 text-white' : 'bg-[#4A90E2] text-white'}`}>
                     {dueCount > 99 ? '99+' : dueCount}
                   </span>
                 ) : (
@@ -158,7 +158,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left">
                 <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarFallback className="bg-[#FF6B00] text-white text-sm font-semibold">
+                  <AvatarFallback className="bg-[#4A90E2] text-white text-sm font-semibold">
                     {profile ? getInitials(profile.full_name) : 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -190,7 +190,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Mobile top bar */}
         <header className="md:hidden flex items-center justify-between px-4 h-14 bg-white border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#FF6B00] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-[#4A90E2] flex items-center justify-center">
               <Trophy className="h-3.5 w-3.5 text-white" />
             </div>
             <span className="font-bold text-gray-900">Indicore</span>
@@ -199,7 +199,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <DropdownMenuTrigger asChild>
               <button>
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-[#FF6B00] text-white text-xs font-semibold">
+                  <AvatarFallback className="bg-[#4A90E2] text-white text-xs font-semibold">
                     {profile ? getInitials(profile.full_name) : 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -237,18 +237,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   className="flex flex-col items-center justify-center gap-1 transition-colors relative"
                 >
                   <div className="relative">
-                    <item.icon className={`h-5 w-5 ${isActive ? 'text-[#FF6B00]' : 'text-gray-400'}`} />
+                    <item.icon className={`h-5 w-5 ${isActive ? 'text-[#4A90E2]' : 'text-gray-400'}`} />
                     {item.name === 'Notes' && dueCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 bg-[#FF6B00] rounded-full text-white text-[8px] font-black flex items-center justify-center">
+                      <span className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 bg-[#4A90E2] rounded-full text-white text-[8px] font-black flex items-center justify-center">
                         {dueCount > 9 ? '9+' : dueCount}
                       </span>
                     )}
                   </div>
-                  <span className={`text-[10px] font-medium ${isActive ? 'text-[#FF6B00]' : 'text-gray-400'}`}>
+                  <span className={`text-[10px] font-medium ${isActive ? 'text-[#4A90E2]' : 'text-gray-400'}`}>
                     {item.name}
                   </span>
                   {isActive && (
-                    <div className="absolute bottom-0 w-8 h-0.5 bg-[#FF6B00] rounded-full" />
+                    <div className="absolute bottom-0 w-8 h-0.5 bg-[#4A90E2] rounded-full" />
                   )}
                 </Link>
               )
