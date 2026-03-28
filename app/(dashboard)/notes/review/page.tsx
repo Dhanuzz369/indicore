@@ -8,7 +8,7 @@ import { getDueNotes, updateNote } from '@/lib/supabase/queries'
 import { computeNextReview } from '@/lib/srs/engine'
 import { FlipCard } from '@/components/notes/FlipCard'
 import { RatingButtons } from '@/components/notes/RatingButtons'
-import { Loader2, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Loader2, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Note, SRSRating } from '@/types'
 
@@ -22,6 +22,7 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(false)
+  const [rated, setRated] = useState(false)
   const [counts, setCounts] = useState<RatingCount>({ again: 0, hard: 0, good: 0, easy: 0 })
 
   useEffect(() => {
@@ -51,12 +52,7 @@ export default function ReviewPage() {
         review_count: card.review_count + 1,
       })
       setCounts(prev => ({ ...prev, [rating]: prev[rating] + 1 }))
-      if (currentIndex + 1 >= cards.length) {
-        setDone(true)
-      } else {
-        setCurrentIndex(i => i + 1)
-        setFlipped(false)
-      }
+      setRated(true)
     } catch {
       toast.error('Failed to save rating.')
     } finally {
@@ -106,6 +102,16 @@ export default function ReviewPage() {
     )
   }
 
+  const handleNext = () => {
+    if (currentIndex + 1 >= cards.length) {
+      setDone(true)
+    } else {
+      setCurrentIndex(i => i + 1)
+      setFlipped(false)
+      setRated(false)
+    }
+  }
+
   const card = cards[currentIndex]
   const progress = ((currentIndex) / cards.length) * 100
 
@@ -133,16 +139,26 @@ export default function ReviewPage() {
         </div>
 
         {/* Flip card */}
-        <FlipCard front={card.front} back={card.back} onFlipped={() => setFlipped(true)} />
+        <FlipCard key={card.$id} front={card.front} back={card.back} onFlipped={() => setFlipped(true)} />
 
-        {/* Rating buttons — only shown after flip */}
-        {flipped ? (
+        {/* Rating buttons — only shown after flip, before rating */}
+        {!flipped && (
+          <p className="text-center text-sm text-gray-400 font-medium">Tap the card to reveal the answer</p>
+        )}
+        {flipped && !rated && (
           <div className="space-y-3">
             <p className="text-xs font-black uppercase tracking-widest text-gray-400 text-center">How well did you know this?</p>
             <RatingButtons onRate={handleRate} disabled={saving} />
           </div>
-        ) : (
-          <p className="text-center text-sm text-gray-400 font-medium">Tap the card to reveal the answer</p>
+        )}
+        {rated && (
+          <button
+            onClick={handleNext}
+            className="w-full h-14 bg-[#4A90E2] hover:bg-[#3a7fd4] text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-100 transition-colors"
+          >
+            {currentIndex + 1 >= cards.length ? 'Finish Session' : 'Next Card'}
+            <ArrowRight className="h-4 w-4" />
+          </button>
         )}
       </div>
     </div>

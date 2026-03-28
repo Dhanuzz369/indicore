@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
-import { getSkillProfile, getSessionCount } from '@/lib/supabase/queries'
+import { getSkillProfile, getSessionCount, getSubjectsWithCounts } from '@/lib/supabase/queries'
 import { Loader2, Brain, TrendingDown, AlertTriangle, Zap, BookOpen, Lightbulb, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SkillProfile, SubjectScore, SubtopicRating, BehaviorSignals, Recommendation } from '@/types'
@@ -16,6 +16,7 @@ export default function IntelligencePage() {
   const [profile, setProfile] = useState<SkillProfile | null>(null)
   const [sessionCount, setSessionCount] = useState(0)
   const [subjects, setSubjects] = useState<SubjectScore[]>([])
+  const [subjectNameMap, setSubjectNameMap] = useState<Record<string, string>>({})
   const [subtopics, setSubtopics] = useState<SubtopicRating[]>([])
   const [behavior, setBehavior] = useState<BehaviorSignals | null>(null)
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
@@ -25,10 +26,16 @@ export default function IntelligencePage() {
       try {
         const user = await getCurrentUser()
         if (!user) { router.push('/login'); return }
-        const [prof, count] = await Promise.all([
+        const [prof, count, subjectsData] = await Promise.all([
           getSkillProfile(user.$id),
           getSessionCount(user.$id),
+          getSubjectsWithCounts(),
         ])
+        const nameMap: Record<string, string> = {}
+        for (const s of subjectsData.documents as unknown as { $id: string; Name: string }[]) {
+          nameMap[s.$id] = s.Name
+        }
+        setSubjectNameMap(nameMap)
         setSessionCount(count)
         if (!prof) { setLoading(false); return }
         setProfile(prof)
@@ -172,7 +179,7 @@ export default function IntelligencePage() {
                 <div key={sub.subjectId} className="flex items-center gap-4">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-bold text-gray-700">{sub.subjectId}</span>
+                      <span className="text-sm font-bold text-gray-700">{subjectNameMap[sub.subjectId] ?? sub.subjectId}</span>
                       <span className="text-sm font-black text-gray-900">{sub.accuracy.toFixed(0)}%</span>
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
