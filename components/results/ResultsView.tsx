@@ -41,9 +41,10 @@ function getScoreThreshold(pct: number) {
 // ─── Sub-components ───────────────────────────────────────────
 
 function SubjectPerformanceCard({
-  subject, correct, total, accuracy, questions, answers, onQuestionClick
+  subject, label, correct, total, accuracy, questions, answers, onQuestionClick
 }: {
-  subject: string
+  subject: string   // UUID — used for filtering questions
+  label: string     // resolved name — used for display
   correct: number
   total: number
   accuracy: number
@@ -65,7 +66,7 @@ function SubjectPerformanceCard({
             {accuracy}%
           </div>
           <div>
-            <h3 className="text-base font-black text-gray-900 uppercase tracking-tight">{(subject ?? 'Unknown').replace(/_/g, ' ')}</h3>
+            <h3 className="text-base font-black text-gray-900 uppercase tracking-tight">{(label ?? subject ?? 'Unknown').replace(/_/g, ' ')}</h3>
             <p className="text-xs text-gray-400 font-bold uppercase">{correct} / {total} Correct</p>
           </div>
         </div>
@@ -826,6 +827,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 <SubjectPerformanceCard
                   key={stat.subject}
                   subject={subjectUUID}
+                  label={stat.subject}
                   correct={stat.correct}
                   total={stat.total}
                   accuracy={stat.accuracy}
