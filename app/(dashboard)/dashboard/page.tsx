@@ -41,7 +41,7 @@ function getSubjectEmoji(name?: string) {
 
 function getSubjectBgColor(name?: string, color?: string) {
   if (color) return color
-  if (!name) return '#FF6B00'
+  if (!name) return '#4A90E2'
   const l = name.toLowerCase()
   if (l.includes('geo')) return '#1a9c72'
   if (l.includes('hist')) return '#7c3aed'
@@ -50,7 +50,7 @@ function getSubjectBgColor(name?: string, color?: string) {
   if (l.includes('environ')) return '#16a34a'
   if (l.includes('science')) return '#9333ea'
   if (l.includes('art')) return '#d97706'
-  return '#FF6B00'
+  return '#4A90E2'
 }
 
 function formatNumber(n: number): string {
@@ -131,7 +131,7 @@ function WeakSubjectCard({ subject, accuracy }: { subject: Subject; accuracy: nu
                 </div>
                 <span className="text-xs font-medium text-gray-700">{sub}</span>
               </div>
-              <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-[#FF6B00] transition-colors" />
+              <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-[#4A90E2] transition-colors" />
             </Link>
           ))}
         </div>
@@ -224,7 +224,7 @@ export default function DashboardPage() {
           <p className="text-gray-500">{error}</p>
           <button
             onClick={fetchData}
-            className="px-6 py-2.5 bg-[#FF6B00] text-white rounded-xl text-sm font-semibold hover:bg-[#FF8C00] transition-colors"
+            className="px-6 py-2.5 bg-[#4A90E2] text-white rounded-xl text-sm font-semibold hover:bg-[#3a7fd4] transition-colors"
           >
             Try Again
           </button>
@@ -241,7 +241,7 @@ export default function DashboardPage() {
           <p className="text-[11px] font-black tracking-[0.25em] text-gray-400 uppercase mb-2">Overview</p>
           <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight tracking-tight">
             {getGreeting()}<br />
-            <span className="text-[#FF6B00]">{firstName}!</span>
+            <span className="text-[#4A90E2]">{firstName}!</span>
           </h1>
         </div>
       </div>
@@ -254,7 +254,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm flex flex-col gap-1">
               <div className="flex items-center gap-1.5">
-                <Flame className="h-4 w-4 text-orange-400" />
+                <Flame className="h-4 w-4 text-blue-400" />
                 <span className="text-[10px] font-black tracking-widest uppercase text-gray-400">Streak</span>
               </div>
               <p className="text-4xl font-black text-gray-900 leading-none mt-2">
@@ -265,7 +265,7 @@ export default function DashboardPage() {
 
             <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm flex flex-col gap-1">
               <div className="flex items-center gap-1.5">
-                <Target className="h-4 w-4 text-[#FF6B00]" />
+                <Target className="h-4 w-4 text-[#4A90E2]" />
                 <span className="text-[10px] font-black tracking-widest uppercase text-gray-400">Accuracy</span>
               </div>
               <p className="text-4xl font-black text-gray-900 leading-none mt-2">
@@ -310,7 +310,7 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-black text-gray-900">Core Practice</h2>
-            <Link href="/quiz" className="text-[10px] font-black tracking-widest uppercase text-[#FF6B00] flex items-center gap-1 hover:translate-x-1 transition-transform">
+            <Link href="/quiz" className="text-[10px] font-black tracking-widest uppercase text-[#4A90E2] flex items-center gap-1 hover:translate-x-1 transition-transform">
               VIEW LIBRARY <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
@@ -318,7 +318,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* FULL LENGTH MOCK TEST */}
             <Link href="/quiz">
-              <div className="h-full relative bg-[#FF6B00] rounded-[2rem] p-8 overflow-hidden shadow-lg shadow-orange-100 group transition-all hover:-translate-y-1">
+              <div className="h-full relative bg-[#4A90E2] rounded-[2rem] p-8 overflow-hidden shadow-lg shadow-blue-100 group transition-all hover:-translate-y-1">
                 <div className="absolute -right-8 -top-8 w-48 h-48 bg-white/10 rounded-full" />
                 <div className="absolute -right-2 top-10 w-32 h-32 bg-white/10 rounded-full" />
                 <div className="relative z-10">
@@ -328,7 +328,7 @@ export default function DashboardPage() {
                   <h3 className="text-white font-black text-3xl leading-tight mb-8">
                     Full Length<br />Mock Test
                   </h3>
-                  <button className="flex items-center gap-2 bg-white text-[#FF6B00] font-black text-sm px-7 py-3.5 rounded-2xl hover:bg-orange-50 transition-colors shadow-sm">
+                  <button className="flex items-center gap-2 bg-white text-[#4A90E2] font-black text-sm px-7 py-3.5 rounded-2xl hover:bg-blue-50 transition-colors shadow-sm">
                     Start Session
                     <ArrowRight className="h-5 w-5" />
                   </button>
@@ -349,7 +349,7 @@ export default function DashboardPage() {
                   <h3 className="text-gray-900 font-black text-3xl leading-tight mb-8">
                     Subject-Wise<br />Deep Dive
                   </h3>
-                  <button className="flex items-center gap-2 border-2 border-[#FF6B00] text-[#FF6B00] font-black text-sm px-7 py-3 rounded-2xl hover:bg-orange-50 transition-colors">
+                  <button className="flex items-center gap-2 border-2 border-[#4A90E2] text-[#4A90E2] font-black text-sm px-7 py-3 rounded-2xl hover:bg-blue-50 transition-colors">
                     Browse Subjects
                     <LayoutGrid className="h-5 w-5" />
                   </button>
@@ -387,15 +387,15 @@ export default function DashboardPage() {
         <Link href="/tests">
           <div className="flex items-center justify-between bg-white rounded-[2rem] px-8 py-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
             <div className="flex items-center gap-5">
-              <div className="w-14 h-14 bg-[#FF6B00]/10 rounded-2xl flex items-center justify-center">
-                <ClipboardList className="h-7 w-7 text-[#FF6B00]" />
+              <div className="w-14 h-14 bg-[#4A90E2]/10 rounded-2xl flex items-center justify-center">
+                <ClipboardList className="h-7 w-7 text-[#4A90E2]" />
               </div>
               <div>
                 <p className="text-lg font-black text-gray-900">My Test History</p>
                 <p className="text-sm text-gray-400">View all sessions & deep analytics</p>
               </div>
             </div>
-            <ChevronRight className="h-6 w-6 text-gray-300 group-hover:text-[#FF6B00] group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="h-6 w-6 text-gray-300 group-hover:text-[#4A90E2] group-hover:translate-x-1 transition-all" />
           </div>
         </Link>
       </div>
