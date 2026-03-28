@@ -23,20 +23,20 @@ export default function BentoSection() {
   const reduced = useReducedMotion()
 
   return (
-    <section id="analytics" ref={ref} className="py-32 px-6 md:px-8 max-w-7xl mx-auto">
+    <section id="analytics" ref={ref} className="py-16 sm:py-20 md:py-32 px-6 md:px-8 max-w-7xl mx-auto">
       <m.div
         initial={{ opacity: 0, y: reduced ? 0 : 20 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.6 }}
         className="mb-14"
       >
-        <h2 className="text-4xl font-black text-[#1A1C1C] tracking-tight mb-3">Intelligent Insights</h2>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1A1C1C] tracking-tight mb-3">Intelligent Insights</h2>
         <p className="text-[#43494D] max-w-xl">
           Move beyond simple scores. Our analytics engine understands your cognitive patterns during testing.
         </p>
       </m.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-5" style={{ gridAutoRows: '240px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5" style={{ gridAutoRows: 'minmax(180px, auto)' }}>
         {/* Large bar chart card */}
         <m.div
           variants={cardVariant(0, reduced)}

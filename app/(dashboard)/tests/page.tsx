@@ -89,7 +89,7 @@ export default function TestsPage() {
         {/* ── Header ── */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 bg-[#FF6B00] rounded-xl flex items-center justify-center shadow-md shadow-orange-100 shrink-0">
+            <div className="w-10 h-10 bg-[#4A90E2] rounded-xl flex items-center justify-center shadow-md shadow-blue-100 shrink-0">
               <ClipboardList className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
@@ -138,7 +138,7 @@ export default function TestsPage() {
             </p>
             <Button
               onClick={() => router.push('/quiz')}
-              className="bg-[#FF6B00] hover:bg-[#FF8C00] mt-2"
+              className="bg-[#4A90E2] hover:bg-[#3a7fd4] mt-2"
             >
               Start a Test
             </Button>

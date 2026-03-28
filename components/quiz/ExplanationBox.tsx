@@ -39,7 +39,7 @@ export function ExplanationBox({
           <div className="flex justify-end pt-2">
             <Button
               onClick={onNext}
-              className="bg-[#FF6B00] hover:bg-[#FF8C00]"
+              className="bg-[#4A90E2] hover:bg-[#3a7fd4]"
               size="lg"
             >
               {isLastQuestion ? (

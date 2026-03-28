@@ -98,7 +98,7 @@ export function TestFilters({ filters, onChange }: TestFiltersProps) {
             type="date"
             value={filters.from}
             onChange={e => onChange({ from: e.target.value })}
-            className="w-full h-9 rounded-md border border-gray-100 bg-gray-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] transition-colors"
+            className="w-full h-9 rounded-md border border-gray-100 bg-gray-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2] transition-colors"
           />
         </div>
 
@@ -110,7 +110,7 @@ export function TestFilters({ filters, onChange }: TestFiltersProps) {
             type="date"
             value={filters.to}
             onChange={e => onChange({ to: e.target.value })}
-            className="w-full h-9 rounded-md border border-gray-100 bg-gray-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] transition-colors"
+            className="w-full h-9 rounded-md border border-gray-100 bg-gray-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2] transition-colors"
           />
         </div>
       </div>

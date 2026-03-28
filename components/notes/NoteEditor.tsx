@@ -63,8 +63,8 @@ export function NoteEditor({ prefillFront, sourceQuestionId, subjects, onClose, 
       <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-lg p-7 animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-orange-50 rounded-xl flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-orange-500" />
+            <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center">
+              <BookOpen className="h-5 w-5 text-blue-500" />
             </div>
             <div>
               <h3 className="font-black text-gray-900 text-base">Save as Note</h3>
@@ -83,7 +83,7 @@ export function NoteEditor({ prefillFront, sourceQuestionId, subjects, onClose, 
               value={front}
               onChange={e => setFront(e.target.value)}
               rows={3}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] resize-none"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2] resize-none"
               placeholder="What is the question or topic?"
             />
           </div>
@@ -93,7 +93,7 @@ export function NoteEditor({ prefillFront, sourceQuestionId, subjects, onClose, 
               value={back}
               onChange={e => setBack(e.target.value)}
               rows={3}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00] resize-none"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2] resize-none"
               placeholder="Your own explanation, memory hook, or key points..."
             />
           </div>
@@ -103,7 +103,7 @@ export function NoteEditor({ prefillFront, sourceQuestionId, subjects, onClose, 
               <select
                 value={subject}
                 onChange={e => setSubject(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00]"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2]"
               >
                 {subjects.map(s => <option key={s.$id} value={s.Name}>{s.Name}</option>)}
                 {subjects.length === 0 && <option value="General">General</option>}
@@ -115,7 +115,7 @@ export function NoteEditor({ prefillFront, sourceQuestionId, subjects, onClose, 
                 value={topic}
                 onChange={e => setTopic(e.target.value)}
                 placeholder="e.g. Mughal Empire"
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00]"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2]"
               />
             </div>
           </div>
@@ -128,7 +128,7 @@ export function NoteEditor({ prefillFront, sourceQuestionId, subjects, onClose, 
           <button
             onClick={handleSave}
             disabled={saving || !front.trim() || !back.trim()}
-            className="flex-1 h-12 rounded-xl bg-[#FF6B00] hover:bg-[#FF8C00] text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-orange-100"
+            className="flex-1 h-12 rounded-xl bg-[#4A90E2] hover:bg-[#3a7fd4] text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-blue-100"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Note'}
           </button>

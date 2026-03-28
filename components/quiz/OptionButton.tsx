@@ -22,9 +22,9 @@ export function OptionButton({ optionKey, text, state, onClick, disabled }: Opti
       case 'revealed':
         return `${baseClasses} bg-green-50 border-2 border-green-400 text-green-700`
       case 'selected':
-        return `${baseClasses} bg-[#FFF3EC] border-2 border-[#FF6B00] text-[#FF6B00]`
+        return `${baseClasses} bg-[#EBF2FC] border-2 border-[#4A90E2] text-[#4A90E2]`
       default:
-        return `${baseClasses} bg-white border-2 border-gray-200 hover:border-[#FF6B00] hover:bg-[#FFF3EC] ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+        return `${baseClasses} bg-white border-2 border-gray-200 hover:border-[#4A90E2] hover:bg-[#EBF2FC] ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
           }`
     }
   }

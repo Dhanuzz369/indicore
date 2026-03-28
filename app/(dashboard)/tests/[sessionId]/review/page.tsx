@@ -115,7 +115,7 @@ function ReviewContent() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] p-6 bg-gray-50">
-        <Loader2 className="h-10 w-10 text-[#FF6B00] animate-spin mb-4" />
+        <Loader2 className="h-10 w-10 text-[#4A90E2] animate-spin mb-4" />
         <p className="text-gray-400 font-black text-sm uppercase tracking-widest">Loading Review...</p>
       </div>
     )
@@ -129,7 +129,7 @@ function ReviewContent() {
           <p className="text-gray-500 text-sm">This is a legacy session without saved question data.</p>
           <button
             onClick={() => router.push(`/results?session=${sessionId}&replay=true`)}
-            className="bg-[#FF6B00] text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#FF8C00] transition-all"
+            className="bg-[#4A90E2] text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#3a7fd4] transition-all"
           >
             Back to Analytics
           </button>
@@ -216,7 +216,7 @@ function ReviewContent() {
 
           {/* Question number + difficulty */}
           <div className="flex items-center gap-3">
-            <span className="bg-[#FF6B00] text-white px-4 py-1.5 rounded-xl font-black text-sm shadow-sm shadow-orange-200">Q.{safeIndex + 1}</span>
+            <span className="bg-[#4A90E2] text-white px-4 py-1.5 rounded-xl font-black text-sm shadow-sm shadow-blue-200">Q.{safeIndex + 1}</span>
             {question.difficulty && (
               <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
                 question.difficulty === 'easy' ? 'bg-emerald-50 text-emerald-600'
@@ -271,11 +271,11 @@ function ReviewContent() {
 
           {/* Subtopic */}
           {(question.subtopic || (question.tags && question.tags[0])) && (
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-center gap-3">
-              <BookOpen className="h-4 w-4 text-orange-600 shrink-0" />
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center gap-3">
+              <BookOpen className="h-4 w-4 text-blue-600 shrink-0" />
               <div>
-                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Sub-Topic</p>
-                <p className="text-sm font-semibold text-orange-900 mt-0.5">{question.subtopic || question.tags[0]}</p>
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Sub-Topic</p>
+                <p className="text-sm font-semibold text-blue-900 mt-0.5">{question.subtopic || question.tags[0]}</p>
               </div>
             </div>
           )}
@@ -307,7 +307,7 @@ function ReviewContent() {
             <button onClick={() => goTo(safeIndex - 1)} disabled={safeIndex === 0} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-gray-200 font-bold text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               <ArrowLeft className="h-4 w-4" /> Previous
             </button>
-            <button onClick={backToAnalytics} className="flex-1 flex items-center justify-center py-3 rounded-xl bg-[#FF6B00] text-white font-bold text-sm hover:bg-[#FF8C00] transition-colors">
+            <button onClick={backToAnalytics} className="flex-1 flex items-center justify-center py-3 rounded-xl bg-[#4A90E2] text-white font-bold text-sm hover:bg-[#3a7fd4] transition-colors">
               Back to Analytics
             </button>
             <button onClick={() => goTo(safeIndex + 1)} disabled={safeIndex === questions.length - 1} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-gray-200 font-bold text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
@@ -330,7 +330,7 @@ function ReviewContent() {
                 if (isCorrect) colorCls = 'bg-emerald-500 text-white border-emerald-500'
                 else if (!isSkipped) colorCls = 'bg-red-500 text-white border-red-500'
                 return (
-                  <button key={q.$id} onClick={() => goTo(idx)} className={`h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${colorCls} ${isCurrent ? 'ring-2 ring-offset-1 ring-[#FF6B00] scale-110' : ''}`}>
+                  <button key={q.$id} onClick={() => goTo(idx)} className={`h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 ${colorCls} ${isCurrent ? 'ring-2 ring-offset-1 ring-[#4A90E2] scale-110' : ''}`}>
                     {idx + 1}
                   </button>
                 )
@@ -357,7 +357,7 @@ function ReviewContent() {
             if (isCorrect) colorCls = 'bg-emerald-500 text-white'
             else if (!isSkipped) colorCls = 'bg-red-500 text-white'
             return (
-              <button key={q.$id} onClick={() => goTo(idx)} className={`shrink-0 h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs transition-all ${colorCls} ${isCurrent ? 'ring-2 ring-offset-1 ring-[#FF6B00] scale-110' : ''}`}>
+              <button key={q.$id} onClick={() => goTo(idx)} className={`shrink-0 h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs transition-all ${colorCls} ${isCurrent ? 'ring-2 ring-offset-1 ring-[#4A90E2] scale-110' : ''}`}>
                 {idx + 1}
               </button>
             )
@@ -370,7 +370,7 @@ function ReviewContent() {
 
 export default function TestReviewPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-[#FF6B00]" /></div>}>
+    <Suspense fallback={<div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-[#4A90E2]" /></div>}>
       <ReviewContent />
     </Suspense>
   )

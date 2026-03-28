@@ -67,7 +67,7 @@ export default function ReviewPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 text-[#FF6B00] animate-spin" />
+        <Loader2 className="h-8 w-8 text-[#4A90E2] animate-spin" />
       </div>
     )
   }
@@ -98,7 +98,7 @@ export default function ReviewPage() {
               ))}
             </div>
           )}
-          <button onClick={() => router.push('/notes')} className="bg-[#FF6B00] hover:bg-[#FF8C00] text-white px-8 py-3 rounded-2xl font-black text-sm shadow-lg shadow-orange-100 transition-colors">
+          <button onClick={() => router.push('/notes')} className="bg-[#4A90E2] hover:bg-[#3a7fd4] text-white px-8 py-3 rounded-2xl font-black text-sm shadow-lg shadow-blue-100 transition-colors">
             Back to Notes
           </button>
         </div>
@@ -123,12 +123,12 @@ export default function ReviewPage() {
 
         {/* Progress bar */}
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-full bg-[#FF6B00] rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+          <div className="h-full bg-[#4A90E2] rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
         </div>
 
         {/* Subject badge */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-orange-50 text-orange-600">{card.subject}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{card.subject}</span>
           {card.topic && <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">{card.topic}</span>}
         </div>
 

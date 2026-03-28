@@ -128,8 +128,8 @@ export default function OnboardingPage() {
         <CardHeader className="text-center space-y-4 pb-6">
           <div className="flex justify-center">
             <div className="flex items-center gap-2">
-              <Trophy className="h-8 w-8 text-[#FF6B00]" />
-              <span className="text-2xl font-bold text-[#FF6B00]">Indicore</span>
+              <Trophy className="h-8 w-8 text-[#4A90E2]" />
+              <span className="text-2xl font-bold text-[#4A90E2]">Indicore</span>
             </div>
           </div>
           <div>
@@ -161,7 +161,7 @@ export default function OnboardingPage() {
                     className={`
                       p-4 rounded-lg border-2 transition-all text-center font-medium
                       ${isSelected
-                        ? 'border-[#FF6B00] bg-[#FFF3EC] text-[#FF6B00]'
+                        ? 'border-[#4A90E2] bg-[#EBF2FC] text-[#4A90E2]'
                         : 'border-gray-200 hover:border-gray-300 text-gray-700'
                       }
                       ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -194,8 +194,8 @@ export default function OnboardingPage() {
                     className={`
                       px-6 py-2.5 rounded-full font-medium transition-all
                       ${isSelected
-                        ? 'bg-[#FF6B00] text-white'
-                        : 'border border-gray-200 hover:border-[#FF6B00] text-gray-700'
+                        ? 'bg-[#4A90E2] text-white'
+                        : 'border border-gray-200 hover:border-[#4A90E2] text-gray-700'
                       }
                       ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                     `}
@@ -214,7 +214,7 @@ export default function OnboardingPage() {
             <Button
               onClick={handleSubmit}
               disabled={!isFormComplete || loading}
-              className="w-full bg-[#FF6B00] hover:bg-[#FF8C00]"
+              className="w-full bg-[#4A90E2] hover:bg-[#3a7fd4]"
               size="lg"
             >
               {loading ? (

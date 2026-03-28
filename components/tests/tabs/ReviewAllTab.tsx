@@ -54,7 +54,7 @@ export function ReviewAllTab({ items, subjects }: ReviewAllTabProps) {
             onClick={() => { setFilter(chip.key); setPage(0) }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
               filter === chip.key
-                ? 'bg-[#FF6B00] text-white'
+                ? 'bg-[#4A90E2] text-white'
                 : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >

@@ -41,7 +41,7 @@ export function TestSessionCard({ session }: TestSessionCardProps) {
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-bold text-gray-900 text-base leading-tight">{session.paper_label}</h3>
-            <Badge variant="outline" className="text-[10px] uppercase tracking-wide font-semibold border-[#FF6B00]/30 text-[#FF6B00]">
+            <Badge variant="outline" className="text-[10px] uppercase tracking-wide font-semibold border-[#4A90E2]/30 text-[#4A90E2]">
               {session.mode === 'full_length' ? 'Full Length' : 'Subject Practice'}
             </Badge>
           </div>
@@ -99,7 +99,7 @@ export function TestSessionCard({ session }: TestSessionCardProps) {
       {/* Action button */}
       <div className="px-6 py-4 border-t border-gray-50">
         <Link href={`/results?session=${session.$id}&replay=true`} className="block w-full">
-          <Button size="sm" className="w-full gap-2 bg-[#FF6B00] hover:bg-[#FF8C00] font-semibold">
+          <Button size="sm" className="w-full gap-2 bg-[#4A90E2] hover:bg-[#3a7fd4] font-semibold">
             <BarChart2 className="h-4 w-4" />
             View Analytics
           </Button>

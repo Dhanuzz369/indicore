@@ -23,9 +23,9 @@ export function NoteCard({ note }: NoteCardProps) {
 
   return (
     <Link href={`/notes/${note.$id}`}>
-      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-orange-100 transition-all group cursor-pointer flex flex-col gap-3">
+      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-blue-100 transition-all group cursor-pointer flex flex-col gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-orange-50 text-orange-600">
+          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
             {note.subject}
           </span>
           {note.topic && (
