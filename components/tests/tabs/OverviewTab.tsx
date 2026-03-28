@@ -38,8 +38,8 @@ export function OverviewTab({ session, analytics }: OverviewTabProps) {
   return (
     <div className="space-y-6">
       {/* Score Hero */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center space-y-2">
-        <p className={`text-6xl font-black ${scoreColor}`}>{score.toFixed(0)}%</p>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6 text-center space-y-2">
+        <p className={`text-5xl md:text-6xl font-black ${scoreColor}`}>{score.toFixed(0)}%</p>
         <p className="text-sm text-gray-500 font-medium">
           {session.correct} correct out of {session.total_questions} questions
         </p>
@@ -63,12 +63,13 @@ export function OverviewTab({ session, analytics }: OverviewTabProps) {
           <div className="space-y-3">
             {analytics.subjectBreakdown.map(sub => (
               <div key={sub.subjectId} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-gray-700 capitalize">
+                <div className="flex items-start justify-between gap-2 text-xs">
+                  <span className="font-semibold text-gray-700 capitalize leading-tight">
                     {sub.subjectId.replace(/_/g, ' ')}
                   </span>
-                  <span className="text-gray-500">
-                    {sub.correct}/{sub.total} · {sub.accuracy.toFixed(0)}% · avg {sub.avgTimeSeconds.toFixed(0)}s
+                  <span className="text-gray-500 text-right shrink-0">
+                    {sub.correct}/{sub.total} · {sub.accuracy.toFixed(0)}%
+                    <span className="hidden sm:inline"> · avg {sub.avgTimeSeconds.toFixed(0)}s</span>
                   </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -95,29 +96,29 @@ export function OverviewTab({ session, analytics }: OverviewTabProps) {
           <p className="text-xs font-black uppercase tracking-widest text-gray-400">
             Behavior Signals
           </p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 md:gap-3">
             <div className="text-center">
-              <p className="text-xl font-black text-red-500">
+              <p className="text-lg md:text-xl font-black text-red-500">
                 {analytics.behavior.sureButWrongCount}
               </p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1">
+              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-wide md:tracking-widest text-gray-400 mt-1 leading-tight">
                 Sure But Wrong
               </p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-black text-amber-500">
+              <p className="text-lg md:text-xl font-black text-amber-500">
                 {(analytics.behavior.sureButWrongRate * 100).toFixed(0)}%
               </p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1">
-                Overconfidence Rate
+              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-wide md:tracking-widest text-gray-400 mt-1 leading-tight">
+                Overconfidence
               </p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-black text-blue-500">
+              <p className="text-lg md:text-xl font-black text-blue-500">
                 {analytics.behavior.answerChangeAvg.toFixed(1)}
               </p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1">
-                Avg Answer Changes
+              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-wide md:tracking-widest text-gray-400 mt-1 leading-tight">
+                Avg Changes
               </p>
             </div>
           </div>

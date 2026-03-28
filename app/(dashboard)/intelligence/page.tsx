@@ -132,37 +132,37 @@ export default function IntelligencePage() {
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#4A90E2] rounded-xl flex items-center justify-center shadow-md shadow-blue-100">
-            <Brain className="h-5 w-5 text-white" />
+          <div className="w-9 md:w-10 h-9 md:h-10 bg-[#4A90E2] rounded-xl flex items-center justify-center shadow-md shadow-blue-100 shrink-0">
+            <Brain className="h-4 md:h-5 w-4 md:w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Intelligence Engine</h1>
-            <p className="text-sm text-gray-500 font-medium">Based on {sessionCount} sessions · Updated after every test</p>
+            <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Intelligence Engine</h1>
+            <p className="text-xs md:text-sm text-gray-500 font-medium">Based on {sessionCount} sessions · Updated after every test</p>
           </div>
         </div>
 
         {/* Sure But Wrong — slim banner */}
         {behavior && (
-          <div className={`rounded-2xl border p-5 flex items-center gap-4 ${sureButWrongHigh ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100 shadow-sm'}`}>
-            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${sureButWrongHigh ? 'bg-red-100' : 'bg-blue-50'}`}>
-              <AlertCircle className={`h-5 w-5 ${sureButWrongHigh ? 'text-red-500' : 'text-blue-500'}`} />
+          <div className={`rounded-2xl border p-4 md:p-5 flex items-center gap-3 md:gap-4 ${sureButWrongHigh ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100 shadow-sm'}`}>
+            <div className={`h-9 md:h-10 w-9 md:w-10 rounded-xl flex items-center justify-center shrink-0 ${sureButWrongHigh ? 'bg-red-100' : 'bg-blue-50'}`}>
+              <AlertCircle className={`h-4 md:h-5 w-4 md:w-5 ${sureButWrongHigh ? 'text-red-500' : 'text-blue-500'}`} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sure But Wrong</p>
-              <p className={`text-2xl font-black leading-tight ${sureButWrongHigh ? 'text-red-500' : 'text-gray-900'}`}>
+              <p className={`text-xl md:text-2xl font-black leading-tight ${sureButWrongHigh ? 'text-red-500' : 'text-gray-900'}`}>
                 {sureButWrongRate.toFixed(0)}%
               </p>
             </div>
-            <p className="text-xs text-gray-400 font-medium text-right max-w-[160px] leading-relaxed">
+            <p className="text-xs text-gray-400 font-medium text-right max-w-[120px] md:max-w-[160px] leading-relaxed">
               {sureButWrongHigh
-                ? 'High — you are overconfident on wrong answers'
+                ? 'High — overconfident on wrong answers'
                 : 'of confident answers were incorrect'}
             </p>
           </div>
         )}
 
         {/* Weaker Subjects — <50% accuracy */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
           <div className="flex items-center gap-2 mb-5">
             <TrendingDown className="h-4 w-4 text-red-500" />
             <h2 className="font-black text-gray-900 text-base">Weaker Subjects</h2>
@@ -197,7 +197,7 @@ export default function IntelligencePage() {
         </div>
 
         {/* Confused Topics — rotational batch */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="h-4 w-4 text-blue-500" />
             <h2 className="font-black text-gray-900 text-base">Confused Topics</h2>
@@ -232,7 +232,7 @@ export default function IntelligencePage() {
 
         {/* Action Plan */}
         {recommendations.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
             <div className="flex items-center gap-2 mb-5">
               <Lightbulb className="h-4 w-4 text-[#4A90E2]" />
               <h2 className="font-black text-gray-900 text-base">Your Action Plan</h2>

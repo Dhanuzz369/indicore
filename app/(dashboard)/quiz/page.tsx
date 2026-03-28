@@ -338,28 +338,28 @@ function QuizSetupContent() {
     <div className="min-h-screen bg-[#FDFDFD] pb-32">
 
       {/* HEADER */}
-      <div className="max-w-7xl mx-auto px-6 pt-10 pb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
-            <LayoutGrid className="h-6 w-6" />
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-5 md:pt-10 pb-4 md:pb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="h-9 md:h-12 w-9 md:w-12 bg-blue-500 rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
+            <LayoutGrid className="h-5 md:h-6 w-5 md:w-6" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
+          <h1 className="text-xl md:text-3xl font-black text-gray-900 tracking-tight">
             {activeTab === 'full' ? 'PYQ Tests' : activeTab === 'mock' ? 'Mock Tests' : 'Practice Lab'}
           </h1>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-[#4A90E2] transition-colors">
-            <Search className="h-5 w-5" />
+        <div className="flex items-center gap-2 md:gap-3">
+          <button className="h-9 md:h-12 w-9 md:w-12 flex items-center justify-center rounded-xl md:rounded-2xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-[#4A90E2] transition-colors">
+            <Search className="h-4 md:h-5 w-4 md:w-5" />
           </button>
-          <div className="h-12 w-12 rounded-full bg-gray-900 border-2 border-white shadow-md overflow-hidden ring-4 ring-gray-50">
+          <div className="h-9 md:h-12 w-9 md:w-12 rounded-full bg-gray-900 border-2 border-white shadow-md overflow-hidden ring-2 md:ring-4 ring-gray-50">
             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="User" />
           </div>
         </div>
       </div>
 
       {/* TABS */}
-      <div className="max-w-3xl mx-auto px-6 mt-4">
-        <div className="bg-gray-100 p-1.5 rounded-[2rem] flex h-16">
+      <div className="max-w-3xl mx-auto px-3 md:px-6 mt-3 md:mt-4">
+        <div className="bg-gray-100 p-1 md:p-1.5 rounded-[1.5rem] md:rounded-[2rem] flex h-11 md:h-16">
           <button
             onClick={() => { setActiveTab('mock'); setMockConfigSubject(null); setMockSelectedDifficulty('All'); setMockQuestionCount(20) }}
             className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'mock' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
@@ -381,7 +381,7 @@ function QuizSetupContent() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-6 mt-16">
+      <main className="max-w-7xl mx-auto px-3 md:px-6 mt-8 md:mt-16">
 
         {/* ── MOCK TEST TAB ── */}
         {activeTab === 'mock' && (
@@ -390,7 +390,7 @@ function QuizSetupContent() {
             {/* Full Length Mocks */}
             <div className="space-y-6">
               <div className="flex flex-col md:flex-row md:items-center gap-6">
-                <h2 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase">INDICORE MOCK.</h2>
+                <h2 className="text-3xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase">INDICORE MOCK.</h2>
                 <div className="flex bg-gray-100 p-1.5 rounded-full h-10 px-3 w-fit">
                   <span className="text-[10px] font-black text-white bg-black rounded-full px-5 uppercase tracking-tighter flex items-center">Full Length</span>
                 </div>
@@ -409,27 +409,27 @@ function QuizSetupContent() {
                     : mocks.filter(m => m.subject_weights.length > 1).map((mock, idx) => {
                         const theme = idx === 0 ? 'blue' : idx === 1 ? 'black' : 'gray'
                         return (
-                          <div key={mock.$id} className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col">
+                          <div key={mock.$id} className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col">
                             <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">INDICORE MOCK</p>
-                            <h3 className="text-2xl font-black text-gray-900 mb-6">{mock.name}</h3>
-                            <div className="grid grid-cols-3 gap-4 mb-8 mt-auto">
+                            <h3 className="text-lg md:text-2xl font-black text-gray-900 mb-4 md:mb-6">{mock.name}</h3>
+                            <div className="grid grid-cols-3 gap-2 md:gap-4 mb-5 md:mb-8 mt-auto">
                               <div>
-                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Questions</p>
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Questions</p>
                                 <p className="text-sm font-black text-gray-900">100</p>
                               </div>
                               <div>
-                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Duration</p>
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Duration</p>
                                 <p className="text-sm font-black text-gray-900">2 Hr</p>
                               </div>
                               <div>
-                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Marks</p>
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Marks</p>
                                 <p className="text-sm font-black text-gray-900">200</p>
                               </div>
                             </div>
                             <button
                               onClick={() => handleStartMock(mock)}
                               disabled={loadingMockId === mock.$id}
-                              className={`h-16 w-full rounded-2xl flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
+                              className={`h-12 md:h-16 w-full rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
                                 theme === 'black'
                                   ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
                                   : theme === 'gray'
@@ -437,7 +437,7 @@ function QuizSetupContent() {
                                     : 'bg-[#4A90E2] text-white hover:bg-blue-600 shadow-lg shadow-blue-100'
                               }`}
                             >
-                              {loadingMockId === mock.$id ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Attempt Test <ArrowRight className="h-5 w-5" /></>}
+                              {loadingMockId === mock.$id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Attempt Test <ArrowRight className="h-4 w-4" /></>}
                             </button>
                           </div>
                         )
@@ -498,7 +498,7 @@ function QuizSetupContent() {
         {activeTab === 'full' && (
           <div className="space-y-12">
             <div className="flex flex-col md:flex-row md:items-center gap-6">
-              <h2 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase">UPSC CSE.</h2>
+              <h2 className="text-3xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase">UPSC CSE.</h2>
               <div className="flex bg-gray-100 p-1.5 rounded-full h-10 px-3 w-fit">
                 <button className="text-[10px] font-black text-white bg-black rounded-full px-5 uppercase tracking-tighter">Prelims</button>
                 <button className="text-[10px] font-black text-gray-400 px-5 uppercase tracking-tighter">Mains</button>
@@ -507,49 +507,49 @@ function QuizSetupContent() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {PAPER_OPTIONS.map(paper => (
-                <div key={paper.id} className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col">
-                  <div className="absolute top-6 right-8 text-[72px] font-black text-gray-50 select-none -z-10 tracking-tighter group-hover:scale-110 transition-transform">{paper.year}</div>
+                <div key={paper.id} className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col">
+                  <div className="absolute top-4 md:top-6 right-5 md:right-8 text-[48px] md:text-[72px] font-black text-gray-50 select-none -z-10 tracking-tighter group-hover:scale-110 transition-transform">{paper.year}</div>
                   <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">UPSC PRELIMS</p>
-                  <div className="flex items-baseline gap-3 mb-2">
-                    <h3 className="text-2xl font-black text-gray-900">{paper.label}</h3>
+                  <div className="flex items-baseline gap-2 md:gap-3 mb-1 md:mb-2">
+                    <h3 className="text-lg md:text-2xl font-black text-gray-900">{paper.label}</h3>
                     <span className="text-sm font-black text-gray-400">{paper.year}</span>
                   </div>
-                  <p className="text-xs text-gray-400 font-semibold mb-8">Prelims · General Studies · Paper I</p>
-                  <div className="grid grid-cols-3 gap-4 mb-10 mt-auto">
-                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Questions</p><p className="text-sm font-black text-gray-900">{paper.questions}</p></div>
-                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Duration</p><p className="text-sm font-black text-gray-900">{paper.time}</p></div>
-                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Marks</p><p className="text-sm font-black text-gray-900">{paper.marks}</p></div>
+                  <p className="text-xs text-gray-400 font-semibold mb-4 md:mb-8">Prelims · General Studies · Paper I</p>
+                  <div className="grid grid-cols-3 gap-2 md:gap-4 mb-5 md:mb-10 mt-auto">
+                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Questions</p><p className="text-sm font-black text-gray-900">{paper.questions}</p></div>
+                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Duration</p><p className="text-sm font-black text-gray-900">{paper.time}</p></div>
+                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Marks</p><p className="text-sm font-black text-gray-900">{paper.marks}</p></div>
                   </div>
                   <button
                     onClick={() => handleStartTest(paper)}
                     disabled={loadingCardId === paper.id}
-                    className={`h-16 w-full rounded-2xl flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
+                    className={`h-12 md:h-16 w-full rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
                       paper.theme === 'black' ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
                       : paper.theme === 'gray' ? 'bg-gray-800 text-white hover:bg-gray-700 shadow-lg shadow-gray-200'
                       : 'bg-[#4A90E2] text-white hover:bg-blue-600 shadow-lg shadow-blue-100'
                     }`}
                   >
-                    {loadingCardId === paper.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Start Test <ArrowRight className="h-5 w-5" /></>}
+                    {loadingCardId === paper.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Start Test <ArrowRight className="h-4 w-4" /></>}
                   </button>
                 </div>
               ))}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 bg-[#111111] rounded-[2.5rem] overflow-hidden p-10 text-white relative">
-                <span className="inline-block px-4 py-1.5 bg-[#4A90E2] text-[10px] font-black uppercase tracking-widest rounded-full mb-6">Adaptive Learning</span>
-                <h3 className="text-4xl font-black tracking-tight leading-tight mb-6">Focus on Weak<br />Subjects</h3>
-                <p className="text-sm text-gray-400 font-medium leading-relaxed mb-10 max-w-md">Practice subject-wise to target your weak areas and boost your score.</p>
-                <button onClick={() => setActiveTab('subject')} className="bg-white text-black px-10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors shadow-xl">Go to Subjects</button>
+              <div className="lg:col-span-2 bg-[#111111] rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden p-6 md:p-10 text-white relative">
+                <span className="inline-block px-3 py-1 bg-[#4A90E2] text-[10px] font-black uppercase tracking-widest rounded-full mb-4 md:mb-6">Adaptive Learning</span>
+                <h3 className="text-2xl md:text-4xl font-black tracking-tight leading-tight mb-3 md:mb-6">Focus on Weak<br />Subjects</h3>
+                <p className="text-xs md:text-sm text-gray-400 font-medium leading-relaxed mb-6 md:mb-10 max-w-md">Practice subject-wise to target your weak areas and boost your score.</p>
+                <button onClick={() => setActiveTab('subject')} className="bg-white text-black px-6 md:px-10 py-3 md:py-4 rounded-xl md:rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors shadow-xl">Go to Subjects</button>
               </div>
-              <div className="bg-[#FFF8EF] rounded-[2.5rem] p-10 flex flex-col">
-                <div className="h-14 w-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-8">
-                  <Sparkles className="h-7 w-7 text-blue-600" />
+              <div className="bg-[#FFF8EF] rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 flex flex-col">
+                <div className="h-10 md:h-14 w-10 md:w-14 bg-white rounded-xl md:rounded-2xl shadow-sm flex items-center justify-center mb-5 md:mb-8">
+                  <Sparkles className="h-5 md:h-7 w-5 md:w-7 text-blue-600" />
                 </div>
-                <h4 className="text-2xl font-black text-gray-900 mb-4">Previous Analysis</h4>
-                <p className="text-sm text-gray-500 font-medium leading-relaxed mb-10">Review your mistakes to improve your current score.</p>
+                <h4 className="text-xl md:text-2xl font-black text-gray-900 mb-2 md:mb-4">Previous Analysis</h4>
+                <p className="text-xs md:text-sm text-gray-500 font-medium leading-relaxed mb-6 md:mb-10">Review your mistakes to improve your current score.</p>
                 <button onClick={() => router.push('/tests')} className="mt-auto text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2 hover:translate-x-2 transition-transform">
-                  View My Tests <ArrowRight className="h-5 w-5" />
+                  View My Tests <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
                 </button>
               </div>
             </div>
@@ -562,8 +562,8 @@ function QuizSetupContent() {
             {!configSubject ? (
               <>
                 <div>
-                  <h2 className="text-6xl md:text-8xl font-black text-gray-900 tracking-tighter leading-none">Subject-wise<br />Practice</h2>
-                  <p className="text-lg text-gray-400 font-medium mt-6 max-w-xl leading-relaxed">Pick a subject, choose your question count and difficulty, and start a timed practice session.</p>
+                  <h2 className="text-3xl md:text-8xl font-black text-gray-900 tracking-tighter leading-none">Subject-wise<br />Practice</h2>
+                  <p className="text-sm md:text-lg text-gray-400 font-medium mt-3 md:mt-6 max-w-xl leading-relaxed">Pick a subject, choose your question count and difficulty, and start a timed practice session.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {loadingSubjects
@@ -572,16 +572,16 @@ function QuizSetupContent() {
                         const accent = getSubjectAccent(subj.Name)
                         return (
                           <div key={subj.$id}
-                            className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 hover:shadow-xl hover:border-blue-50 transition-all group flex flex-col cursor-pointer"
+                            className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 hover:shadow-xl hover:border-blue-50 transition-all group flex flex-col cursor-pointer"
                             onClick={() => openConfig(subj)}
                           >
                             <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: accent.color }} />
-                            <div className="flex items-start justify-between mb-8">
-                              <div className={`h-16 w-16 ${accent.bg} rounded-3xl flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform`}>{accent.icon}</div>
-                              <div className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full ${accent.bg} ${accent.text}`}>{subj.slug?.split('-')[0] ?? subj.Name.slice(0, 4)}</div>
+                            <div className="flex items-start justify-between mb-4 md:mb-8">
+                              <div className={`h-12 md:h-16 w-12 md:w-16 ${accent.bg} rounded-2xl md:rounded-3xl flex items-center justify-center text-2xl md:text-3xl shadow-sm group-hover:scale-110 transition-transform`}>{accent.icon}</div>
+                              <div className={`text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${accent.bg} ${accent.text}`}>{subj.slug?.split('-')[0] ?? subj.Name.slice(0, 4)}</div>
                             </div>
-                            <h3 className="text-2xl font-black text-gray-900 mb-2">{subj.Name}</h3>
-                            <div className="mt-10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#4A90E2]">
+                            <h3 className="text-base md:text-2xl font-black text-gray-900 mb-1 md:mb-2">{subj.Name}</h3>
+                            <div className="mt-4 md:mt-10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#4A90E2]">
                               Configure & Start <ChevronRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
                             </div>
                           </div>
@@ -597,17 +597,16 @@ function QuizSetupContent() {
                 {(() => {
                   const accent = getSubjectAccent(configSubject.Name)
                   return (
-                    <div className={`${accent.bg} rounded-[2.5rem] p-8 mb-8 flex items-center gap-6 border-2`} style={{ borderColor: accent.color + '30' }}>
-                      <div className="text-5xl">{accent.icon}</div>
+                    <div className={`${accent.bg} rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 mb-5 md:mb-8 flex items-center gap-4 md:gap-6 border-2`} style={{ borderColor: accent.color + '30' }}>
+                      <div className="text-3xl md:text-5xl">{accent.icon}</div>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: accent.color }}>Subject Practice</p>
-                        <h2 className="text-3xl font-black text-gray-900">{configSubject.Name}</h2>
-                        <p className="text-sm text-gray-500 font-semibold mt-1">{configSubject.count} questions available</p>
+                        <h2 className="text-xl md:text-3xl font-black text-gray-900">{configSubject.Name}</h2>
                       </div>
                     </div>
                   )
                 })()}
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 space-y-10">
+                <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm p-5 md:p-8 space-y-7 md:space-y-10">
                   {selectedDifficulty === 'All' && (
                     <div>
                       <div className="flex items-center gap-3 mb-5">
@@ -651,9 +650,9 @@ function QuizSetupContent() {
                     </div>
                   </div>
                   <button onClick={handleStartPractice} disabled={startLoading}
-                    className="w-full h-20 bg-gradient-to-r from-[#4A90E2] to-[#3a7fd4] rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-blue-100 hover:scale-[1.01] hover:shadow-blue-200 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full h-14 md:h-20 bg-gradient-to-r from-[#4A90E2] to-[#3a7fd4] rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center gap-3 md:gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-blue-100 hover:scale-[1.01] hover:shadow-blue-200 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {startLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>Begin Practice <ArrowRight className="h-6 w-6" /></>}
+                    {startLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Begin Practice <ArrowRight className="h-5 w-5 md:h-6 md:w-6" /></>}
                   </button>
                 </div>
               </div>
