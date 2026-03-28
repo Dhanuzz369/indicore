@@ -33,7 +33,7 @@ export function FlipCard({ front, back, onFlipped }: FlipCardProps) {
           className="absolute inset-0 bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 flex flex-col items-center justify-center text-center"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <p className="text-[10px] font-black uppercase tracking-widest text-orange-500 mb-4">Question / Topic</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-4">Question / Topic</p>
           <p className="text-lg font-semibold text-gray-900 leading-relaxed">{front}</p>
           {!flipped && (
             <p className="absolute bottom-6 text-xs text-gray-400 font-medium">Tap to reveal answer</p>
@@ -43,7 +43,7 @@ export function FlipCard({ front, back, onFlipped }: FlipCardProps) {
           className="absolute inset-0 bg-gray-900 rounded-[2rem] p-8 flex flex-col items-center justify-center text-center"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <p className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-4">Your Answer</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-4">Your Answer</p>
           <p className="text-lg font-semibold text-white leading-relaxed">{back}</p>
         </div>
       </div>

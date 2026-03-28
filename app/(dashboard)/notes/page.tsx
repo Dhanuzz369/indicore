@@ -59,7 +59,7 @@ export default function NotesPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#FF6B00] rounded-xl flex items-center justify-center shadow-md shadow-orange-100">
+            <div className="w-10 h-10 bg-[#4A90E2] rounded-xl flex items-center justify-center shadow-md shadow-blue-100">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -69,7 +69,7 @@ export default function NotesPage() {
           </div>
           <button
             onClick={() => router.push('/notes/new')}
-            className="flex items-center gap-2 bg-[#FF6B00] hover:bg-[#FF8C00] text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-orange-100 transition-colors"
+            className="flex items-center gap-2 bg-[#4A90E2] hover:bg-[#3a7fd4] text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-blue-100 transition-colors"
           >
             <Plus className="h-4 w-4" /> New Note
           </button>
@@ -77,14 +77,14 @@ export default function NotesPage() {
 
         {/* Due for review banner */}
         {dueCount > 0 && (
-          <div className="bg-gradient-to-r from-[#FF6B00] to-orange-400 rounded-2xl p-5 flex items-center justify-between shadow-lg shadow-orange-100">
+          <div className="bg-gradient-to-r from-[#4A90E2] to-blue-400 rounded-2xl p-5 flex items-center justify-between shadow-lg shadow-blue-100">
             <div>
               <p className="text-white font-black text-lg">{dueCount} card{dueCount !== 1 ? 's' : ''} due for review</p>
               <p className="text-white/80 text-sm font-medium mt-0.5">Keep your streak going — revise now</p>
             </div>
             <button
               onClick={() => router.push('/notes/review')}
-              className="flex items-center gap-2 bg-white text-[#FF6B00] px-5 py-2.5 rounded-xl font-black text-sm hover:bg-orange-50 transition-colors shadow-sm"
+              className="flex items-center gap-2 bg-white text-[#4A90E2] px-5 py-2.5 rounded-xl font-black text-sm hover:bg-blue-50 transition-colors shadow-sm"
             >
               <RotateCcw className="h-4 w-4" /> Start Review
             </button>
@@ -99,13 +99,13 @@ export default function NotesPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search notes..."
-              className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00]"
+              className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2]"
             />
           </div>
           <select
             value={filterSubject}
             onChange={e => setFilterSubject(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 focus:border-[#FF6B00]"
+            className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 focus:border-[#4A90E2]"
           >
             <option value="all">All Subjects</option>
             {subjects.map(s => <option key={s.$id} value={s.Name}>{s.Name}</option>)}
@@ -126,7 +126,7 @@ export default function NotesPage() {
             <p className="text-sm text-gray-500 max-w-xs mx-auto">
               {search || filterSubject !== 'all' ? 'Try adjusting your filters.' : 'Save notes from quiz questions or create one manually.'}
             </p>
-            <button onClick={() => router.push('/notes/new')} className="bg-[#FF6B00] hover:bg-[#FF8C00] text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-orange-100 transition-colors">
+            <button onClick={() => router.push('/notes/new')} className="bg-[#4A90E2] hover:bg-[#3a7fd4] text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-blue-100 transition-colors">
               Create First Note
             </button>
           </div>

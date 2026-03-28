@@ -70,7 +70,7 @@ export default function CardDetailPage() {
     }
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 text-[#FF6B00] animate-spin" /></div>
+  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 text-[#4A90E2] animate-spin" /></div>
   if (!note) return null
 
   const isDue = new Date(note.next_review_at) <= new Date()
@@ -102,14 +102,14 @@ export default function CardDetailPage() {
           <div className="flex items-center gap-2 flex-wrap">
             {editing ? (
               <>
-                <select value={subject} onChange={e => setSubject(e.target.value)} className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30">
+                <select value={subject} onChange={e => setSubject(e.target.value)} className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30">
                   {subjects.map(s => <option key={s.$id} value={s.Name}>{s.Name}</option>)}
                 </select>
-                <input value={topic} onChange={e => setTopic(e.target.value)} placeholder="Topic (optional)" className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+                <input value={topic} onChange={e => setTopic(e.target.value)} placeholder="Topic (optional)" className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30" />
               </>
             ) : (
               <>
-                <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-orange-50 text-orange-600">{note.subject}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{note.subject}</span>
                 {note.topic && <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">{note.topic}</span>}
               </>
             )}
@@ -119,7 +119,7 @@ export default function CardDetailPage() {
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Front</p>
             {editing ? (
-              <textarea value={front} onChange={e => setFront(e.target.value)} rows={3} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 resize-none" />
+              <textarea value={front} onChange={e => setFront(e.target.value)} rows={3} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 resize-none" />
             ) : (
               <p className="text-base font-semibold text-gray-900 leading-relaxed">{note.front}</p>
             )}
@@ -129,7 +129,7 @@ export default function CardDetailPage() {
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Back</p>
             {editing ? (
-              <textarea value={back} onChange={e => setBack(e.target.value)} rows={4} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 resize-none" />
+              <textarea value={back} onChange={e => setBack(e.target.value)} rows={4} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30 resize-none" />
             ) : (
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{note.back}</p>
             )}
@@ -140,7 +140,7 @@ export default function CardDetailPage() {
               <button onClick={() => { setEditing(false); setFront(note.front); setBack(note.back); setSubject(note.subject); setTopic(note.topic) }} className="flex-1 h-11 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors">
                 <X className="h-4 w-4" /> Cancel
               </button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 h-11 rounded-xl bg-[#FF6B00] hover:bg-[#FF8C00] text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-md shadow-orange-100">
+              <button onClick={handleSave} disabled={saving} className="flex-1 h-11 rounded-xl bg-[#4A90E2] hover:bg-[#3a7fd4] text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-md shadow-blue-100">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4" /> Save</>}
               </button>
             </div>
