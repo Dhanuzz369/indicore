@@ -38,13 +38,13 @@ type Difficulty = typeof DIFFICULTY_OPTIONS[number]
 
 function getSubjectAccent(name: string) {
   const l = name.toLowerCase()
-  if (l.includes('polity')) return { color: '#FF6B00', bg: 'bg-orange-50', text: 'text-orange-600', icon: '⚖️' }
+  if (l.includes('polity')) return { color: '#4A90E2', bg: 'bg-blue-50', text: 'text-blue-600', icon: '⚖️' }
   if (l.includes('hist')) return { color: '#8B4513', bg: 'bg-amber-50', text: 'text-amber-700', icon: '🏛️' }
   if (l.includes('geo')) return { color: '#007AFF', bg: 'bg-blue-50', text: 'text-blue-600', icon: '🌍' }
   if (l.includes('econ')) return { color: '#FF3B30', bg: 'bg-red-50', text: 'text-red-600', icon: '📈' }
   if (l.includes('environ')) return { color: '#34C759', bg: 'bg-green-50', text: 'text-green-600', icon: '🌿' }
   if (l.includes('science') || l.includes('tech')) return { color: '#5856D6', bg: 'bg-indigo-50', text: 'text-indigo-600', icon: '🔬' }
-  return { color: '#FF6B00', bg: 'bg-orange-50', text: 'text-orange-600', icon: '📚' }
+  return { color: '#4A90E2', bg: 'bg-blue-50', text: 'text-blue-600', icon: '📚' }
 }
 
 function formatTimerPreview(totalSeconds: number): string {
@@ -319,7 +319,7 @@ function QuizSetupContent() {
       {/* HEADER */}
       <div className="max-w-7xl mx-auto px-6 pt-10 pb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-100">
+          <div className="h-12 w-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
             <LayoutGrid className="h-6 w-6" />
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
@@ -327,7 +327,7 @@ function QuizSetupContent() {
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          <button className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-[#FF6B00] transition-colors">
+          <button className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-[#4A90E2] transition-colors">
             <Search className="h-5 w-5" />
           </button>
           <div className="h-12 w-12 rounded-full bg-gray-900 border-2 border-white shadow-md overflow-hidden ring-4 ring-gray-50">
@@ -341,19 +341,19 @@ function QuizSetupContent() {
         <div className="bg-gray-100 p-1.5 rounded-[2rem] flex h-16">
           <button
             onClick={() => { setActiveTab('mock'); setMockConfigSubject(null); setMockSelectedDifficulty('All'); setMockQuestionCount(20) }}
-            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'mock' ? 'bg-[#FF6B00] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'mock' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Mock Test
           </button>
           <button
             onClick={() => { setActiveTab('full'); setConfigSubject(null) }}
-            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'full' ? 'bg-[#FF6B00] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'full' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
             PYQ
           </button>
           <button
             onClick={() => { setActiveTab('subject'); setConfigSubject(null) }}
-            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'subject' ? 'bg-[#FF6B00] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'subject' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Subject Practice
           </button>
@@ -395,8 +395,8 @@ function QuizSetupContent() {
                           })
                           .join(' · ')
                         return (
-                          <div key={mock.$id} className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 group hover:shadow-xl hover:border-orange-100 transition-all flex flex-col">
-                            <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1 font-mono">INDICORE MOCK</p>
+                          <div key={mock.$id} className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col">
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">INDICORE MOCK</p>
                             <h3 className="text-2xl font-black text-gray-900 mb-1">{mock.name}</h3>
                             <p className="text-xs text-gray-400 font-semibold mb-3">{mock.description}</p>
                             <p className="text-[10px] font-bold text-gray-400 mb-6 leading-relaxed">{weightLabel}</p>
@@ -422,7 +422,7 @@ function QuizSetupContent() {
                                   ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
                                   : theme === 'gray'
                                     ? 'bg-gray-800 text-white hover:bg-gray-700 shadow-lg shadow-gray-200'
-                                    : 'bg-[#FF6B00] text-white hover:bg-orange-600 shadow-lg shadow-orange-100'
+                                    : 'bg-[#4A90E2] text-white hover:bg-blue-600 shadow-lg shadow-blue-100'
                               }`}
                             >
                               {loadingMockId === mock.$id ? <Loader2 className="h-5 w-5 animate-spin" /> : (
@@ -483,7 +483,7 @@ function QuizSetupContent() {
                               onClick={() => setMockQuestionCount(n)}
                               className={`px-5 py-3 rounded-2xl font-black text-sm transition-all border-2 ${
                                 mockQuestionCount === n
-                                  ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-100 scale-105'
+                                  ? 'bg-[#4A90E2] border-[#4A90E2] text-white shadow-lg shadow-blue-100 scale-105'
                                   : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:text-gray-700'
                               }`}
                             >
@@ -538,7 +538,7 @@ function QuizSetupContent() {
                       <button
                         onClick={handleStartMockPractice}
                         disabled={mockStartLoading}
-                        className="w-full h-20 bg-gradient-to-r from-[#FF6B00] to-orange-500 rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-orange-100 hover:scale-[1.01] transition-all active:scale-[0.98] disabled:opacity-60"
+                        className="w-full h-20 bg-gradient-to-r from-[#4A90E2] to-[#3a7fd4] rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-blue-100 hover:scale-[1.01] transition-all active:scale-[0.98] disabled:opacity-60"
                       >
                         {mockStartLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>Begin Practice <ArrowRight className="h-6 w-6" /></>}
                       </button>
@@ -549,7 +549,7 @@ function QuizSetupContent() {
                           disabled={mockStartLoading}
                           className="w-full h-14 bg-gray-900 rounded-[2rem] flex items-center justify-center gap-3 text-white font-black text-[11px] tracking-widest uppercase hover:bg-gray-800 transition-all active:scale-[0.98] disabled:opacity-60"
                         >
-                          <Clock className="h-4 w-4 text-[#FF6B00]" />
+                          <Clock className="h-4 w-4 text-[#4A90E2]" />
                           Full Length Test · All {mockConfigSubject.count} Questions
                         </button>
                       )}
@@ -572,7 +572,7 @@ function QuizSetupContent() {
                           return (
                             <div
                               key={subj.$id}
-                              className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 hover:shadow-xl hover:border-orange-50 transition-all group flex flex-col cursor-pointer"
+                              className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 hover:shadow-xl hover:border-blue-50 transition-all group flex flex-col cursor-pointer"
                               onClick={() => { setMockConfigSubject(subj); setMockSelectedDifficulty('All'); setMockQuestionCount(20) }}
                             >
                               <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: accent.color }} />
@@ -589,11 +589,11 @@ function QuizSetupContent() {
                                 <FileText className="h-3 w-3" /> {subj.count} mock questions
                               </p>
                               {subj.count > 50 && (
-                                <p className="text-[10px] font-black text-[#FF6B00] uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                                <p className="text-[10px] font-black text-[#4A90E2] uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
                                   <Clock className="h-3 w-3" /> Full length test available
                                 </p>
                               )}
-                              <div className="mt-8 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#FF6B00]">
+                              <div className="mt-8 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#4A90E2]">
                                 Configure &amp; Start <ChevronRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
                               </div>
                             </div>
@@ -618,11 +618,11 @@ function QuizSetupContent() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {PAPER_OPTIONS.map(paper => (
-                <div key={paper.id} className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 group hover:shadow-xl hover:border-orange-100 transition-all flex flex-col">
+                <div key={paper.id} className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col">
                   <div className="absolute top-6 right-8 text-[72px] font-black text-gray-50 select-none -z-10 tracking-tighter group-hover:scale-110 transition-transform">
                     {paper.year}
                   </div>
-                  <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1 font-mono">UPSC PRELIMS</p>
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">UPSC PRELIMS</p>
                   <div className="flex items-baseline gap-3 mb-2">
                     <h3 className="text-2xl font-black text-gray-900">{paper.label}</h3>
                     <span className="text-sm font-black text-gray-400">{paper.year}</span>
@@ -650,7 +650,7 @@ function QuizSetupContent() {
                         ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
                         : paper.theme === 'gray'
                           ? 'bg-gray-800 text-white hover:bg-gray-700 shadow-lg shadow-gray-200'
-                          : 'bg-[#FF6B00] text-white hover:bg-orange-600 shadow-lg shadow-orange-100'
+                          : 'bg-[#4A90E2] text-white hover:bg-blue-600 shadow-lg shadow-blue-100'
                     }`}
                   >
                     {loadingCardId === paper.id ? <Loader2 className="h-5 w-5 animate-spin" /> : (
@@ -663,7 +663,7 @@ function QuizSetupContent() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-[#111111] rounded-[2.5rem] overflow-hidden p-10 text-white relative">
-                <span className="inline-block px-4 py-1.5 bg-[#FF6B00] text-[10px] font-black uppercase tracking-widest rounded-full mb-6">Adaptive Learning</span>
+                <span className="inline-block px-4 py-1.5 bg-[#4A90E2] text-[10px] font-black uppercase tracking-widest rounded-full mb-6">Adaptive Learning</span>
                 <h3 className="text-4xl font-black tracking-tight leading-tight mb-6">Focus on Weak<br />Subjects</h3>
                 <p className="text-sm text-gray-400 font-medium leading-relaxed mb-10 max-w-md">
                   Practice subject-wise to target your weak areas and boost your score.
@@ -678,7 +678,7 @@ function QuizSetupContent() {
 
               <div className="bg-[#FFF8EF] rounded-[2.5rem] p-10 flex flex-col">
                 <div className="h-14 w-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-8">
-                  <Sparkles className="h-7 w-7 text-orange-600" />
+                  <Sparkles className="h-7 w-7 text-blue-600" />
                 </div>
                 <h4 className="text-2xl font-black text-gray-900 mb-4">Previous Analysis</h4>
                 <p className="text-sm text-gray-500 font-medium leading-relaxed mb-10">
@@ -686,7 +686,7 @@ function QuizSetupContent() {
                 </p>
                 <button
                   onClick={() => router.push('/tests')}
-                  className="mt-auto text-[11px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-2 hover:translate-x-2 transition-transform"
+                  className="mt-auto text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2 hover:translate-x-2 transition-transform"
                 >
                   View My Tests <ArrowRight className="h-5 w-5" />
                 </button>
@@ -719,7 +719,7 @@ function QuizSetupContent() {
                         return (
                           <div
                             key={subj.$id}
-                            className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 hover:shadow-xl hover:border-orange-50 transition-all group flex flex-col cursor-pointer"
+                            className="relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-8 hover:shadow-xl hover:border-blue-50 transition-all group flex flex-col cursor-pointer"
                             onClick={() => openConfig(subj)}
                           >
                             <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: accent.color }} />
@@ -735,7 +735,7 @@ function QuizSetupContent() {
                             <p className="text-[11px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-2">
                               <FileText className="h-3 w-3" /> {subj.count} questions
                             </p>
-                            <div className="mt-10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#FF6B00]">
+                            <div className="mt-10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#4A90E2]">
                               Configure & Start <ChevronRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
                             </div>
                           </div>
@@ -797,7 +797,7 @@ function QuizSetupContent() {
                           onClick={() => setQuestionCount(n)}
                           className={`px-5 py-3 rounded-2xl font-black text-sm transition-all border-2 ${
                             questionCount === n
-                              ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-100 scale-105'
+                              ? 'bg-[#4A90E2] border-[#4A90E2] text-white shadow-lg shadow-blue-100 scale-105'
                               : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:text-gray-700'
                           }`}
                         >
@@ -859,7 +859,7 @@ function QuizSetupContent() {
                   <button
                     onClick={handleStartPractice}
                     disabled={startLoading}
-                    className="w-full h-20 bg-gradient-to-r from-[#FF6B00] to-orange-500 rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-orange-100 hover:scale-[1.01] hover:shadow-orange-200 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full h-20 bg-gradient-to-r from-[#4A90E2] to-[#3a7fd4] rounded-[2rem] flex items-center justify-center gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-blue-100 hover:scale-[1.01] hover:shadow-blue-200 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {startLoading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
