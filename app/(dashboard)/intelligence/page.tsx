@@ -8,10 +8,12 @@ import { getSkillProfile, getSessionCount, getSubjectsWithCounts } from '@/lib/s
 import { Loader2, Brain, TrendingDown, AlertTriangle, Zap, BookOpen, Lightbulb, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SkillProfile, SubjectScore, SubtopicRating, BehaviorSignals, Recommendation } from '@/types'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 
 export default function IntelligencePage() {
   const router = useRouter()
+  const { track } = useAnalytics()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<SkillProfile | null>(null)
   const [sessionCount, setSessionCount] = useState(0)
@@ -46,6 +48,7 @@ export default function IntelligencePage() {
         } catch {}
         try { setBehavior(JSON.parse(prof.behavior_signals_json)) } catch {}
         try { setRecommendations(JSON.parse(prof.recommendations_json)) } catch {}
+        track('intelligence_viewed')
       } catch {
         toast.error('Failed to load intelligence data.')
       } finally {
