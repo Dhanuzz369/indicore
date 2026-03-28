@@ -192,7 +192,7 @@ export default function MistakesPage() {
         {/* Loading state */}
         {!done && (
           <div className="flex items-center gap-3 text-sm text-gray-500 bg-white rounded-2xl border border-gray-100 p-4">
-            <Loader2 className="h-4 w-4 text-[#FF6B00] animate-spin shrink-0" />
+            <Loader2 className="h-4 w-4 text-[#4A90E2] animate-spin shrink-0" />
             {loadingMsg}
           </div>
         )}
@@ -203,7 +203,7 @@ export default function MistakesPage() {
             <select
               value={subjectFilter}
               onChange={e => setSubjectFilter(e.target.value)}
-              className="text-xs font-bold bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30"
+              className="text-xs font-bold bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30"
             >
               <option value="all">All Subjects</option>
               {mistakeSubjects.map(s => (
@@ -213,7 +213,7 @@ export default function MistakesPage() {
             <select
               value={sort}
               onChange={e => setSort(e.target.value as 'most_wrong' | 'most_recent')}
-              className="text-xs font-bold bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30"
+              className="text-xs font-bold bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/30"
             >
               <option value="most_wrong">Most Wrong First</option>
               <option value="most_recent">Most Recent First</option>

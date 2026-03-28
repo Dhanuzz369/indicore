@@ -86,7 +86,7 @@ export function SubtopicDrillTab({ analytics, questions, attemptMap }: SubtopicD
               <p className="text-sm font-bold text-gray-900 capitalize truncate">
                 {(group.name ?? 'General').replace(/_/g, ' ')}
               </p>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 shrink-0">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 shrink-0">
                 {(group.subjectId ?? 'General').replace(/_/g, ' ')}
               </span>
             </div>
@@ -128,7 +128,7 @@ export function SubtopicDrillTab({ analytics, questions, attemptMap }: SubtopicD
                 `/quiz?${group.subtopicId ? `subtopic=${encodeURIComponent(group.subtopicId)}` : `subjectId=${encodeURIComponent(group.subjectId)}`}`
               )
             }
-            className="shrink-0 px-3 py-2 rounded-xl bg-[#FF6B00] hover:bg-[#FF8C00] text-white text-xs font-bold transition-colors"
+            className="shrink-0 px-3 py-2 rounded-xl bg-[#4A90E2] hover:bg-[#3a7fd4] text-white text-xs font-bold transition-colors"
           >
             Practice
           </button>

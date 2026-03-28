@@ -63,7 +63,7 @@ export function QuestionReviewCard({
     >
       {/* Badges row */}
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-orange-50 text-orange-600">
+        <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
           {subjectName || question.subject_id}
         </span>
         {question.subtopic && (
@@ -108,7 +108,7 @@ export function QuestionReviewCard({
         <div>
           <button
             onClick={() => setExpanded(e => !e)}
-            className="flex items-center gap-1 text-xs font-bold text-[#FF6B00] hover:text-[#FF8C00] transition-colors"
+            className="flex items-center gap-1 text-xs font-bold text-[#4A90E2] hover:text-[#3a7fd4] transition-colors"
           >
             {expanded ? (
               <ChevronUp className="h-3.5 w-3.5" />
@@ -118,7 +118,7 @@ export function QuestionReviewCard({
             {expanded ? 'Hide' : 'Show'} Explanation
           </button>
           {expanded && (
-            <p className="mt-2 text-xs text-gray-600 leading-relaxed bg-orange-50/50 rounded-xl p-3">
+            <p className="mt-2 text-xs text-gray-600 leading-relaxed bg-blue-50/50 rounded-xl p-3">
               {question.explanation}
             </p>
           )}
