@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Loader2, Eye, EyeOff, Trophy } from 'lucide-react'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 // ─────────────────────────────────────────────────────────────────
 // VALIDATION SCHEMA
@@ -30,6 +31,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const { track } = useAnalytics()
 
   // ─────────────────────────────────────────────────────────────────
   // REACT HOOK FORM SETUP
@@ -51,6 +53,7 @@ export default function LoginPage() {
     try {
       await signIn(data.email, data.password)
       toast.success('Welcome back!')
+      track('user_logged_in', { method: 'email' })
 
       // Small delay to ensure session cookie is set
       await new Promise(resolve => setTimeout(resolve, 500))

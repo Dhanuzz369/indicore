@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Loader2, Eye, EyeOff, Trophy } from 'lucide-react'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 // ─────────────────────────────────────────────────────────────────
 // VALIDATION SCHEMA
@@ -37,6 +38,7 @@ export default function SignupPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const { track } = useAnalytics()
 
   // ─────────────────────────────────────────────────────────────────
   // REACT HOOK FORM SETUP
@@ -66,6 +68,7 @@ export default function SignupPage() {
       await createUserStats(user.$id)
 
       toast.success('Account created successfully!')
+      track('user_signed_up', { method: 'email' })
 
       // Step 4: Redirect to onboarding
       router.push('/onboarding')
