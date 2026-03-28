@@ -110,7 +110,7 @@ function SubjectPerformanceCard({
                       {globalIndex + 1}
                     </button>
                     {wasRevised && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-orange-400 rounded-full border border-white" />
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-blue-400 rounded-full border border-white" />
                     )}
                   </div>
                 )
@@ -123,7 +123,7 @@ function SubjectPerformanceCard({
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-emerald-400" />Sure</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-purple-400" />50:50</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-yellow-400" />Guess</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 inline-block" />Revised</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" />Revised</span>
             </div>
           </div>
         </div>
@@ -154,7 +154,7 @@ function TaggedQuestionsDropdown({
     ? 'text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 border-emerald-200'
     : tag === 'fifty_fifty'
       ? 'text-blue-700 bg-blue-50/80 hover:bg-blue-100 border-blue-200'
-      : 'text-orange-700 bg-orange-50/80 hover:bg-orange-100 border-orange-200'
+      : 'text-blue-700 bg-blue-50/80 hover:bg-blue-100 border-blue-200'
 
   return (
     <div className="mt-4 rounded-2xl overflow-hidden border border-gray-100 bg-white/50 backdrop-blur-md shadow-sm transition-all duration-300">
@@ -513,7 +513,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   if (isRehydrating) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] p-6 bg-gray-50">
-        <Loader2 className="h-10 w-10 text-[#FF6B00] animate-spin mb-4" />
+        <Loader2 className="h-10 w-10 text-[#4A90E2] animate-spin mb-4" />
         <p className="text-gray-400 font-black text-sm uppercase tracking-widest">Reconstructing Analysis...</p>
       </div>
     )
@@ -534,7 +534,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           </p>
           <button
             onClick={() => router.push(replayMode ? '/tests' : '/quiz')}
-            className="bg-[#FF6B00] text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#FF8C00] transition-all shadow-xl shadow-orange-100"
+            className="bg-[#4A90E2] text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-[#3a7fd4] transition-all shadow-xl shadow-blue-100"
           >
             {replayMode ? 'Back to My Tests' : 'Start Practice'}
           </button>
@@ -558,12 +558,12 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
       <div className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-[#FF6B00] p-2 rounded-xl shadow-lg shadow-orange-200">
+            <div className="bg-[#4A90E2] p-2 rounded-xl shadow-lg shadow-blue-200">
               <Brain className="h-5 w-5 text-white" />
             </div>
             <div>
               <h1 className="text-lg font-black text-gray-900 tracking-tight leading-none uppercase italic">
-                Analytical Engine <span className="text-[#FF6B00]">PRO</span>
+                Analytical Engine <span className="text-[#4A90E2]">PRO</span>
               </h1>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">
                 {displayPaperLabel || 'Real-time Analysis'}
@@ -624,7 +624,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-4xl font-black text-[#FF6B00]">{score.percentage}%</span>
+                  <span className="text-4xl font-black text-[#4A90E2]">{score.percentage}%</span>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">accuracy</p>
                 </div>
               </div>
@@ -634,7 +634,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 </div>
                 <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#FF6B00] rounded-full transition-all duration-1000"
+                    className="h-full bg-[#4A90E2] rounded-full transition-all duration-1000"
                     style={{ width: `${(Object.keys(displayAnswers).length / displayQuestions.length) * 100}%` }}
                   />
                 </div>
@@ -660,7 +660,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               </div>
               <button
                 onClick={() => handleQuestionClick(0)}
-                className="bg-[#FF6B00]/10 hover:bg-[#FF6B00]/20 text-[#FF6B00] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+                className="bg-[#4A90E2]/10 hover:bg-[#4A90E2]/20 text-[#4A90E2] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors"
               >
                 <Clock className="h-3 w-3" /> Review Test
               </button>
@@ -754,7 +754,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </p>
             <p className="text-base font-bold text-white">
               You revised{' '}
-              <span className="text-[#FF6B00] font-black">{revisionSummary.totalRevised}</span>{' '}
+              <span className="text-[#4A90E2] font-black">{revisionSummary.totalRevised}</span>{' '}
               answer{revisionSummary.totalRevised !== 1 ? 's' : ''} during this test.
             </p>
             {revisionSummary.changedCorrectToWrong > 0 && (
@@ -798,12 +798,12 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             <p className="text-xs text-gray-500 font-medium mb-6 leading-relaxed">Questions where you narrowed it down but were hesitant. This is where your edge lies.</p>
             <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
           </div>
-          <div className="bg-white rounded-[2rem] border border-orange-100 shadow-sm p-8 flex flex-col">
+          <div className="bg-white rounded-[2rem] border border-blue-100 shadow-sm p-8 flex flex-col">
             <div className="flex items-center justify-between mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center">
-                <Zap className="h-6 w-6 text-orange-600" />
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
+                <Zap className="h-6 w-6 text-blue-600" />
               </div>
-              <span className="text-xs font-black text-orange-600 uppercase tracking-widest">Luck Factor</span>
+              <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Luck Factor</span>
             </div>
             <h4 className="text-xl font-black text-gray-900 mb-2">Calculated Guesses</h4>
             <p className="text-xs text-gray-500 font-medium mb-6 leading-relaxed">Pure guesses. Analyzing these helps you understand your subconscious processing.</p>
@@ -846,12 +846,12 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             <div className="absolute top-0 right-0 p-10 opacity-10"><Lightbulb className="h-40 w-40" /></div>
             <div className="relative z-10">
               <h3 className="text-xl font-black uppercase tracking-widest mb-6 flex items-center gap-3">
-                <Zap className="h-6 w-6 text-[#FF6B00]" /> Strategy Protocol
+                <Zap className="h-6 w-6 text-[#4A90E2]" /> Strategy Protocol
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                 {analytics.suggestions.map((s: string, idx: number) => (
                   <div key={idx} className="flex gap-4">
-                    <span className="text-[#FF6B00] font-black italic">#{idx + 1}</span>
+                    <span className="text-[#4A90E2] font-black italic">#{idx + 1}</span>
                     <p className="text-sm font-medium text-gray-300 leading-relaxed">{s}</p>
                   </div>
                 ))}

@@ -51,7 +51,7 @@ export default function IntelligencePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 text-[#FF6B00] animate-spin" />
+        <Loader2 className="h-8 w-8 text-[#4A90E2] animate-spin" />
       </div>
     )
   }
@@ -61,8 +61,8 @@ export default function IntelligencePage() {
     return (
       <div className="min-h-screen bg-[#F8F9FC]">
         <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
-          <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto">
-            <Brain className="h-10 w-10 text-[#FF6B00]" />
+          <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
+            <Brain className="h-10 w-10 text-[#4A90E2]" />
           </div>
           <div>
             <h1 className="text-2xl font-black text-gray-900">Intelligence Engine</h1>
@@ -76,12 +76,12 @@ export default function IntelligencePage() {
               <span className="font-black text-gray-900">{sessionCount} / 3</span>
             </div>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#FF6B00] rounded-full transition-all" style={{ width: `${Math.min(100, (sessionCount / 3) * 100)}%` }} />
+              <div className="h-full bg-[#4A90E2] rounded-full transition-all" style={{ width: `${Math.min(100, (sessionCount / 3) * 100)}%` }} />
             </div>
           </div>
           <button
             onClick={() => router.push('/quiz')}
-            className="bg-[#FF6B00] hover:bg-[#FF8C00] text-white px-8 py-3 rounded-2xl font-black text-sm shadow-lg shadow-orange-100 transition-colors"
+            className="bg-[#4A90E2] hover:bg-[#3a7fd4] text-white px-8 py-3 rounded-2xl font-black text-sm shadow-lg shadow-blue-100 transition-colors"
           >
             Start a Practice Test
           </button>
@@ -125,7 +125,7 @@ export default function IntelligencePage() {
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#FF6B00] rounded-xl flex items-center justify-center shadow-md shadow-orange-100">
+          <div className="w-10 h-10 bg-[#4A90E2] rounded-xl flex items-center justify-center shadow-md shadow-blue-100">
             <Brain className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -137,8 +137,8 @@ export default function IntelligencePage() {
         {/* Sure But Wrong — slim banner */}
         {behavior && (
           <div className={`rounded-2xl border p-5 flex items-center gap-4 ${sureButWrongHigh ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100 shadow-sm'}`}>
-            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${sureButWrongHigh ? 'bg-red-100' : 'bg-orange-50'}`}>
-              <AlertCircle className={`h-5 w-5 ${sureButWrongHigh ? 'text-red-500' : 'text-orange-500'}`} />
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${sureButWrongHigh ? 'bg-red-100' : 'bg-blue-50'}`}>
+              <AlertCircle className={`h-5 w-5 ${sureButWrongHigh ? 'text-red-500' : 'text-blue-500'}`} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sure But Wrong</p>
@@ -177,7 +177,7 @@ export default function IntelligencePage() {
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all ${sub.accuracy < 30 ? 'bg-red-500' : 'bg-orange-400'}`}
+                        className={`h-full rounded-full transition-all ${sub.accuracy < 30 ? 'bg-red-500' : 'bg-blue-400'}`}
                         style={{ width: `${sub.accuracy}%` }}
                       />
                     </div>
@@ -192,7 +192,7 @@ export default function IntelligencePage() {
         {/* Confused Topics — rotational batch */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <AlertTriangle className="h-4 w-4 text-blue-500" />
             <h2 className="font-black text-gray-900 text-base">Confused Topics</h2>
             {confusedTopics.length > BATCH_SIZE && (
               <span className="text-xs font-semibold text-gray-400 ml-auto">
@@ -209,11 +209,11 @@ export default function IntelligencePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {confusedBatch.map(st => (
-                <div key={st.subtopicId} className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                <div key={st.subtopicId} className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                   <p className="text-sm font-black text-gray-900 truncate">{st.subtopicId}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{st.subjectId}</p>
                   <div className="mt-3">
-                    <span className="text-lg font-black text-orange-600">
+                    <span className="text-lg font-black text-blue-600">
                       {st.wrong_count ?? 0}/{st.attempts} wrong
                     </span>
                   </div>
@@ -227,7 +227,7 @@ export default function IntelligencePage() {
         {recommendations.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-5">
-              <Lightbulb className="h-4 w-4 text-[#FF6B00]" />
+              <Lightbulb className="h-4 w-4 text-[#4A90E2]" />
               <h2 className="font-black text-gray-900 text-base">Your Action Plan</h2>
             </div>
             <div className="space-y-4">
@@ -281,7 +281,7 @@ export default function IntelligencePage() {
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => router.push('/quiz')}
-            className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-[#FF6B00] hover:bg-[#FF8C00] text-white font-black text-sm shadow-lg shadow-orange-100 transition-colors"
+            className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-[#4A90E2] hover:bg-[#3a7fd4] text-white font-black text-sm shadow-lg shadow-blue-100 transition-colors"
           >
             <Zap className="h-4 w-4" /> Start Practice
           </button>

@@ -15,7 +15,7 @@ function ResultsContent() {
 
 export default function ResultsPage() {
   return (
-    <Suspense fallback={<div className="p-20 text-center"><Loader2 className="h-10 w-10 animate-spin mx-auto text-[#FF6B00]" /></div>}>
+    <Suspense fallback={<div className="p-20 text-center"><Loader2 className="h-10 w-10 animate-spin mx-auto text-[#4A90E2]" /></div>}>
       <ResultsContent />
     </Suspense>
   )
