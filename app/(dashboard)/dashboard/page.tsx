@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { getProfile, getUserStats, getSubjectsWithCounts } from '@/lib/supabase/queries'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -74,7 +75,7 @@ const layerTitle: React.CSSProperties = {
   fontSize: '9.5px', fontWeight: 600, color: '#1a0808', lineHeight: 1.2,
 }
 
-function MockSlide({ active }: { active: boolean }) {
+function MockSlide({ active, onCta }: { active: boolean; onCta: () => void }) {
   return (
     <div style={{
       position: 'absolute', inset: 0,
@@ -108,12 +109,12 @@ function MockSlide({ active }: { active: boolean }) {
           <div style={{ fontFamily: MONO, fontSize: '10px', color: '#9999bb', marginTop: '8px', letterSpacing: '.04em' }}>
             100 questions&nbsp;·&nbsp;2 hours&nbsp;·&nbsp;200 marks
           </div>
-          <div style={{
+          <button onClick={onCta} style={{
             display: 'inline-flex', alignItems: 'center', marginTop: '10px',
             fontFamily: MONO, fontSize: '10px', fontWeight: 700, letterSpacing: '.12em',
             padding: '7px 15px', borderRadius: '7px', background: '#6366f1', color: '#fff',
-            textTransform: 'uppercase', cursor: 'default',
-          }}>Attempt Now →</div>
+            textTransform: 'uppercase', cursor: 'pointer', border: 'none',
+          }}>Attempt Now →</button>
         </div>
         {/* stacked mock cards */}
         <div className="hidden sm:block" style={{ position: 'relative', width: '200px', height: '154px', flexShrink: 0 }}>
@@ -147,7 +148,10 @@ function MockSlide({ active }: { active: boolean }) {
   )
 }
 
-function AnalyticsSlide({ active }: { active: boolean }) {
+function AnalyticsSlide({ active, stats }: { active: boolean; stats: UserStats | null }) {
+  const answered = stats?.total_attempted ?? 0
+  const correct = stats?.total_correct ?? 0
+  const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : null
   return (
     <div style={{
       position: 'absolute', inset: 0,
@@ -185,13 +189,17 @@ function AnalyticsSlide({ active }: { active: boolean }) {
         }}>
           {/* L1 Score */}
           <div style={layerCardStyle}>
-            <div style={layerNum('#fca5a5')}>L1 · SCORE</div>
-            <div style={layerTitle}>Score & Accuracy</div>
+            <div style={layerNum('#fca5a5')}>L1 · ACCURACY</div>
+            <div style={layerTitle}>Overall Score</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
-              <div style={{ fontFamily: MONO, fontSize: '13px', fontWeight: 700, color: '#1a0808' }}>112</div>
+              <div style={{ fontFamily: MONO, fontSize: '13px', fontWeight: 700, color: '#1a0808' }}>
+                {correct}
+              </div>
               <div>
-                <div style={{ fontSize: '7.5px', color: '#bbb' }}>/&nbsp;200 marks</div>
-                <div style={{ fontSize: '7.5px', color: '#ef4444', fontWeight: 600 }}>56% acc.</div>
+                <div style={{ fontSize: '7.5px', color: '#bbb' }}>/ {answered} answered</div>
+                <div style={{ fontSize: '7.5px', color: '#ef4444', fontWeight: 600 }}>
+                  {accuracy !== null ? `${accuracy}% acc.` : 'No data yet'}
+                </div>
               </div>
             </div>
           </div>
@@ -259,7 +267,7 @@ function AnalyticsSlide({ active }: { active: boolean }) {
   )
 }
 
-function NotesSlide({ active }: { active: boolean }) {
+function NotesSlide({ active, onCta }: { active: boolean; onCta: () => void }) {
   return (
     <div style={{
       position: 'absolute', inset: 0,
@@ -293,12 +301,12 @@ function NotesSlide({ active }: { active: boolean }) {
           <div style={{ fontSize: '12px', color: '#b08050', marginTop: '9px' }}>
             Flashcards that know when to show up.
           </div>
-          <div style={{
+          <button onClick={onCta} style={{
             display: 'inline-flex', alignItems: 'center', marginTop: '10px',
             fontFamily: MONO, fontSize: '10px', fontWeight: 700, letterSpacing: '.12em',
             padding: '7px 15px', borderRadius: '7px', background: '#1c1207', color: '#fdf8f0',
-            textTransform: 'uppercase', cursor: 'default',
-          }}>Open Notes →</div>
+            textTransform: 'uppercase', cursor: 'pointer', border: 'none',
+          }}>Open Notes →</button>
         </div>
         {/* stacked flashcards */}
         <div className="hidden sm:block" style={{ position: 'relative', width: '200px', height: '154px', flexShrink: 0 }}>
@@ -328,9 +336,10 @@ function NotesSlide({ active }: { active: boolean }) {
   )
 }
 
-function OfferingsCarousel() {
+function OfferingsCarousel({ stats }: { stats: UserStats | null }) {
   const [current, setCurrent] = useState(0)
   const pausedRef = useRef(false)
+  const router = useRouter()
   const ACCENT = ['#6366f1', '#ef4444', '#d97706']
 
   useEffect(() => {
@@ -347,9 +356,9 @@ function OfferingsCarousel() {
       onMouseEnter={() => { pausedRef.current = true }}
       onMouseLeave={() => { pausedRef.current = false }}
     >
-      <MockSlide active={current === 0} />
-      <AnalyticsSlide active={current === 1} />
-      <NotesSlide active={current === 2} />
+      <MockSlide active={current === 0} onCta={() => router.push('/quiz')} />
+      <AnalyticsSlide active={current === 1} stats={stats} />
+      <NotesSlide active={current === 2} onCta={() => router.push('/notes')} />
 
       {/* Dot nav */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
@@ -559,7 +568,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-8">
 
         {/* OFFERINGS CAROUSEL */}
-        <OfferingsCarousel />
+        <OfferingsCarousel stats={stats} />
 
         {/* CORE PRACTICE */}
         <div>

@@ -489,6 +489,9 @@ export default function TestSessionPage() {
           const finalConfTag: 'sure' | 'fifty_fifty' | 'guess' | null =
             finalConfidenceMap[qId] || ans.confidenceTag || null
 
+          // Skip stub entries — questions viewed but never answered
+          if (!ans.selectedOption) continue
+
           try {
             await saveAttempt({
               user_id: user.$id,
