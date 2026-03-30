@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { getProfile, getUserStats, getSubjectsWithCounts } from '@/lib/supabase/queries'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -56,108 +56,319 @@ function getPerformanceLabel(accuracy: number) {
   return { label: 'Low', color: 'text-red-500', dot: 'bg-red-500', trend: 'down' }
 }
 
-// ─── Offerings Carousel ────────────────────────────────────────────
+// ─── Offerings Carousel v2 (reference design) ─────────────────────
 
-const SLIDES = [
-  {
-    bg: '#4A90E2',
-    badge: 'MOCK TESTS',
-    headline: 'Full-Length Mocks',
-    tagline: 'Test yourself against real exam patterns',
-    cta: 'Start Mock',
-    href: '/quiz',
-  },
-  {
-    bg: '#6366f1',
-    badge: 'ANALYTICS',
-    headline: 'Deep Analytics',
-    tagline: 'See where you stand, know what to fix',
-    cta: 'View Analytics',
-    href: '/intelligence',
-  },
-  {
-    bg: '#10b981',
-    badge: 'SMART NOTES',
-    headline: 'Smart Notes',
-    tagline: 'Structured revision at your fingertips',
-    cta: 'Open Notes',
-    href: '/notes',
-  },
-]
+const MONO = 'var(--font-jetbrains,"JetBrains Mono",ui-monospace,monospace)'
+const DISPLAY = 'var(--font-bebas,"Bebas Neue",Impact,sans-serif)'
+
+const layerCardStyle: React.CSSProperties = {
+  background: '#fff', borderRadius: '9px', padding: '8px 9px',
+  border: '1px solid #f0e8e8', display: 'flex', flexDirection: 'column',
+  gap: '2px', minHeight: 0, overflow: 'hidden',
+}
+const layerNum = (color: string): React.CSSProperties => ({
+  fontFamily: MONO, fontSize: '7px', fontWeight: 700, color, letterSpacing: '.1em',
+  whiteSpace: 'nowrap',
+})
+const layerTitle: React.CSSProperties = {
+  fontSize: '9.5px', fontWeight: 600, color: '#1a0808', lineHeight: 1.2,
+}
+
+function MockSlide({ active }: { active: boolean }) {
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      opacity: active ? 1 : 0, transition: 'opacity 0.45s ease',
+      pointerEvents: active ? 'all' : 'none',
+      background: '#f7f7f2', display: 'flex', alignItems: 'stretch', overflow: 'hidden',
+    }}>
+      {/* ruled paper texture */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: 'repeating-linear-gradient(transparent,transparent 27px,rgba(99,102,241,.05) 27px,rgba(99,102,241,.05) 28px)',
+      }} />
+      {/* right accent panel */}
+      <div style={{
+        position: 'absolute', right: 0, top: 0, bottom: 0, width: '300px',
+        background: 'linear-gradient(135deg,#eef0ff 0%,#e0e4ff 100%)',
+        clipPath: 'polygon(22% 0%,100% 0%,100% 100%,0% 100%)',
+      }} />
+      <div style={{
+        position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', width: '100%', padding: '20px 28px',
+      }}>
+        {/* text */}
+        <div>
+          <div style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 600, letterSpacing: '.18em', textTransform: 'uppercase', color: '#6366f1', marginBottom: '8px' }}>
+            // Full-length simulation
+          </div>
+          <div style={{ fontFamily: DISPLAY, fontSize: 'clamp(36px,5vw,50px)', lineHeight: .88, color: '#1a1a2e' }}>
+            INDICORE<br /><span style={{ color: '#6366f1' }}>MOCK.</span>
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: '10px', color: '#9999bb', marginTop: '8px', letterSpacing: '.04em' }}>
+            100 questions&nbsp;·&nbsp;2 hours&nbsp;·&nbsp;200 marks
+          </div>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', marginTop: '10px',
+            fontFamily: MONO, fontSize: '10px', fontWeight: 700, letterSpacing: '.12em',
+            padding: '7px 15px', borderRadius: '7px', background: '#6366f1', color: '#fff',
+            textTransform: 'uppercase', cursor: 'default',
+          }}>Attempt Now →</div>
+        </div>
+        {/* stacked mock cards */}
+        <div className="hidden sm:block" style={{ position: 'relative', width: '200px', height: '154px', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', width: '138px', height: '88px', borderRadius: '12px', background: '#dde0ff', right: 0, top: '34px', transform: 'rotate(5.5deg)', border: '1px solid rgba(99,102,241,.07)' }} />
+          <div style={{ position: 'absolute', width: '138px', height: '88px', borderRadius: '12px', background: '#eef0ff', right: '13px', top: '19px', transform: 'rotate(1.5deg)', border: '1px solid rgba(99,102,241,.11)' }} />
+          <div style={{
+            position: 'absolute', width: '138px', height: '88px', borderRadius: '12px',
+            background: '#fff', right: '26px', top: '4px', transform: 'rotate(-2.5deg)',
+            boxShadow: '0 4px 18px rgba(99,102,241,.13)', border: '1px solid rgba(99,102,241,.2)',
+            padding: '10px 13px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ fontFamily: MONO, fontSize: '6.5px', fontWeight: 700, color: '#6366f1', letterSpacing: '.14em', textTransform: 'uppercase' }}>Indicore Mock</div>
+              <div style={{ fontFamily: DISPLAY, fontSize: '21px', lineHeight: 1, color: '#1a1a2e', marginTop: '2px' }}>Mock 1</div>
+            </div>
+            <div>
+              <div style={{ height: '1px', background: 'rgba(99,102,241,.12)', marginBottom: '5px' }} />
+              <div style={{ display: 'flex' }}>
+                {[['100', 'Questions'], ['2 Hr', 'Duration'], ['200', 'Marks']].map(([v, l]) => (
+                  <div key={l} style={{ flex: 1 }}>
+                    <div style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 700, color: '#1a1a2e' }}>{v}</div>
+                    <div style={{ fontSize: '5.5px', color: '#bbb', textTransform: 'uppercase', letterSpacing: '.08em', marginTop: '1px' }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AnalyticsSlide({ active }: { active: boolean }) {
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      opacity: active ? 1 : 0, transition: 'opacity 0.45s ease',
+      pointerEvents: active ? 'all' : 'none',
+      background: '#faf7f7', display: 'flex', alignItems: 'stretch', overflow: 'hidden',
+    }}>
+      {/* pink blob */}
+      <div style={{
+        position: 'absolute', right: '-50px', top: '-70px', width: '300px', height: '300px',
+        borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%,#ffe4e1,#fecaca 55%,transparent 78%)', opacity: .4,
+      }} />
+      <div style={{
+        position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center',
+        width: '100%', padding: '0 20px 0 28px', gap: '16px',
+      }}>
+        {/* left text */}
+        <div style={{ flexShrink: 0 }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 600, letterSpacing: '.18em', textTransform: 'uppercase', color: '#ef4444', marginBottom: '8px' }}>
+            // 6-layer engine
+          </div>
+          <div style={{ fontFamily: DISPLAY, fontSize: 'clamp(36px,5vw,50px)', lineHeight: .88, color: '#1a0808' }}>
+            DEEP<br /><span style={{ color: '#ef4444' }}>ANALYTICS.</span>
+          </div>
+          <div style={{ fontSize: '11.5px', color: '#bbb', marginTop: '7px', lineHeight: 1.4 }}>
+            Every layer of<br />your performance.
+          </div>
+        </div>
+        {/* 6-layer grid */}
+        <div className="hidden sm:block" style={{ width: '340px', flexShrink: 0 }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr',
+          gap: '6px', width: '100%', maxHeight: '158px', height: '158px',
+        }}>
+          {/* L1 Score */}
+          <div style={layerCardStyle}>
+            <div style={layerNum('#fca5a5')}>L1 · SCORE</div>
+            <div style={layerTitle}>Score & Accuracy</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
+              <div style={{ fontFamily: MONO, fontSize: '13px', fontWeight: 700, color: '#1a0808' }}>112</div>
+              <div>
+                <div style={{ fontSize: '7.5px', color: '#bbb' }}>/&nbsp;200 marks</div>
+                <div style={{ fontSize: '7.5px', color: '#ef4444', fontWeight: 600 }}>56% acc.</div>
+              </div>
+            </div>
+          </div>
+          {/* L2 Difficulty */}
+          <div style={layerCardStyle}>
+            <div style={layerNum('#fca5a5')}>L2 · DIFFICULTY</div>
+            <div style={layerTitle}>Easy / Med / Hard</div>
+            <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', height: '18px', marginTop: '2px' }}>
+              <div style={{ width: '8px', borderRadius: '2px 2px 0 0', height: '16px', background: '#86efac' }} />
+              <div style={{ width: '8px', borderRadius: '2px 2px 0 0', height: '11px', background: '#fcd34d' }} />
+              <div style={{ width: '8px', borderRadius: '2px 2px 0 0', height: '6px', background: '#fca5a5' }} />
+              <div style={{ fontSize: '7px', color: '#bbb', alignSelf: 'flex-end', marginLeft: '2px', lineHeight: 1.2 }}>82%<br />61%<br />38%</div>
+            </div>
+          </div>
+          {/* L3 Subject */}
+          <div style={layerCardStyle}>
+            <div style={layerNum('#fca5a5')}>L3 · SUBJECT</div>
+            <div style={layerTitle}>Weak Areas</div>
+            <div style={{ marginTop: '2px' }}>
+              <div style={{ fontSize: '7.5px', color: '#bbb', marginBottom: '2px' }}>History</div>
+              <div style={{ height: '4px', background: '#f0e8e8', borderRadius: '2px' }}>
+                <div style={{ height: '100%', width: '26%', background: '#ef4444', borderRadius: '2px' }} />
+              </div>
+              <div style={{ fontSize: '7.5px', color: '#bbb', marginTop: '3px', marginBottom: '2px' }}>Polity</div>
+              <div style={{ height: '4px', background: '#f0e8e8', borderRadius: '2px' }}>
+                <div style={{ height: '100%', width: '62%', background: '#fbbf24', borderRadius: '2px' }} />
+              </div>
+            </div>
+          </div>
+          {/* L4 Confidence */}
+          <div style={layerCardStyle}>
+            <div style={layerNum('#fca5a5')}>L4 · CONFIDENCE</div>
+            <div style={layerTitle}>Confidence Tags</div>
+            <div style={{ display: 'flex', gap: '3px', marginTop: '3px', flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: MONO, fontSize: '7px', fontWeight: 700, padding: '2px 5px', borderRadius: '3px', background: '#f0fdf4', border: '1px solid #86efac', color: '#16a34a' }}>✓ Sure 12</span>
+              <span style={{ fontFamily: MONO, fontSize: '7px', fontWeight: 700, padding: '2px 5px', borderRadius: '3px', background: '#fffbeb', border: '1px solid #fcd34d', color: '#b45309' }}>~ 50-50 4</span>
+              <span style={{ fontFamily: MONO, fontSize: '7px', fontWeight: 700, padding: '2px 5px', borderRadius: '3px', background: '#fef2f2', border: '1px solid #fca5a5', color: '#dc2626' }}>? Guess 3</span>
+            </div>
+          </div>
+          {/* L5 Trend */}
+          <div style={layerCardStyle}>
+            <div style={layerNum('#fca5a5')}>L5 · TREND</div>
+            <div style={layerTitle}>Over Time</div>
+            <div style={{ marginTop: '3px' }}>
+              <svg width="100%" height="22" viewBox="0 0 110 22" preserveAspectRatio="none">
+                <polyline points="0,18 22,14 44,16 66,9 88,11 110,6" fill="none" stroke="#fca5a5" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+                <circle cx="110" cy="6" r="2.5" fill="#ef4444" />
+              </svg>
+            </div>
+          </div>
+          {/* L6 Answer Log */}
+          <div style={layerCardStyle}>
+            <div style={layerNum('#fca5a5')}>L6 · LOG</div>
+            <div style={layerTitle}>Revised to Wrong</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
+              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ef4444', flexShrink: 0 }} />
+              <div style={{ fontSize: '8px', color: '#1a0808', fontWeight: 600 }}>2 changes</div>
+            </div>
+            <div style={{ fontSize: '7.5px', color: '#bbb', marginTop: '1px' }}>−1.34 marks lost</div>
+          </div>
+        </div>{/* end grid */}
+        </div>{/* end sm:block wrapper */}
+      </div>
+    </div>
+  )
+}
+
+function NotesSlide({ active }: { active: boolean }) {
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      opacity: active ? 1 : 0, transition: 'opacity 0.45s ease',
+      pointerEvents: active ? 'all' : 'none',
+      background: '#fdf8f0', display: 'flex', alignItems: 'stretch', overflow: 'hidden',
+    }}>
+      {/* dot grid */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: 'radial-gradient(circle,rgba(160,105,42,.1) 1.2px,transparent 1.2px)',
+        backgroundSize: '18px 18px',
+      }} />
+      {/* warm blob */}
+      <div style={{
+        position: 'absolute', right: '-30px', top: '-50px', width: '240px', height: '240px',
+        borderRadius: '50%', background: 'radial-gradient(circle,#fde68a,#fdf3d0 50%,transparent 74%)', opacity: .32,
+      }} />
+      <div style={{
+        position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', width: '100%', padding: '20px 28px',
+      }}>
+        {/* text */}
+        <div>
+          <div style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 600, letterSpacing: '.18em', textTransform: 'uppercase', color: '#b45309', marginBottom: '8px' }}>
+            // Spaced repetition
+          </div>
+          <div style={{ fontFamily: DISPLAY, fontSize: 'clamp(36px,5vw,50px)', lineHeight: .88, color: '#1c1207' }}>
+            MY<br /><span style={{ color: '#d97706' }}>NOTES.</span>
+          </div>
+          <div style={{ fontSize: '12px', color: '#b08050', marginTop: '9px' }}>
+            Flashcards that know when to show up.
+          </div>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', marginTop: '10px',
+            fontFamily: MONO, fontSize: '10px', fontWeight: 700, letterSpacing: '.12em',
+            padding: '7px 15px', borderRadius: '7px', background: '#1c1207', color: '#fdf8f0',
+            textTransform: 'uppercase', cursor: 'default',
+          }}>Open Notes →</div>
+        </div>
+        {/* stacked flashcards */}
+        <div className="hidden sm:block" style={{ position: 'relative', width: '200px', height: '154px', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', width: '136px', height: '88px', borderRadius: '11px', background: '#fae8c0', right: 0, top: '34px', transform: 'rotate(5.5deg)', border: '1px solid rgba(180,83,9,.07)' }} />
+          <div style={{ position: 'absolute', width: '136px', height: '88px', borderRadius: '11px', background: '#fdf3e0', right: '13px', top: '19px', transform: 'rotate(1.5deg)', border: '1px solid rgba(180,83,9,.1)' }} />
+          <div style={{
+            position: 'absolute', width: '136px', height: '88px', borderRadius: '11px',
+            background: '#fff', right: '26px', top: '4px', transform: 'rotate(-2.5deg)',
+            boxShadow: '0 4px 18px rgba(180,83,9,.11)', border: '1px solid rgba(180,83,9,.18)',
+            padding: '10px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+          }}>
+            <div>
+              <span style={{
+                display: 'inline-block', fontFamily: MONO, fontSize: '6.5px', fontWeight: 700,
+                letterSpacing: '.14em', background: '#fef3c7', color: '#92400e',
+                padding: '2px 7px', borderRadius: '4px',
+              }}>HISTORY</span>
+              <div style={{ fontSize: '8.5px', fontWeight: 500, color: '#1c1207', lineHeight: 1.45, marginTop: '5px' }}>
+                Which feature characterizes Indus Valley agricultural practices?
+              </div>
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: '6.5px', color: '#b45309' }}>⏱ Due tomorrow</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function OfferingsCarousel() {
   const [current, setCurrent] = useState(0)
   const pausedRef = useRef(false)
+  const ACCENT = ['#6366f1', '#ef4444', '#d97706']
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (!pausedRef.current) {
-        setCurrent(c => (c + 1) % SLIDES.length)
-      }
+      if (!pausedRef.current) setCurrent(c => (c + 1) % 3)
     }, 4000)
     return () => clearInterval(id)
   }, [])
 
   return (
     <div
-      className="relative h-40 md:h-52 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden"
+      className="relative rounded-[1.375rem] overflow-hidden"
+      style={{ height: '200px', boxShadow: '0 2px 30px rgba(0,0,0,0.09)' }}
       onMouseEnter={() => { pausedRef.current = true }}
       onMouseLeave={() => { pausedRef.current = false }}
     >
-      {/* Slide track */}
-      <div
-        className="flex h-full"
-        style={{
-          width: `${SLIDES.length * 100}%`,
-          transform: `translateX(-${(current * 100) / SLIDES.length}%)`,
-          transition: 'transform 500ms ease-in-out',
-        }}
-      >
-        {SLIDES.map((slide, i) => (
-          <div
-            key={i}
-            className="relative flex flex-col justify-between p-4 md:p-8 h-full"
-            style={{ width: `${100 / SLIDES.length}%`, backgroundColor: slide.bg }}
-          >
-            {/* Decorative circles */}
-            <div className="absolute -right-8 -top-8 w-48 h-48 bg-white/10 rounded-full pointer-events-none" />
-            <div className="absolute -right-2 top-10 w-32 h-32 bg-white/10 rounded-full pointer-events-none" />
+      <MockSlide active={current === 0} />
+      <AnalyticsSlide active={current === 1} />
+      <NotesSlide active={current === 2} />
 
-            <div className="relative z-10">
-              {/* Badge */}
-              <div className="inline-flex items-center bg-white/20 text-white text-[9px] font-black tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-3">
-                {slide.badge}
-              </div>
-              {/* Headline */}
-              <h3 className="text-white font-black text-lg md:text-3xl leading-tight mb-1">{slide.headline}</h3>
-              {/* Tagline */}
-              <p className="text-white/70 text-xs md:text-sm font-semibold">{slide.tagline}</p>
-            </div>
-
-            {/* Decorative CTA pill — non-navigating */}
-            <div className="relative z-10">
-              <span className="inline-flex items-center gap-1.5 bg-white/20 text-white font-black text-xs md:text-sm px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl border border-white/30">
-                {slide.cta}
-                <ArrowRight className="h-4 w-4" />
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Dot indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-        {SLIDES.map((_, i) => (
+      {/* Dot nav */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+        {[0, 1, 2].map(i => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            className="rounded-full bg-white transition-all duration-300"
-            style={{
-              width: i === current ? '20px' : '8px',
-              height: '8px',
-              opacity: i === current ? 1 : 0.4,
-            }}
             aria-label={`Go to slide ${i + 1}`}
+            style={{
+              width: i === current ? '24px' : '6px',
+              height: '6px',
+              borderRadius: '4px',
+              background: i === current ? ACCENT[current] : '#ccc',
+              transition: 'all 0.3s ease',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              outline: 'none',
+            }}
           />
         ))}
       </div>

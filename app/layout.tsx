@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Bebas_Neue, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
@@ -10,6 +10,20 @@ import { Analytics } from "@vercel/analytics/react";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+const bebasNeue = Bebas_Neue({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-bebas",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  weight: ["400", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -40,7 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.className} bg-background text-foreground antialiased`}
+        className={`${inter.variable} ${bebasNeue.variable} ${jetbrainsMono.variable} ${inter.className} bg-background text-foreground antialiased`}
       >
         <PostHogProvider>
           <ThemeProvider>
