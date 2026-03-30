@@ -11,6 +11,7 @@ import {
 import type { Question, SelectionEvent } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { toast } from 'sonner'
+import { FeedbackCard } from './FeedbackCard'
 
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -36,6 +37,14 @@ function getScoreThreshold(pct: number) {
   if (pct >= 40) return { label: 'Good Effort! 📚' }
   if (pct >= 20) return { label: 'Keep Practising! 💪' }
   return { label: 'Needs More Work! 🔥' }
+}
+
+/** Format a list of numbers into "1, 2, and 3" style */
+function formatQuestionList(nums: number[]): string {
+  if (nums.length === 0) return ''
+  if (nums.length === 1) return `${nums[0]}`
+  if (nums.length === 2) return `${nums[0]} and ${nums[1]}`
+  return `${nums.slice(0, -1).join(', ')}, and ${nums[nums.length - 1]}`
 }
 
 // ─── Sub-components ───────────────────────────────────────────
@@ -516,30 +525,39 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
   // ─── Revision summary ──────────────────────────────────────
   const revisionSummary = useMemo(() => {
-    let totalRevised = 0
-    let changedCorrectToWrong = 0
-    let changedWrongToCorrect = 0
+    // Questions where the user changed a CORRECT first answer to a WRONG final answer
+    const correctToWrong: number[] = []
+    // Questions where the user changed a WRONG first answer to a CORRECT final answer
+    const wrongToCorrect: number[] = []
 
-    for (const q of displayQuestions) {
+    displayQuestions.forEach((q, idx) => {
       const answer = displayAnswers[q.$id]
-      if (!answer) continue
-      const changeCount: number = answer.selectionHistory?.change_count ?? 0
-      if (changeCount === 0) continue
+      if (!answer) return
 
-      totalRevised++
+      // Detect change_count from stored selectionHistory
+      const hist = answer.selectionHistory
+      const changeCount: number =
+        (typeof hist?.change_count === 'number' ? hist.change_count : 0) ||
+        (hist?.events ?? []).filter((e: SelectionEvent) => e.type === 'change').length
 
-      const events: SelectionEvent[] = answer.selectionHistory?.events ?? []
+      if (changeCount === 0) return
+
+      const events: SelectionEvent[] = hist?.events ?? []
+      // first_select = the very first answer chosen (before any revision)
       const firstSelect = events.find((e: SelectionEvent) => e.type === 'select')
-      if (firstSelect?.option) {
-        const firstWasCorrect = firstSelect.option === q.correct_option
-        if (firstWasCorrect && !answer.isCorrect) changedCorrectToWrong++
-        if (!firstWasCorrect && answer.isCorrect) changedWrongToCorrect++
-      }
-    }
+      const firstOption = firstSelect?.option
 
-    return totalRevised > 0
-      ? { totalRevised, changedCorrectToWrong, changedWrongToCorrect }
-      : null
+      if (firstOption) {
+        const firstWasCorrect = firstOption === q.correct_option
+        const finalIsCorrect  = answer.isCorrect
+
+        if (firstWasCorrect && !finalIsCorrect)  correctToWrong.push(idx + 1)
+        if (!firstWasCorrect && finalIsCorrect)  wrongToCorrect.push(idx + 1)
+      }
+    })
+
+    if (correctToWrong.length === 0 && wrongToCorrect.length === 0) return null
+    return { correctToWrong, wrongToCorrect }
   }, [displayQuestions, displayAnswers])
 
   const handleQuestionClick = (index: number) => {
@@ -798,31 +816,43 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
         {/* ── Revision banner ── */}
         {revisionSummary && (
-          <div className={`rounded-2xl px-6 py-5 flex flex-col gap-2 border-l-4 bg-gray-900 text-white ${
-            revisionSummary.changedCorrectToWrong > revisionSummary.changedWrongToCorrect
-              ? 'border-amber-500'
-              : 'border-emerald-500'
-          }`}>
-            <p className="text-sm font-black uppercase tracking-widest text-gray-300">
-              Answer Revision
-            </p>
-            <p className="text-base font-bold text-white">
-              You revised{' '}
-              <span className="text-[#4A90E2] font-black">{revisionSummary.totalRevised}</span>{' '}
-              answer{revisionSummary.totalRevised !== 1 ? 's' : ''} during this test.
-            </p>
-            {revisionSummary.changedCorrectToWrong > 0 && (
-              <p className="text-sm font-medium text-amber-300">
-                ⚠ In{' '}
-                <span className="font-black">{revisionSummary.changedCorrectToWrong}</span>{' '}
-                of those, you changed a correct answer to a wrong one.
-              </p>
-            )}
-            {revisionSummary.changedWrongToCorrect > 0 && (
-              <p className="text-sm font-medium text-emerald-300">
-                ✓ You caught yourself and corrected{' '}
-                <span className="font-black">{revisionSummary.changedWrongToCorrect}</span>{' '}
-                wrong answer{revisionSummary.changedWrongToCorrect !== 1 ? 's' : ''}.
+          <div className="rounded-2xl border-l-4 border-amber-500 bg-gray-900 text-white px-6 py-5 flex flex-col gap-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Answer Revision</p>
+
+            {revisionSummary.correctToWrong.length > 0 && (() => {
+              const n = revisionSummary.correctToWrong.length
+              // UPSC full-length: correct = +2, wrong = -0.67 → net loss per Q = 2.67
+              // Practice: no marks system — show question count only
+              const marksLost = isFullLength ? (n * 2.67).toFixed(2) : null
+              return (
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm md:text-base font-bold text-white leading-relaxed">
+                    In Question{' '}
+                    <span className="text-amber-400 font-black">
+                      {formatQuestionList(revisionSummary.correctToWrong)}
+                    </span>
+                    {', '}you changed the answer from{' '}
+                    <span className="text-emerald-400 font-semibold">correct</span> to{' '}
+                    <span className="text-red-400 font-semibold">wrong</span>.
+                  </p>
+                  {marksLost && (
+                    <p className="text-sm text-amber-300 font-medium">
+                      ⚠ This costed you{' '}
+                      <span className="font-black text-amber-400">{marksLost} marks</span>
+                      {' '}({n} × 2.67 — lost +2 and gained −0.67 negative marking).
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
+
+            {revisionSummary.wrongToCorrect.length > 0 && (
+              <p className="text-sm text-emerald-300 font-medium">
+                ✓ In Question{' '}
+                <span className="font-black text-emerald-400">
+                  {formatQuestionList(revisionSummary.wrongToCorrect)}
+                </span>
+                {', '}you caught yourself and changed a wrong answer to the correct one.
               </p>
             )}
           </div>
@@ -913,6 +943,12 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </div>
           </div>
         )}
+
+        {/* ── Feedback ── */}
+        <FeedbackCard
+          sessionId={sessionId}
+          testMode={isFullLength ? 'full_length' : 'practice'}
+        />
 
       </main>
     </div>
