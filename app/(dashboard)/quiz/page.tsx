@@ -474,10 +474,16 @@ function QuizSetupContent() {
                     <div key={session.$id} className="flex-none w-64 bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 flex flex-col gap-3">
                       <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{formatDate(session.submitted_at)}</p>
                       <p className="text-sm font-black text-gray-900 leading-snug line-clamp-2">{session.paper_label}</p>
-                      <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-3xl font-black text-gray-900">{session.score}%</span>
-                        <span className="text-xs font-bold text-gray-400">{session.correct}/{session.total_questions} correct</span>
-                      </div>
+                      {(() => {
+                        const marksScored = Math.max(0, parseFloat(((session.correct ?? 0) * 2 - (session.incorrect ?? 0) * (2 / 3)).toFixed(1)))
+                        const totalMarks  = (session.total_questions ?? 0) * 2
+                        return (
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-3xl font-black text-gray-900">{marksScored}</span>
+                            <span className="text-xs font-bold text-gray-400">/ {totalMarks} marks</span>
+                          </div>
+                        )
+                      })()}
                       <div className="flex gap-2 mt-auto">
                         <button
                           onClick={() => router.push('/results?session=' + session.$id)}
