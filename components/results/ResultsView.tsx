@@ -525,39 +525,50 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
   // ─── Revision summary ──────────────────────────────────────
   const revisionSummary = useMemo(() => {
-    // Questions where the user changed a CORRECT first answer to a WRONG final answer
-    const correctToWrong: number[] = []
-    // Questions where the user changed a WRONG first answer to a CORRECT final answer
-    const wrongToCorrect: number[] = []
+    type RevisedQ = {
+      qNum: number
+      firstWasCorrect: boolean
+      finalIsCorrect: boolean
+    }
+    const revised: RevisedQ[] = []
 
     displayQuestions.forEach((q, idx) => {
       const answer = displayAnswers[q.$id]
-      if (!answer) return
+      // Skip unanswered stubs
+      if (!answer || !answer.selectedOption) return
 
-      // Detect change_count from stored selectionHistory
       const hist = answer.selectionHistory
+      const events: SelectionEvent[] = hist?.events ?? []
+
+      // Count changes robustly: prefer change_count, fallback to counting 'change' events
       const changeCount: number =
-        (typeof hist?.change_count === 'number' ? hist.change_count : 0) ||
-        (hist?.events ?? []).filter((e: SelectionEvent) => e.type === 'change').length
+        (typeof hist?.change_count === 'number' && hist.change_count > 0)
+          ? hist.change_count
+          : events.filter((e: SelectionEvent) => e.type === 'change').length
 
       if (changeCount === 0) return
 
-      const events: SelectionEvent[] = hist?.events ?? []
-      // first_select = the very first answer chosen (before any revision)
-      const firstSelect = events.find((e: SelectionEvent) => e.type === 'select')
-      const firstOption = firstSelect?.option
+      // Determine first answer: 'select' event option OR first 'change' event's 'from' field
+      const selectEvt  = events.find((e: SelectionEvent) => e.type === 'select')
+      const changeEvt  = events.find((e: SelectionEvent) => e.type === 'change')
+      const firstOption: string | null = selectEvt?.option ?? changeEvt?.from ?? null
 
-      if (firstOption) {
-        const firstWasCorrect = firstOption === q.correct_option
-        const finalIsCorrect  = answer.isCorrect
+      const firstWasCorrect = firstOption != null
+        ? firstOption === q.correct_option
+        : false   // unknown — treat as wrong for safety
+      const finalIsCorrect = !!answer.isCorrect
 
-        if (firstWasCorrect && !finalIsCorrect)  correctToWrong.push(idx + 1)
-        if (!firstWasCorrect && finalIsCorrect)  wrongToCorrect.push(idx + 1)
-      }
+      revised.push({ qNum: idx + 1, firstWasCorrect, finalIsCorrect })
     })
 
-    if (correctToWrong.length === 0 && wrongToCorrect.length === 0) return null
-    return { correctToWrong, wrongToCorrect }
+    if (revised.length === 0) return null
+
+    return {
+      total: revised.length,
+      correctToWrong: revised.filter(r =>  r.firstWasCorrect && !r.finalIsCorrect),
+      wrongToCorrect: revised.filter(r => !r.firstWasCorrect &&  r.finalIsCorrect),
+      neutral:        revised.filter(r => !r.firstWasCorrect && !r.finalIsCorrect),
+    }
   }, [displayQuestions, displayAnswers])
 
   const handleQuestionClick = (index: number) => {
@@ -814,47 +825,88 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           </div>
         </div>
 
-        {/* ── Revision banner ── */}
+        {/* ── Revision card ── */}
         {revisionSummary && (
-          <div className="rounded-2xl border-l-4 border-amber-500 bg-gray-900 text-white px-6 py-5 flex flex-col gap-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Answer Revision</p>
+          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+            {/* Header bar */}
+            <div className="flex items-center gap-3 px-5 md:px-6 py-4 border-b border-gray-100 bg-gray-50">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                <RefreshCw className="h-4 w-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-gray-900">Answer Revisions</p>
+                <p className="text-xs text-gray-400 font-medium">
+                  You changed{' '}
+                  <span className="font-black text-gray-700">{revisionSummary.total}</span>
+                  {' '}answer{revisionSummary.total !== 1 ? 's' : ''} during this test
+                </p>
+              </div>
+            </div>
 
-            {revisionSummary.correctToWrong.length > 0 && (() => {
-              const n = revisionSummary.correctToWrong.length
-              // UPSC full-length: correct = +2, wrong = -0.67 → net loss per Q = 2.67
-              // Practice: no marks system — show question count only
-              const marksLost = isFullLength ? (n * 2.67).toFixed(2) : null
-              return (
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm md:text-base font-bold text-white leading-relaxed">
-                    In Question{' '}
-                    <span className="text-amber-400 font-black">
-                      {formatQuestionList(revisionSummary.correctToWrong)}
-                    </span>
-                    {', '}you changed the answer from{' '}
-                    <span className="text-emerald-400 font-semibold">correct</span> to{' '}
-                    <span className="text-red-400 font-semibold">wrong</span>.
-                  </p>
-                  {marksLost && (
-                    <p className="text-sm text-amber-300 font-medium">
-                      ⚠ This costed you{' '}
-                      <span className="font-black text-amber-400">{marksLost} marks</span>
-                      {' '}({n} × 2.67 — lost +2 and gained −0.67 negative marking).
-                    </p>
-                  )}
+            <div className="px-5 md:px-6 py-4 flex flex-col gap-3">
+
+              {/* ❌ Correct → Wrong */}
+              {revisionSummary.correctToWrong.length > 0 && (
+                <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-500 text-base mt-0.5 shrink-0">✗</span>
+                    <div>
+                      <p className="text-sm font-bold text-red-800 leading-snug">
+                        In Question{' '}
+                        <span className="font-black">
+                          {formatQuestionList(revisionSummary.correctToWrong.map(r => r.qNum))}
+                        </span>
+                        {' '}— changed{' '}
+                        <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
+                      </p>
+                      {isFullLength && (
+                        <p className="text-xs text-red-600 font-semibold mt-1">
+                          This costed you{' '}
+                          <span className="font-black">
+                            {(revisionSummary.correctToWrong.length * 2.67).toFixed(2)} marks
+                          </span>
+                          {' '}({revisionSummary.correctToWrong.length} × 2.67 = lost +2 correct + gained −0.67 penalty)
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )
-            })()}
+              )}
 
-            {revisionSummary.wrongToCorrect.length > 0 && (
-              <p className="text-sm text-emerald-300 font-medium">
-                ✓ In Question{' '}
-                <span className="font-black text-emerald-400">
-                  {formatQuestionList(revisionSummary.wrongToCorrect)}
-                </span>
-                {', '}you caught yourself and changed a wrong answer to the correct one.
-              </p>
-            )}
+              {/* ✅ Wrong → Correct */}
+              {revisionSummary.wrongToCorrect.length > 0 && (
+                <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-emerald-500 text-base mt-0.5 shrink-0">✓</span>
+                    <p className="text-sm font-bold text-emerald-800 leading-snug">
+                      In Question{' '}
+                      <span className="font-black">
+                        {formatQuestionList(revisionSummary.wrongToCorrect.map(r => r.qNum))}
+                      </span>
+                      {' '}— caught yourself and changed{' '}
+                      <span className="text-red-700">wrong</span> → <span className="text-emerald-700">correct</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* ↔ Wrong → Wrong */}
+              {revisionSummary.neutral.length > 0 && (
+                <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-gray-400 text-base mt-0.5 shrink-0">↔</span>
+                    <p className="text-sm font-medium text-gray-600 leading-snug">
+                      In Question{' '}
+                      <span className="font-bold text-gray-800">
+                        {formatQuestionList(revisionSummary.neutral.map(r => r.qNum))}
+                      </span>
+                      {' '}— changed to a different wrong answer
+                    </p>
+                  </div>
+                </div>
+              )}
+
+            </div>
           </div>
         )}
 
