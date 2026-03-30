@@ -826,89 +826,123 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
         </div>
 
         {/* ── Revision card ── */}
-        {revisionSummary && (
-          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
-            {/* Header bar */}
-            <div className="flex items-center gap-3 px-5 md:px-6 py-4 border-b border-gray-100 bg-gray-50">
-              <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                <RefreshCw className="h-4 w-4 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm font-black text-gray-900">Answer Revisions</p>
-                <p className="text-xs text-gray-400 font-medium">
-                  You changed{' '}
-                  <span className="font-black text-gray-700">{revisionSummary.total}</span>
-                  {' '}answer{revisionSummary.total !== 1 ? 's' : ''} during this test
-                </p>
-              </div>
-            </div>
+        {revisionSummary && (() => {
+          const nLost    = revisionSummary.correctToWrong.length
+          const nGained  = revisionSummary.wrongToCorrect.length
+          // Full-length UPSC: correct=+2, wrong=−0.67 → swapping costs/gains 2.67
+          const marksLost   = parseFloat((nLost   * 2.67).toFixed(2))
+          const marksGained = parseFloat((nGained * 2.67).toFixed(2))
+          const netMarks    = parseFloat((marksGained - marksLost).toFixed(2))
+          return (
+            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
 
-            <div className="px-5 md:px-6 py-4 flex flex-col gap-3">
+              {/* Header */}
+              <div className="flex items-center justify-between gap-3 px-5 md:px-6 py-4 border-b border-gray-100 bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                    <RefreshCw className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-gray-900">Answer Revisions</p>
+                    <p className="text-xs text-gray-400 font-medium">
+                      You changed{' '}
+                      <span className="font-black text-gray-700">{revisionSummary.total}</span>
+                      {' '}answer{revisionSummary.total !== 1 ? 's' : ''} during this test
+                    </p>
+                  </div>
+                </div>
+                {/* Net marks badge — full-length only */}
+                {isFullLength && (
+                  <div className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-black border ${
+                    netMarks < 0
+                      ? 'bg-red-50 border-red-200 text-red-700'
+                      : netMarks > 0
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                        : 'bg-gray-100 border-gray-200 text-gray-500'
+                  }`}>
+                    Net: {netMarks > 0 ? '+' : ''}{netMarks} marks
+                  </div>
+                )}
+              </div>
 
-              {/* ❌ Correct → Wrong */}
-              {revisionSummary.correctToWrong.length > 0 && (
-                <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
-                  <div className="flex items-start gap-2">
-                    <span className="text-red-500 text-base mt-0.5 shrink-0">✗</span>
-                    <div>
-                      <p className="text-sm font-bold text-red-800 leading-snug">
-                        In Question{' '}
-                        <span className="font-black">
-                          {formatQuestionList(revisionSummary.correctToWrong.map(r => r.qNum))}
-                        </span>
-                        {' '}— changed{' '}
-                        <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
-                      </p>
-                      {isFullLength && (
-                        <p className="text-xs text-red-600 font-semibold mt-1">
-                          This costed you{' '}
+              <div className="px-5 md:px-6 py-4 flex flex-col gap-3">
+
+                {/* ❌ Correct → Wrong */}
+                {nLost > 0 && (
+                  <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <span className="text-red-500 text-base mt-0.5 shrink-0">✗</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-red-800 leading-snug">
+                          In Question{' '}
                           <span className="font-black">
-                            {(revisionSummary.correctToWrong.length * 2.67).toFixed(2)} marks
+                            {formatQuestionList(revisionSummary.correctToWrong.map(r => r.qNum))}
                           </span>
-                          {' '}({revisionSummary.correctToWrong.length} × 2.67 = lost +2 correct + gained −0.67 penalty)
+                          {' '}— changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
                         </p>
-                      )}
+                        <p className="text-xs text-red-600 font-semibold mt-1">
+                          {isFullLength
+                            ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × 2.67 — forfeited +2 &amp; incurred −0.67 penalty)</>
+                            : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
+                          }
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* ✅ Wrong → Correct */}
-              {revisionSummary.wrongToCorrect.length > 0 && (
-                <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-500 text-base mt-0.5 shrink-0">✓</span>
-                    <p className="text-sm font-bold text-emerald-800 leading-snug">
-                      In Question{' '}
-                      <span className="font-black">
-                        {formatQuestionList(revisionSummary.wrongToCorrect.map(r => r.qNum))}
-                      </span>
-                      {' '}— caught yourself and changed{' '}
-                      <span className="text-red-700">wrong</span> → <span className="text-emerald-700">correct</span>
-                    </p>
+                {/* ✅ Wrong → Correct */}
+                {nGained > 0 && (
+                  <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <span className="text-emerald-500 text-base mt-0.5 shrink-0">✓</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-emerald-800 leading-snug">
+                          In Question{' '}
+                          <span className="font-black">
+                            {formatQuestionList(revisionSummary.wrongToCorrect.map(r => r.qNum))}
+                          </span>
+                          {' '}— caught yourself, changed <span className="text-red-700">wrong</span> → <span className="text-emerald-700">correct</span>
+                        </p>
+                        <p className="text-xs text-emerald-600 font-semibold mt-1">
+                          {isFullLength
+                            ? <>Marks gained: <span className="font-black">+{marksGained}</span> &nbsp;({nGained} × 2.67 — removed −0.67 penalty &amp; earned +2)</>
+                            : <>{nGained} wrong answer{nGained !== 1 ? 's' : ''} corrected by revision</>
+                          }
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* ↔ Wrong → Wrong */}
-              {revisionSummary.neutral.length > 0 && (
-                <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
-                  <div className="flex items-start gap-2">
-                    <span className="text-gray-400 text-base mt-0.5 shrink-0">↔</span>
-                    <p className="text-sm font-medium text-gray-600 leading-snug">
-                      In Question{' '}
-                      <span className="font-bold text-gray-800">
-                        {formatQuestionList(revisionSummary.neutral.map(r => r.qNum))}
-                      </span>
-                      {' '}— changed to a different wrong answer
-                    </p>
+                {/* ↔ Wrong → Wrong */}
+                {revisionSummary.neutral.length > 0 && (
+                  <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-400 text-base mt-0.5 shrink-0">↔</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-700 leading-snug">
+                          In Question{' '}
+                          <span className="font-bold text-gray-900">
+                            {formatQuestionList(revisionSummary.neutral.map(r => r.qNum))}
+                          </span>
+                          {' '}— changed to a different wrong answer
+                        </p>
+                        <p className="text-xs text-gray-500 font-medium mt-1">
+                          {isFullLength
+                            ? <>Marks impact: <span className="font-bold">0</span> — penalty was already applied, revision made no difference</>
+                            : <>No marks impact — answer was and remained wrong</>
+                          }
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* ── Confidence panels ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
