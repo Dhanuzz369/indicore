@@ -251,16 +251,14 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     const correct  = answered.filter((a) => a.isCorrect).length
     const wrong    = answered.filter((a) => !a.isCorrect).length
     // Full-length: total = all questions (UPSC totalMarks base)
-    // Practice: total = attempted questions (accuracy base)
+    // Practice: total = attempted questions
     const total    = testMode ? questions.length : answered.length
     const MARKS_PER_Q = 2
     const NEGATIVE    = 2 / 3
     const marksScored = Number((correct * MARKS_PER_Q - wrong * NEGATIVE).toFixed(2))
     const totalMarks  = total * MARKS_PER_Q
-    // Full-length: marks-based %; Practice: accuracy = correct/attempted*100
-    const percentage = testMode
-      ? totalMarks > 0 ? Number(((marksScored / totalMarks) * 100).toFixed(2)) : 0
-      : answered.length > 0 ? Number(((correct / answered.length) * 100).toFixed(2)) : 0
+    // Accuracy = correct / attempted × 100 for all quiz types
+    const percentage = answered.length > 0 ? Number(((correct / answered.length) * 100).toFixed(2)) : 0
     return { correct, wrong, total, percentage, marksScored, totalMarks }
   },
 

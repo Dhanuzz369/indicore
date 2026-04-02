@@ -215,11 +215,8 @@ export function generateTestAnalytics({
       const NEGATIVE    = 2 / 3      // 0.666... per wrong (UPSC)
       const marksScored = Number((correct * MARKS_PER_Q - wrong * NEGATIVE).toFixed(2))
 
-      // Full-length mock: percentage = marks scored / total possible marks (UPSC model)
-      // Practice/subject-wise: percentage = correct / attempted * 100 (user's formula)
-      const percentage = practiceMode
-        ? answered > 0 ? Number(((correct / answered) * 100).toFixed(2)) : 0
-        : total   > 0 ? Number(((marksScored / (total * MARKS_PER_Q)) * 100).toFixed(2)) : 0
+      // Accuracy = correct / attempted × 100 for all quiz types
+      const percentage = answered > 0 ? Number(((correct / answered) * 100).toFixed(2)) : 0
 
       return {
         correct,
