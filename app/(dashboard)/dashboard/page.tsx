@@ -8,7 +8,7 @@ import { getProfile, getUserStats, getSubjectsWithCounts } from '@/lib/supabase/
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Flame, ChevronRight, AlertCircle, Grid3x3, ArrowRight,
-  LayoutGrid, ChevronDown, ClipboardList, BookCheck
+  LayoutGrid, ClipboardList, BookCheck
 } from 'lucide-react'
 import type { Profile, UserStats, Subject } from '@/types'
 import Link from 'next/link'
@@ -22,34 +22,6 @@ function getGreeting() {
   return 'Good evening,'
 }
 
-function getSubjectEmoji(name?: string) {
-  if (!name) return '📚'
-  const l = name.toLowerCase()
-  if (l.includes('geo')) return '🌍'
-  if (l.includes('polity') || l.includes('govern')) return '⚖️'
-  if (l.includes('hist') || l.includes('ancient') || l.includes('modern')) return '🏛️'
-  if (l.includes('econ')) return '📈'
-  if (l.includes('environ')) return '🌿'
-  if (l.includes('science') || l.includes('tech')) return '🔬'
-  if (l.includes('art') || l.includes('cult')) return '🎨'
-  if (l.includes('intern') || l.includes('relat')) return '🌐'
-  if (l.includes('ethics') || l.includes('integ')) return '🧭'
-  return '📚'
-}
-
-function getSubjectBgColor(name?: string, color?: string) {
-  if (color) return color
-  if (!name) return '#4A90E2'
-  const l = name.toLowerCase()
-  if (l.includes('geo')) return '#1a9c72'
-  if (l.includes('hist')) return '#7c3aed'
-  if (l.includes('polity')) return '#1d4ed8'
-  if (l.includes('econ')) return '#0891b2'
-  if (l.includes('environ')) return '#16a34a'
-  if (l.includes('science')) return '#9333ea'
-  if (l.includes('art')) return '#d97706'
-  return '#4A90E2'
-}
 
 function getPerformanceLabel(accuracy: number) {
   if (accuracy >= 70) return { label: 'Improving', color: 'text-emerald-600', dot: 'bg-emerald-500', trend: 'up' }
@@ -387,72 +359,25 @@ function OfferingsCarousel({ stats }: { stats: UserStats | null }) {
 
 // ─── Weak Area Subject Card ────────────────────────────────────────
 function WeakSubjectCard({ subject, accuracy }: { subject: Subject; accuracy: number }) {
-  const [open, setOpen] = useState(false)
   const perf = getPerformanceLabel(accuracy)
-  const bgColor = getSubjectBgColor(subject.Name, subject.color)
-  const emoji = getSubjectEmoji(subject.Name)
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50/60 transition-colors"
-      >
-        <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-sm"
-          style={{ backgroundColor: bgColor + '18', border: `1.5px solid ${bgColor}30` }}
-        >
-          {emoji}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-gray-900 text-sm leading-tight">{subject.Name}</h3>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-xs text-gray-500">Performance:</span>
-            <span className={`text-xs font-bold ${perf.color}`}>{accuracy}%</span>
-            <span
-              className={`text-[10px] font-semibold ${perf.color} px-1.5 py-0.5 rounded-full`}
-              style={{ backgroundColor: perf.dot.replace('bg-', '') + '15' }}
-            >
-              ({perf.label})
-            </span>
-          </div>
-        </div>
-
-        <ChevronDown className={`h-4 w-4 text-gray-400 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-      </button>
-
-      <div className="px-4 pb-1">
-        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${accuracy}%`,
-              backgroundColor: accuracy >= 70 ? '#16a34a' : accuracy >= 55 ? '#d97706' : '#ef4444',
-            }}
-          />
-        </div>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3">
+      <h3 className="font-bold text-gray-900 text-sm leading-tight">{subject.Name}</h3>
+      <div className="flex items-center gap-1.5 mt-0.5 mb-2">
+        <span className="text-xs text-gray-500">Performance:</span>
+        <span className={`text-xs font-bold ${perf.color}`}>{accuracy}%</span>
+        <span className={`text-[10px] font-semibold ${perf.color}`}>({perf.label})</span>
       </div>
-
-      {open && (
-        <div className="border-t border-gray-50 pb-2 animate-in fade-in slide-in-from-top-1 duration-200">
-          {['Ancient Period', 'Medieval Era', 'Modern History', 'Post-Independence'].map((sub, i) => (
-            <Link
-              key={i}
-              href={`/quiz?tab=subject&subject=${subject.slug}`}
-              className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-sm shrink-0">
-                  {getSubjectEmoji(sub)}
-                </div>
-                <span className="text-xs font-medium text-gray-700">{sub}</span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-[#4A90E2] transition-colors" />
-            </Link>
-          ))}
-        </div>
-      )}
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{
+            width: `${accuracy}%`,
+            backgroundColor: accuracy >= 70 ? '#16a34a' : accuracy >= 55 ? '#d97706' : '#ef4444',
+          }}
+        />
+      </div>
     </div>
   )
 }
