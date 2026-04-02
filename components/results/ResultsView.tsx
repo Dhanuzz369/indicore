@@ -856,23 +856,29 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
               <div className="px-5 md:px-6 py-4">
                 <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
-                  <div className="flex items-start gap-2">
-                    <span className="text-red-500 text-base mt-0.5 shrink-0">✗</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-red-800 leading-snug">
-                        In Question{' '}
-                        <span className="font-black">
-                          {formatQuestionList(revisionSummary.correctToWrong.map(r => r.qNum))}
-                        </span>
-                        {' '}— changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
-                      </p>
-                      <p className="text-xs text-red-600 font-semibold mt-1">
-                        {isFullLength
-                          ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × 2.67 — forfeited +2 &amp; incurred −0.67 penalty)</>
-                          : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
-                        }
-                      </p>
-                    </div>
+                  <p className="text-sm font-bold text-red-800 leading-snug mb-1">
+                    Changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
+                  </p>
+                  <p className="text-xs text-red-600 font-semibold mb-3">
+                    {isFullLength
+                      ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × 2.67 — forfeited +2 &amp; incurred −0.67 penalty)</>
+                      : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
+                    }
+                  </p>
+                  <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.15em] mb-2">
+                    Click to review
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {revisionSummary.correctToWrong.map(r => (
+                      <button
+                        key={r.qNum}
+                        onClick={() => handleQuestionClick(r.qNum - 1)}
+                        className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-red-100 border-red-300 text-red-700 hover:bg-red-200"
+                        title={`Q${r.qNum} — revised correct → wrong`}
+                      >
+                        {r.qNum}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
