@@ -919,25 +919,46 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           {/* Sure Items */}
           {(() => {
             const bu = analytics.buttonUsageStats || {}
-            const mistakes = (bu.totalAreYouSure ?? 0) - (bu.correctAreYouSure ?? 0)
+            const total   = bu.totalAreYouSure   ?? 0
+            const correct = bu.correctAreYouSure ?? 0
+            const mistakes = total - correct
             const insight = getSureInsight(mistakes)
             return (
-              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-emerald-100 shadow-sm p-5 md:p-8 flex flex-col">
-                <div className="flex items-center justify-between mb-4 md:mb-6">
-                  <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-emerald-50 flex items-center justify-center">
-                    <CheckCircle className="h-5 md:h-6 w-5 md:w-6 text-emerald-600" />
+              <div className="bg-emerald-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-100 shadow-sm p-5 md:p-6 flex flex-col gap-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-emerald-600" />
                   </div>
-                  <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">Mastery</span>
+                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Mastery</span>
                 </div>
-                <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">Sure Items</h4>
-                <div className="mb-4 md:mb-6">
+                {/* Title + stats */}
+                <div>
+                  <h4 className="text-xl font-black text-gray-900 mb-2">Sure Items</h4>
+                  {total > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <span className="bg-emerald-500 text-white text-[11px] font-black px-3 py-1 rounded-full">
+                        {correct} / {total} correct
+                      </span>
+                      <span className="text-xs text-gray-500 font-semibold">
+                        {mistakes} mistake{mistakes !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400 font-medium">No sure answers tagged</span>
+                  )}
+                </div>
+                {/* Message box */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm flex-1">
                   {insight ? (
                     <>
-                      <p className="text-xs font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
-                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1">{insight.recommendation}</p>
+                      <p className="text-sm font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
                     </>
                   ) : (
-                    <p className="text-xs text-gray-500 font-medium leading-relaxed">Questions you answered with absolute confidence. These reflect your core strengths.</p>
+                    <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                      {total > 0 ? 'Perfect accuracy on sure items — your confident answers are reliable.' : 'Tag questions as "Sure" during the test to track your confident answers.'}
+                    </p>
                   )}
                 </div>
                 <TaggedQuestionsDropdown tag="sure" title="Review Sure Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
@@ -948,27 +969,42 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           {/* 50:50 Logic */}
           {(() => {
             const bu = analytics.buttonUsageStats || {}
-            const total = bu.total5050 ?? 0
+            const total   = bu.total5050   ?? 0
             const correct = bu.correct5050 ?? 0
             const hitRate = total > 0 ? Math.round((correct / total) * 100) : null
             const insight = hitRate !== null ? getHitRateInsight(hitRate) : null
             return (
-              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-8 flex flex-col">
-                <div className="flex items-center justify-between mb-4 md:mb-6">
-                  <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center">
-                    <Brain className="h-5 md:h-6 w-5 md:w-6 text-blue-600" />
+              <div className="bg-blue-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-6 flex flex-col gap-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center">
+                    <Brain className="h-5 w-5 text-blue-600" />
                   </div>
-                  <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Learning</span>
+                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Learning</span>
                 </div>
-                <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">50:50 Logic</h4>
-                <div className="mb-4 md:mb-6">
+                {/* Title + stats */}
+                <div>
+                  <h4 className="text-xl font-black text-gray-900 mb-2">50:50 Logic</h4>
+                  {total > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <span className="bg-blue-500 text-white text-[11px] font-black px-3 py-1 rounded-full">
+                        {correct} / {total} correct
+                      </span>
+                      <span className="text-xs text-gray-500 font-semibold">{hitRate}% hit rate</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400 font-medium">No 50:50 answers tagged</span>
+                  )}
+                </div>
+                {/* Message box */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm flex-1">
                   {insight ? (
                     <>
-                      <p className="text-xs font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
-                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1">{insight.recommendation}</p>
+                      <p className="text-sm font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
                     </>
                   ) : (
-                    <p className="text-xs text-gray-500 font-medium leading-relaxed">Questions where you narrowed it down but were hesitant. This is where your edge lies.</p>
+                    <p className="text-sm text-gray-500 font-medium leading-relaxed">Tag questions where you narrowed to two options to track your elimination accuracy.</p>
                   )}
                 </div>
                 <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
@@ -979,27 +1015,42 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           {/* Calculated Guesses */}
           {(() => {
             const bu = analytics.buttonUsageStats || {}
-            const total = bu.totalGuess ?? 0
+            const total   = bu.totalGuess   ?? 0
             const correct = bu.correctGuess ?? 0
             const hitRate = total > 0 ? Math.round((correct / total) * 100) : null
             const insight = hitRate !== null ? getHitRateInsight(hitRate) : null
             return (
-              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-8 flex flex-col">
-                <div className="flex items-center justify-between mb-4 md:mb-6">
-                  <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center">
-                    <Zap className="h-5 md:h-6 w-5 md:w-6 text-blue-600" />
+              <div className="bg-violet-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-violet-100 shadow-sm p-5 md:p-6 flex flex-col gap-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-violet-100 flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-violet-600" />
                   </div>
-                  <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Luck Factor</span>
+                  <span className="text-[10px] font-black text-violet-600 uppercase tracking-widest">Luck Factor</span>
                 </div>
-                <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">Calculated Guesses</h4>
-                <div className="mb-4 md:mb-6">
+                {/* Title + stats */}
+                <div>
+                  <h4 className="text-xl font-black text-gray-900 mb-2">Calculated Guesses</h4>
+                  {total > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <span className="bg-violet-500 text-white text-[11px] font-black px-3 py-1 rounded-full">
+                        {correct} / {total} correct
+                      </span>
+                      <span className="text-xs text-gray-500 font-semibold">in this zone</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400 font-medium">No guess answers tagged</span>
+                  )}
+                </div>
+                {/* Message box */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm flex-1">
                   {insight ? (
                     <>
-                      <p className="text-xs font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
-                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1">{insight.recommendation}</p>
+                      <p className="text-sm font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
                     </>
                   ) : (
-                    <p className="text-xs text-gray-500 font-medium leading-relaxed">Pure guesses. Analyzing these helps you understand your subconscious processing.</p>
+                    <p className="text-sm text-gray-500 font-medium leading-relaxed">Pure guesses. Analyzing these helps you understand your subconscious processing.</p>
                   )}
                 </div>
                 <TaggedQuestionsDropdown tag="guess" title="Review Guess Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
