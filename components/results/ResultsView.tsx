@@ -31,6 +31,33 @@ function formatTime(seconds: number | undefined) {
   return `${m}m ${s}s`
 }
 
+function getSureInsight(mistakes: number): { message: string; recommendation: string } | null {
+  if (mistakes === 0) return null
+  if (mistakes <= 2) return {
+    message: 'You did well, but aim for 100% accuracy here.',
+    recommendation: 'Recheck all the questions you were sure in — look for traps like "correct/incorrect" or tricky wording of statements.',
+  }
+  if (mistakes <= 5) return {
+    message: 'You are dealing with overconfidence — revisit these questions.',
+    recommendation: 'Revise the topics these questions belong to and understand the nuances.',
+  }
+  return {
+    message: 'Serious knowledge gap — this can spoil your whole attempt.',
+    recommendation: 'Do not attempt questions based on assumption. Fill knowledge gaps and revise core concepts.',
+  }
+}
+
+function getHitRateInsight(hitRate: number): { message: string; recommendation: string } {
+  if (hitRate >= 40) return {
+    message: 'Calculated guesses are working — keep following this elimination technique.',
+    recommendation: 'Revisit and revise to convert some of them into the "Sure" category next time.',
+  }
+  return {
+    message: 'You are moving from elimination to gamble — high chances of bleeding marks here.',
+    recommendation: 'Attempt such questions only when you can clearly eliminate 2 options, or move them into the "Guess" category.',
+  }
+}
+
 function getScoreThreshold(pct: number) {
   if (pct >= 80) return { label: 'Outstanding! 🏆' }
   if (pct >= 60) return { label: 'Great Work! 🎯' }
@@ -889,39 +916,96 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
         {/* ── Confidence panels ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-emerald-100 shadow-sm p-5 md:p-8 flex flex-col">
-            <div className="flex items-center justify-between mb-4 md:mb-6">
-              <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-emerald-50 flex items-center justify-center">
-                <CheckCircle className="h-5 md:h-6 w-5 md:w-6 text-emerald-600" />
+          {/* Sure Items */}
+          {(() => {
+            const bu = analytics.buttonUsageStats || {}
+            const mistakes = (bu.totalAreYouSure ?? 0) - (bu.correctAreYouSure ?? 0)
+            const insight = getSureInsight(mistakes)
+            return (
+              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-emerald-100 shadow-sm p-5 md:p-8 flex flex-col">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-emerald-50 flex items-center justify-center">
+                    <CheckCircle className="h-5 md:h-6 w-5 md:w-6 text-emerald-600" />
+                  </div>
+                  <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">Mastery</span>
+                </div>
+                <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">Sure Items</h4>
+                <div className="mb-4 md:mb-6">
+                  {insight ? (
+                    <>
+                      <p className="text-xs font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1">{insight.recommendation}</p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-500 font-medium leading-relaxed">Questions you answered with absolute confidence. These reflect your core strengths.</p>
+                  )}
+                </div>
+                <TaggedQuestionsDropdown tag="sure" title="Review Sure Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
               </div>
-              <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">Mastery</span>
-            </div>
-            <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">Sure Items</h4>
-            <p className="text-xs text-gray-500 font-medium mb-4 md:mb-6 leading-relaxed">Questions you answered with absolute confidence. These reflect your core strengths.</p>
-            <TaggedQuestionsDropdown tag="sure" title="Review Sure Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
-          </div>
-          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-8 flex flex-col">
-            <div className="flex items-center justify-between mb-4 md:mb-6">
-              <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center">
-                <Brain className="h-5 md:h-6 w-5 md:w-6 text-blue-600" />
+            )
+          })()}
+
+          {/* 50:50 Logic */}
+          {(() => {
+            const bu = analytics.buttonUsageStats || {}
+            const total = bu.total5050 ?? 0
+            const correct = bu.correct5050 ?? 0
+            const hitRate = total > 0 ? Math.round((correct / total) * 100) : null
+            const insight = hitRate !== null ? getHitRateInsight(hitRate) : null
+            return (
+              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-8 flex flex-col">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center">
+                    <Brain className="h-5 md:h-6 w-5 md:w-6 text-blue-600" />
+                  </div>
+                  <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Learning</span>
+                </div>
+                <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">50:50 Logic</h4>
+                <div className="mb-4 md:mb-6">
+                  {insight ? (
+                    <>
+                      <p className="text-xs font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1">{insight.recommendation}</p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-500 font-medium leading-relaxed">Questions where you narrowed it down but were hesitant. This is where your edge lies.</p>
+                  )}
+                </div>
+                <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
               </div>
-              <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Learning</span>
-            </div>
-            <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">50:50 Logic</h4>
-            <p className="text-xs text-gray-500 font-medium mb-4 md:mb-6 leading-relaxed">Questions where you narrowed it down but were hesitant. This is where your edge lies.</p>
-            <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
-          </div>
-          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-8 flex flex-col">
-            <div className="flex items-center justify-between mb-4 md:mb-6">
-              <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center">
-                <Zap className="h-5 md:h-6 w-5 md:w-6 text-blue-600" />
+            )
+          })()}
+
+          {/* Calculated Guesses */}
+          {(() => {
+            const bu = analytics.buttonUsageStats || {}
+            const total = bu.totalGuess ?? 0
+            const correct = bu.correctGuess ?? 0
+            const hitRate = total > 0 ? Math.round((correct / total) * 100) : null
+            const insight = hitRate !== null ? getHitRateInsight(hitRate) : null
+            return (
+              <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-8 flex flex-col">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <div className="w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center">
+                    <Zap className="h-5 md:h-6 w-5 md:w-6 text-blue-600" />
+                  </div>
+                  <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Luck Factor</span>
+                </div>
+                <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">Calculated Guesses</h4>
+                <div className="mb-4 md:mb-6">
+                  {insight ? (
+                    <>
+                      <p className="text-xs font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1">{insight.recommendation}</p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-500 font-medium leading-relaxed">Pure guesses. Analyzing these helps you understand your subconscious processing.</p>
+                  )}
+                </div>
+                <TaggedQuestionsDropdown tag="guess" title="Review Guess Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
               </div>
-              <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Luck Factor</span>
-            </div>
-            <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">Calculated Guesses</h4>
-            <p className="text-xs text-gray-500 font-medium mb-4 md:mb-6 leading-relaxed">Pure guesses. Analyzing these helps you understand your subconscious processing.</p>
-            <TaggedQuestionsDropdown tag="guess" title="Review Guess Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
-          </div>
+            )
+          })()}
         </div>
 
         {/* ── Subject drill-down ── */}
