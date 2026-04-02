@@ -30,7 +30,12 @@ const PAPER_OPTIONS = [
   { examType: "UPSC_PRE", year: 2022, label: "GS Paper I", status: "active", theme: "gray", questions: 100, time: "2 Hr", marks: 200, id: "p3" },
 ]
 
-const DIFFICULTY_OPTIONS = ['All', 'Easy', 'Medium', 'Hard'] as const
+const DIFFICULTY_OPTIONS = ['All', 'Basic', 'Intermediate', 'Advanced'] as const
+const DIFFICULTY_TO_DB: Record<string, string> = {
+  Basic: 'easy',
+  Intermediate: 'medium',
+  Advanced: 'hard',
+}
 const QUESTION_COUNT_OPTIONS = [10, 20, 30, 40, 50]
 const SECONDS_PER_QUESTION = 72
 
@@ -62,9 +67,9 @@ function getDifficultyStyle(d: Difficulty, selected: boolean) {
   const base = 'px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all border-2'
   if (!selected) return `${base} bg-white border-gray-100 text-gray-400 hover:border-gray-300`
   switch (d) {
-    case 'Easy': return `${base} bg-green-500 border-green-500 text-white shadow-md shadow-green-100`
-    case 'Medium': return `${base} bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-100`
-    case 'Hard': return `${base} bg-red-500 border-red-500 text-white shadow-md shadow-red-100`
+    case 'Basic': return `${base} bg-green-500 border-green-500 text-white shadow-md shadow-green-100`
+    case 'Intermediate': return `${base} bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-100`
+    case 'Advanced': return `${base} bg-red-500 border-red-500 text-white shadow-md shadow-red-100`
     default: return `${base} bg-gray-900 border-gray-900 text-white shadow-md shadow-gray-200`
   }
 }
@@ -258,7 +263,7 @@ function QuizSetupContent() {
         examType: 'INDICORE_MOCK',
         limit: cap,
       }
-      if (selectedDifficulty !== 'All') filters.difficulty = selectedDifficulty.toLowerCase()
+      if (selectedDifficulty !== 'All') filters.difficulty = DIFFICULTY_TO_DB[selectedDifficulty]
       const result = await getQuestions(filters)
       if (!result.documents?.length) {
         toast.error('No questions found. Try a different difficulty or count.')
@@ -292,7 +297,7 @@ function QuizSetupContent() {
         subjectId: mockConfigSubject.$id,
         limit: mockQuestionCount * 2,
       }
-      if (mockSelectedDifficulty !== 'All') filters.difficulty = mockSelectedDifficulty.toLowerCase()
+      if (mockSelectedDifficulty !== 'All') filters.difficulty = DIFFICULTY_TO_DB[mockSelectedDifficulty]
       const result = await getQuestions(filters)
       if (!result.documents?.length) {
         toast.error('No mock questions found. Try a different difficulty.')
@@ -644,7 +649,7 @@ function QuizSetupContent() {
                     <div className="flex gap-3 flex-wrap">
                       {DIFFICULTY_OPTIONS.map(d => (
                         <button key={d} onClick={() => setSelectedDifficulty(d)} className={getDifficultyStyle(d, selectedDifficulty === d)}>
-                          {d === 'Easy' ? '🟢' : d === 'Medium' ? '🟡' : d === 'Hard' ? '🔴' : '⚡'} {d}
+                          {d === 'Basic' ? '🟢' : d === 'Intermediate' ? '🟡' : d === 'Advanced' ? '🔴' : '⚡'} {d}
                         </button>
                       ))}
                     </div>
@@ -659,7 +664,7 @@ function QuizSetupContent() {
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Timer</p>
                     </div>
                     <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                      <p className={`text-xl font-black ${selectedDifficulty === 'Easy' ? 'text-green-600' : selectedDifficulty === 'Medium' ? 'text-amber-500' : selectedDifficulty === 'Hard' ? 'text-red-500' : 'text-gray-900'}`}>{selectedDifficulty}</p>
+                      <p className={`text-xl font-black ${selectedDifficulty === 'Basic' ? 'text-green-600' : selectedDifficulty === 'Intermediate' ? 'text-amber-500' : selectedDifficulty === 'Advanced' ? 'text-red-500' : 'text-gray-900'}`}>{selectedDifficulty}</p>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Difficulty</p>
                     </div>
                   </div>

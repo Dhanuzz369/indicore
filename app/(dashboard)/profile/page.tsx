@@ -95,7 +95,7 @@ export default function ProfilePage() {
         try {
           const [p, s] = await Promise.all([
             getProfile(user.$id),
-            listTestSessions({ userId: user.$id, limit: 200 }),
+            listTestSessions({ userId: user.$id, mode: 'full_length', limit: 200 }),
           ])
           profileData = p as unknown as Profile
           sessionsData = s
@@ -103,7 +103,7 @@ export default function ProfilePage() {
           if (e.code === 404) {
             const newProfile = await createProfile(user.$id, user.name || 'Aspirant')
             profileData = newProfile as unknown as Profile
-            sessionsData = await listTestSessions({ userId: user.$id, limit: 200 })
+            sessionsData = await listTestSessions({ userId: user.$id, mode: 'full_length', limit: 200 })
           } else {
             throw e
           }
@@ -111,8 +111,7 @@ export default function ProfilePage() {
 
         setProfile(profileData)
 
-        // Only full-length tests for profile stats
-        const fullLengthSessions = sessionsData.documents.filter(s => s.mode === 'full_length')
+        const fullLengthSessions = sessionsData.documents   // already filtered by mode at query level
         if (fullLengthSessions.length > 0) {
           const totalTests = fullLengthSessions.length
           const totalCorrect = fullLengthSessions.reduce((acc, s) => acc + (s.correct ?? 0), 0)

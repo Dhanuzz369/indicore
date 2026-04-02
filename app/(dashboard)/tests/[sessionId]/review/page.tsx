@@ -218,11 +218,13 @@ function ReviewContent() {
           <div className="flex items-center gap-3">
             <span className="bg-[#4A90E2] text-white px-4 py-1.5 rounded-xl font-black text-sm shadow-sm shadow-blue-200">Q.{safeIndex + 1}</span>
             {question.difficulty && (
-              <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                 question.difficulty === 'easy' ? 'bg-emerald-50 text-emerald-600'
                 : question.difficulty === 'hard' ? 'bg-red-50 text-red-600'
                 : 'bg-yellow-50 text-yellow-600'
-              }`}>{question.difficulty}</span>
+              }`}>
+                {question.difficulty === 'easy' ? 'Basic' : question.difficulty === 'medium' ? 'Intermediate' : 'Advanced'}
+              </span>
             )}
             <button
               onClick={handleReportIssue}

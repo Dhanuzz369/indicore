@@ -178,7 +178,7 @@ function AnalyticsSlide({ active, stats }: { active: boolean; stats: UserStats |
           {/* L2 Difficulty */}
           <div style={layerCardStyle}>
             <div style={layerNum('#fca5a5')}>L2 · DIFFICULTY</div>
-            <div style={layerTitle}>Easy / Med / Hard</div>
+            <div style={layerTitle}>Basic / Int / Advanced</div>
             <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', height: '18px', marginTop: '2px' }}>
               <div style={{ width: '8px', borderRadius: '2px 2px 0 0', height: '16px', background: '#86efac' }} />
               <div style={{ width: '8px', borderRadius: '2px 2px 0 0', height: '11px', background: '#fcd34d' }} />

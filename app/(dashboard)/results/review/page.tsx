@@ -150,12 +150,12 @@ function ReviewContent() {
               Q.{safeIndex + 1}
             </span>
             {question.difficulty && (
-              <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                 question.difficulty === 'easy' ? 'bg-emerald-50 text-emerald-600'
                 : question.difficulty === 'hard' ? 'bg-red-50 text-red-600'
                 : 'bg-yellow-50 text-yellow-600'
               }`}>
-                {question.difficulty}
+                {question.difficulty === 'easy' ? 'Basic' : question.difficulty === 'medium' ? 'Intermediate' : 'Advanced'}
               </span>
             )}
             <button
