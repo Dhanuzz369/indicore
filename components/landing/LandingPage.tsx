@@ -1,7 +1,8 @@
 // components/landing/LandingPage.tsx
 'use client'
 
-import { LazyMotion, domAnimation, m, useReducedMotion } from 'framer-motion'
+import { LazyMotion, domAnimation, m, useReducedMotion, useInView } from 'framer-motion'
+import { useRef } from 'react'
 import NavBar from './NavBar'
 import HeroSection from './HeroSection'
 import MarqueeBanner from './MarqueeBanner'
@@ -18,13 +19,15 @@ import Footer from './Footer'
  * Uses spring-physics easing with stagger support.
  */
 function SectionReveal({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-80px' })
   const reduced = useReducedMotion()
   return (
     <m.div
+      ref={ref}
       className={className}
       initial={{ opacity: 0, y: reduced ? 0 : 56 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{
         duration: 0.75,
         ease: [0.22, 1, 0.36, 1],

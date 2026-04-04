@@ -31,10 +31,10 @@ export default function HeroSection() {
       {/* Three.js canvas — behind everything */}
       <HeroCanvas />
 
-      {/* Readability vignette over aurora */}
+      {/* Light readability vignette — keep aurora visible */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 45%, rgba(250,252,255,0.50) 0%, rgba(248,248,252,0.80) 100%)' }}
+        style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 45%, rgba(255,255,255,0.18) 0%, rgba(248,250,255,0.42) 100%)' }}
       />
 
       {/* Content */}
