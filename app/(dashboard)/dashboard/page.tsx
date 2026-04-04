@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
-import { getProfile, getUserStats, getSubjectsWithCounts } from '@/lib/supabase/queries'
+import { getProfile, getUserStats, getSubjectsWithCounts, getSubjectAccuracyFromHistory } from '@/lib/supabase/queries'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Flame, ChevronRight, AlertCircle, Grid3x3, ArrowRight,
@@ -24,9 +24,10 @@ function getGreeting() {
 
 
 function getPerformanceLabel(accuracy: number) {
-  if (accuracy >= 70) return { label: 'Improving', color: 'text-emerald-600', dot: 'bg-emerald-500', trend: 'up' }
-  if (accuracy >= 55) return { label: 'Medium', color: 'text-amber-600', dot: 'bg-amber-400', trend: 'flat' }
-  return { label: 'Low', color: 'text-red-500', dot: 'bg-red-500', trend: 'down' }
+  if (accuracy >= 75) return { label: 'Strong',      color: 'text-emerald-600', dot: 'bg-emerald-500', trend: 'up' }
+  if (accuracy >= 55) return { label: 'Moderate',    color: 'text-amber-600',   dot: 'bg-amber-400',   trend: 'flat' }
+  if (accuracy >= 35) return { label: 'Needs Work',  color: 'text-orange-500',  dot: 'bg-orange-400',  trend: 'down' }
+  return                      { label: 'Critical',   color: 'text-red-600',     dot: 'bg-red-500',     trend: 'down' }
 }
 
 // ─── Offerings Carousel v2 (reference design) ─────────────────────
@@ -268,7 +269,7 @@ function NotesSlide({ active, onCta }: { active: boolean; onCta: () => void }) {
             // Spaced repetition
           </div>
           <div style={{ fontFamily: DISPLAY, fontSize: 'clamp(36px,5vw,50px)', lineHeight: .88, color: '#1c1207' }}>
-            MY<br /><span style={{ color: '#d97706' }}>NOTES.</span>
+            MY<br /><span style={{ color: '#d97706' }}>FLASH CARDS.</span>
           </div>
           <div style={{ fontSize: '12px', color: '#b08050', marginTop: '9px' }}>
             Flashcards that know when to show up.
@@ -278,7 +279,7 @@ function NotesSlide({ active, onCta }: { active: boolean; onCta: () => void }) {
             fontFamily: MONO, fontSize: '10px', fontWeight: 700, letterSpacing: '.12em',
             padding: '7px 15px', borderRadius: '7px', background: '#1c1207', color: '#fdf8f0',
             textTransform: 'uppercase', cursor: 'pointer', border: 'none',
-          }}>Open Notes →</button>
+          }}>Open Flash Cards →</button>
         </div>
         {/* stacked flashcards */}
         <div className="hidden sm:block" style={{ position: 'relative', width: '200px', height: '154px', flexShrink: 0 }}>
@@ -389,6 +390,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState<UserStats | null>(null)
   const [subjects, setSubjects] = useState<Subject[]>([])
+  const [subjectAccuracy, setSubjectAccuracy] = useState<Map<string, number>>(new Map())
 
   const fetchData = async () => {
     setLoading(true)
@@ -405,14 +407,16 @@ export default function DashboardPage() {
             return r
           })
 
-      const [profileData, statsData, subjectsData] = await Promise.all([
+      const [profileData, statsData, subjectsData, accuracyMap] = await Promise.all([
         getProfile(user.$id),
         getUserStats(user.$id),
         subjectsPromise,
+        getSubjectAccuracyFromHistory(user.$id),
       ])
       setProfile(profileData as unknown as Profile)
       setStats(statsData as unknown as UserStats)
       setSubjects(subjectsData.documents as unknown as Subject[])
+      setSubjectAccuracy(accuracyMap)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard')
     } finally {
@@ -425,10 +429,12 @@ export default function DashboardPage() {
   const firstName = profile?.full_name?.split(' ')[0] || 'Aspirant'
   const streakDays = stats?.streak_days ?? 0
 
-  const weakSubjects = subjects.slice(0, 4).map((s, i) => ({
-    subject: s,
-    accuracy: [42, 58, 81, 65][i % 4] ?? 50,
-  }))
+  // Build weak subjects from real accuracy data — only subjects attempted, sorted worst first
+  const weakSubjects = subjects
+    .filter(s => subjectAccuracy.has(s.Name))
+    .map(s => ({ subject: s, accuracy: subjectAccuracy.get(s.Name)! }))
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, 6)
 
   if (loading) {
     return (
@@ -556,10 +562,10 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {subjects.length === 0 ? (
+          {weakSubjects.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-[2rem] border border-gray-100">
               <BookCheck className="h-12 w-12 text-gray-200 mx-auto mb-4" />
-              <p className="text-sm text-gray-400 font-medium">Complete some tests to see weak areas</p>
+              <p className="text-sm text-gray-400 font-medium">Complete some tests to see your weak areas</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

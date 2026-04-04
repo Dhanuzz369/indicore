@@ -276,6 +276,40 @@ export async function getUserStats(userId: string) {
   return { ...data, $id: data.id }
 }
 
+/** Aggregates per-subject accuracy across all test sessions for a user.
+ *  Returns a Map<subjectName, accuracy (0–100)> for subjects with ≥1 attempted question. */
+export async function getSubjectAccuracyFromHistory(userId: string): Promise<Map<string, number>> {
+  const sb = createClient()
+  const { data, error } = await sb
+    .from('test_sessions')
+    .select('analytics')
+    .eq('user_id', userId)
+    .limit(500)
+  if (error || !data) return new Map()
+
+  const totals = new Map<string, { correct: number; attempted: number }>()
+  for (const row of data) {
+    const analytics = typeof row.analytics === 'string'
+      ? (() => { try { return JSON.parse(row.analytics) } catch { return null } })()
+      : row.analytics
+    if (!analytics?.subjectStats) continue
+    for (const stat of analytics.subjectStats as { subject: string; correct: number; attempted: number }[]) {
+      const name = stat.subject
+      if (!name || !stat.attempted) continue
+      if (!totals.has(name)) totals.set(name, { correct: 0, attempted: 0 })
+      const s = totals.get(name)!
+      s.correct   += stat.correct   ?? 0
+      s.attempted += stat.attempted ?? 0
+    }
+  }
+
+  const result = new Map<string, number>()
+  for (const [name, d] of totals.entries()) {
+    if (d.attempted > 0) result.set(name, Math.round((d.correct / d.attempted) * 100))
+  }
+  return result
+}
+
 export async function createUserStats(userId: string) {
   const sb = createClient()
   const { error } = await sb.from('user_stats').upsert(

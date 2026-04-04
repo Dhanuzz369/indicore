@@ -58,7 +58,7 @@ export default function NewNotePage() {
         </button>
 
         <div>
-          <h1 className="text-2xl font-black text-gray-900">New Note</h1>
+          <h1 className="text-2xl font-black text-gray-900">New Flash Card</h1>
           <p className="text-sm text-gray-500 mt-1">Create a flashcard for revision</p>
         </div>
 

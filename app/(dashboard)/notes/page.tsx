@@ -63,7 +63,7 @@ export default function NotesPage() {
               <BookOpen className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-900 tracking-tight">My Notes</h1>
+              <h1 className="text-2xl font-black text-gray-900 tracking-tight">My Flash Cards</h1>
               <p className="text-sm text-gray-500 font-medium">Flashcards for spaced repetition revision</p>
             </div>
           </div>

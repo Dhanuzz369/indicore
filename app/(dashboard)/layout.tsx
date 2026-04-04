@@ -37,7 +37,7 @@ const navigation = [
   { name: 'Home',         href: '/dashboard',      icon: LayoutDashboard },
   { name: 'Practice',     href: '/quiz',            icon: Brain },
   { name: 'My Tests',     href: '/tests',           icon: ClipboardList },
-  { name: 'Notes',        href: '/notes',           icon: BookOpen },
+  { name: 'Flash Cards',  href: '/notes',           icon: BookOpen },
   { name: 'Results',      href: '/results',         icon: BarChart3 },
   { name: 'Intelligence', href: '/intelligence',    icon: Sparkles },
   { name: 'Profile',      href: '/profile',         icon: User },
