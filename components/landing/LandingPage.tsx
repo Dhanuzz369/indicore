@@ -13,15 +13,23 @@ import TestimonialsSection from './TestimonialsSection'
 import CtaBanner from './CtaBanner'
 import Footer from './Footer'
 
-/** Fades + slides a section in as it enters the viewport */
-function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+/**
+ * Wraps a section with a scroll-triggered reveal.
+ * Uses spring-physics easing with stagger support.
+ */
+function SectionReveal({ children, className }: { children: React.ReactNode; className?: string }) {
   const reduced = useReducedMotion()
   return (
     <m.div
-      initial={{ opacity: 0, y: reduced ? 0 : 40 }}
+      className={className}
+      initial={{ opacity: 0, y: reduced ? 0 : 56 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{
+        duration: 0.75,
+        ease: [0.22, 1, 0.36, 1],
+        opacity: { duration: 0.55 },
+      }}
     >
       {children}
     </m.div>
@@ -33,29 +41,38 @@ export default function LandingPage() {
     <LazyMotion features={domAnimation}>
       <div className="bg-white text-[#1A1C1C] font-sans overflow-x-hidden">
         <NavBar />
-        {/* Hero — no wrapper, has its own entrance animation */}
+
+        {/* Hero has its own entrance — no extra wrapper */}
         <HeroSection />
-        <ScrollReveal delay={0}>
+
+        <SectionReveal>
           <MarqueeBanner />
-        </ScrollReveal>
-        <ScrollReveal delay={0}>
+        </SectionReveal>
+
+        <SectionReveal>
           <FeaturesSection />
-        </ScrollReveal>
-        <ScrollReveal delay={0}>
+        </SectionReveal>
+
+        <SectionReveal>
           <ProcessSection />
-        </ScrollReveal>
-        <ScrollReveal delay={0}>
+        </SectionReveal>
+
+        <SectionReveal>
           <StatsSection />
-        </ScrollReveal>
-        <ScrollReveal delay={0}>
+        </SectionReveal>
+
+        <SectionReveal>
           <BentoSection />
-        </ScrollReveal>
-        <ScrollReveal delay={0}>
+        </SectionReveal>
+
+        <SectionReveal>
           <TestimonialsSection />
-        </ScrollReveal>
-        <ScrollReveal delay={0}>
+        </SectionReveal>
+
+        <SectionReveal>
           <CtaBanner />
-        </ScrollReveal>
+        </SectionReveal>
+
         <Footer />
       </div>
     </LazyMotion>

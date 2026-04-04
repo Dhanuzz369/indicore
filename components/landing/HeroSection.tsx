@@ -2,10 +2,9 @@
 'use client'
 
 import { m, useReducedMotion } from 'framer-motion'
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 
-const HeroCanvas = dynamic(() => import('./HeroCanvas'), { ssr: false })
+import HeroCanvas from './HeroCanvas'
 
 const HEADLINE = 'The Smartest Way to Crack UPSC Prelims'
 const WORDS = HEADLINE.split(' ')
@@ -32,10 +31,10 @@ export default function HeroSection() {
       {/* Three.js canvas — behind everything */}
       <HeroCanvas />
 
-      {/* Soft radial gradient over canvas so text is readable */}
+      {/* Readability vignette over aurora */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(250,250,250,0.55) 0%, rgba(250,250,250,0.85) 100%)' }}
+        style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 45%, rgba(250,252,255,0.50) 0%, rgba(248,248,252,0.80) 100%)' }}
       />
 
       {/* Content */}
