@@ -1,7 +1,7 @@
 // components/landing/Footer.tsx
 'use client'
 
-const productLinks = ['Mock Tests', 'Analytics Dashboard', 'Flashcards', 'Pricing']
+const productLinks = ['Mock Tests', 'Analytics Dashboard', 'Flashcards']
 const resourceLinks = ['Study Planner', 'UPSC Guide', 'Success Stories', 'Knowledge Base']
 
 export default function Footer() {

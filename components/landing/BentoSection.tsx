@@ -23,7 +23,10 @@ export default function BentoSection() {
   const reduced = useReducedMotion()
 
   return (
-    <section id="analytics" ref={ref} className="py-16 sm:py-20 md:py-32 px-6 md:px-8 max-w-7xl mx-auto">
+    <section id="analytics" ref={ref} className="relative py-16 sm:py-20 md:py-32 overflow-hidden" style={{ background: 'linear-gradient(160deg, #f0f4ff 0%, #f8f9ff 40%, #f5f0ff 100%)' }}>
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-blue-100/20 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-purple-100/20 blur-3xl pointer-events-none" />
+      <div className="relative px-6 md:px-8 max-w-7xl mx-auto">
       <m.div
         initial={{ opacity: 0, y: reduced ? 0 : 20 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -125,6 +128,7 @@ export default function BentoSection() {
             Unlock Premium Insights
           </button>
         </m.div>
+      </div>
       </div>
     </section>
   )

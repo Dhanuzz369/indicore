@@ -31,8 +31,10 @@ export default function TestimonialsSection() {
   const reduced = useReducedMotion()
 
   return (
-    <section id="testimonials" ref={ref} className="py-16 sm:py-20 md:py-32 bg-[#F4F3F2]">
-      <div className="max-w-7xl mx-auto px-6 md:px-8">
+    <section id="testimonials" ref={ref} className="relative py-16 sm:py-20 md:py-32 overflow-hidden" style={{ background: 'linear-gradient(150deg, #f8f5ff 0%, #f0f5ff 50%, #f5fff8 100%)' }}>
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-purple-100/20 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-teal-100/20 blur-3xl pointer-events-none" />
+      <div className="relative max-w-7xl mx-auto px-6 md:px-8">
         <m.h2
           initial={{ opacity: 0, y: reduced ? 0 : 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}

@@ -45,8 +45,9 @@ function Counter({ to, suffix, label }: { to: number; suffix: string; label: str
 
 export default function StatsSection() {
   return (
-    <section className="py-12 sm:py-16 md:py-24 border-y border-[#4A90E2]/15" style={{ backgroundColor: 'rgba(74,144,226,0.06)' }}>
-      <div className="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-12">
+    <section className="relative py-12 sm:py-16 md:py-24 border-y border-[#4A90E2]/10 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(74,144,226,0.06) 0%, rgba(162,194,232,0.08) 50%, rgba(74,144,226,0.05) 100%)' }}>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-50/30 via-sky-50/20 to-indigo-50/30 pointer-events-none" />
+      <div className="relative max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-12">
         {stats.map((s) => (
           <Counter key={s.label} {...s} />
         ))}

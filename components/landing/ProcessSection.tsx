@@ -31,8 +31,11 @@ export default function ProcessSection() {
   const reduced = useReducedMotion()
 
   return (
-    <section className="py-16 sm:py-20 md:py-32 bg-white" ref={ref}>
-      <div className="max-w-7xl mx-auto px-6 md:px-8">
+    <section className="relative py-16 sm:py-20 md:py-32 overflow-hidden" ref={ref} style={{ background: 'linear-gradient(135deg, #fffbf5 0%, #fff8ee 50%, #f5f8ff 100%)' }}>
+      {/* Decorative blobs */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-40 bg-amber-50/80 rounded-[50%] blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-72 h-72 bg-orange-50/50 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative max-w-7xl mx-auto px-6 md:px-8">
         <m.h2
           initial={{ opacity: 0, y: reduced ? 0 : 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -50,7 +53,7 @@ export default function ProcessSection() {
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: i * 0.15, ease: 'easeOut' }}
               whileHover={{ y: -6 }}
-              className={`bg-[#FAFAFA] p-12 rounded-3xl shadow-sm hover:shadow-lg transition-shadow ${
+              className={`bg-white/80 backdrop-blur-sm p-12 rounded-3xl shadow-sm hover:shadow-lg transition-shadow ${
                 step.accent ? 'border-b-4 border-[#4A90E2]' : ''
               }`}
             >

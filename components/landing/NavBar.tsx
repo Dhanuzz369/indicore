@@ -30,7 +30,7 @@ export default function NavBar() {
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-10">
-          {['Features', 'Analytics', 'Testimonials', 'Pricing'].map((item) => (
+          {['Features', 'Analytics', 'Testimonials'].map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase()}`}
@@ -72,7 +72,7 @@ export default function NavBar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-black/5 px-6 py-6 space-y-4">
-          {['Features', 'Analytics', 'Testimonials', 'Pricing'].map((item) => (
+          {['Features', 'Analytics', 'Testimonials'].map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase()}`}
