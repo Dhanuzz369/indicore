@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getSubjectsWithCounts, getQuestions, listMocks, getSubjectsWithMockCounts, listTestSessions, getQuestionsByIds } from '@/lib/supabase/queries'
+import { getSubjectsWithCounts, getQuestions, listMocks, getSubjectsWithMockCounts, listTestSessions, getQuestionsByIds, getSeenMockQuestionIds } from '@/lib/supabase/queries'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { useQuizStore } from '@/store/quiz-store'
 import { toast } from 'sonner'
@@ -193,26 +193,80 @@ function QuizSetupContent() {
     setLoadingMockId(mock.$id)
     try {
       useQuizStore.getState().resetQuiz()
+
+      // Fetch the full set of question IDs this user has already seen in any mock
+      const user = await getCurrentUser()
+      const seenIds = user ? await getSeenMockQuestionIds(user.$id) : new Set<string>()
+      const seenArr = [...seenIds]
+
+      // Helper: fetch fresh questions (unseen), fall back to seen ones to fill the gap
+      const fetchWithFallback = async (
+        params: Parameters<typeof getQuestions>[0],
+        needed: number
+      ): Promise<Question[]> => {
+        // Fresh first — exclude already-seen IDs
+        const fresh = shuffleArray(
+          (await getQuestions({ ...params, excludeIds: seenArr, limit: needed * 3 }))
+            .documents as unknown as Question[]
+        ).slice(0, needed)
+
+        if (fresh.length >= needed) return fresh
+
+        // Not enough fresh — pad with seen questions to reach the target count
+        const stillNeeded = needed - fresh.length
+        const freshIds = new Set(fresh.map(q => q.$id))
+        const fallback = shuffleArray(
+          (await getQuestions({ ...params, limit: stillNeeded * 3 }))
+            .documents as unknown as Question[]
+        ).filter(q => !freshIds.has(q.$id)).slice(0, stillNeeded)
+
+        return [...fresh, ...fallback]
+      }
+
       const allQuestions: Question[] = []
 
       for (const weight of mock.subject_weights) {
         // Path A — subtopic groups (e.g. History: ancient / medieval / modern)
         if (weight.subtopic_groups && weight.subtopic_groups.length > 0) {
-          const pool = (await getQuestions({
+          // Fetch full unseen pool for this subject, then split by keyword groups
+          const freshPool = (await getQuestions({
+            examType: 'INDICORE_MOCK',
+            subjectId: weight.subjectId,
+            excludeIds: seenArr,
+            limit: 500,
+          })).documents as unknown as Question[]
+
+          // Also keep a seen fallback pool ready
+          const seenPool = (await getQuestions({
             examType: 'INDICORE_MOCK',
             subjectId: weight.subjectId,
             limit: 500,
           })).documents as unknown as Question[]
 
           for (const group of weight.subtopic_groups) {
-            const matched = shuffleArray(
-              pool.filter(q =>
+            const matchFresh = shuffleArray(
+              freshPool.filter(q =>
                 group.keywords.some(kw =>
                   (q.subtopic ?? '').toLowerCase().includes(kw.toLowerCase())
                 )
               )
             ).slice(0, group.count)
-            allQuestions.push(...matched)
+
+            let picked = matchFresh
+            if (picked.length < group.count) {
+              // Pad from seen pool for this subtopic group
+              const pickedIds = new Set(picked.map(q => q.$id))
+              const fallback = shuffleArray(
+                seenPool.filter(q =>
+                  !pickedIds.has(q.$id) &&
+                  group.keywords.some(kw =>
+                    (q.subtopic ?? '').toLowerCase().includes(kw.toLowerCase())
+                  )
+                )
+              ).slice(0, group.count - picked.length)
+              picked = [...picked, ...fallback]
+            }
+            allQuestions.push(...picked)
           }
           continue
         }
@@ -227,12 +281,10 @@ function QuizSetupContent() {
 
           const diffBatches = await Promise.all(
             slots.map(slot =>
-              getQuestions({
-                examType: 'INDICORE_MOCK',
-                subjectId: weight.subjectId,
-                difficulty: slot.difficulty,
-                limit: slot.count * 3,
-              }).then(r => shuffleArray(r.documents as unknown as Question[]).slice(0, slot.count))
+              fetchWithFallback(
+                { examType: 'INDICORE_MOCK', subjectId: weight.subjectId, difficulty: slot.difficulty },
+                slot.count
+              )
             )
           )
           for (const b of diffBatches) allQuestions.push(...b)
@@ -240,12 +292,11 @@ function QuizSetupContent() {
         }
 
         // Path C — legacy: random selection, no difficulty spec
-        const pool = (await getQuestions({
-          examType: 'INDICORE_MOCK',
-          subjectId: weight.subjectId,
-          limit: weight.count * 2,
-        })).documents as unknown as Question[]
-        allQuestions.push(...shuffleArray(pool).slice(0, weight.count))
+        const batch = await fetchWithFallback(
+          { examType: 'INDICORE_MOCK', subjectId: weight.subjectId },
+          weight.count
+        )
+        allQuestions.push(...batch)
       }
 
       if (allQuestions.length === 0) {

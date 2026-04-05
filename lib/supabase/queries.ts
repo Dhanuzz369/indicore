@@ -103,6 +103,7 @@ export async function getQuestions(params: {
   difficulty?: string
   limit?: number
   offset?: number
+  excludeIds?: string[]   // IDs to exclude (already-seen questions)
 }) {
   const sb = createClient()
   // INDICORE_MOCK questions are admin-curated — is_active may be NULL on bulk upload.
@@ -114,6 +115,10 @@ export async function getQuestions(params: {
   if (params.subjectId) q = q.eq('subject_id', params.subjectId)
   if (params.year) q = q.eq('year', params.year)
   if (params.difficulty) q = q.eq('difficulty', params.difficulty)
+  // Exclude already-seen question IDs when provided (non-empty array only)
+  if (params.excludeIds && params.excludeIds.length > 0) {
+    q = q.not('id', 'in', `(${params.excludeIds.join(',')})`)
+  }
   if (params.limit) {
     const offset = params.offset ?? 0
     q = q.range(offset, offset + params.limit - 1)
@@ -121,6 +126,28 @@ export async function getQuestions(params: {
   const { data, error } = await q
   if (error) throw error
   return { documents: (data ?? []).map(d => ({ ...d, $id: d.id })) }
+}
+
+/**
+ * Returns the flat set of question IDs a user has already seen across
+ * all INDICORE_MOCK test sessions. Used to exclude them from the next mock.
+ */
+export async function getSeenMockQuestionIds(userId: string): Promise<Set<string>> {
+  const sb = createClient()
+  const { data, error } = await sb
+    .from('test_sessions')
+    .select('question_ids')
+    .eq('user_id', userId)
+    .eq('exam_type', 'INDICORE_MOCK')
+  if (error || !data) return new Set()
+  const seen = new Set<string>()
+  for (const row of data) {
+    const ids: string[] = typeof row.question_ids === 'string'
+      ? (() => { try { return JSON.parse(row.question_ids) } catch { return [] } })()
+      : (row.question_ids ?? [])
+    for (const id of ids) seen.add(id)
+  }
+  return seen
 }
 
 export async function getQuestionsByIds(ids: string[]) {
