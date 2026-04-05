@@ -221,7 +221,7 @@ export default function IntelligencePage() {
               {confusedBatch.map(st => (
                 <div key={st.subtopicId} className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                   <p className="text-sm font-black text-gray-900 truncate">{st.subtopicId}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{st.subjectId}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{subjectNameMap[st.subjectId] ?? st.subjectId}</p>
                   <div className="mt-3">
                     <span className="text-lg font-black text-blue-600">
                       {st.wrong_count ?? 0}/{st.attempts} wrong
@@ -248,7 +248,7 @@ export default function IntelligencePage() {
                     <div key={i} className="flex items-start gap-3 py-2.5 border-b border-gray-50 last:border-0">
                       <span className="h-5 w-5 rounded-full bg-red-50 text-red-500 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{r.priority}</span>
                       <div>
-                        <p className="text-sm font-bold text-gray-900">{r.target.subtopicId ?? r.target.subjectId ?? 'General revision'}</p>
+                        <p className="text-sm font-bold text-gray-900">{r.target.subtopicId ?? (r.target.subjectId ? subjectNameMap[r.target.subjectId] ?? r.target.subjectId : 'General revision')}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{r.reason}</p>
                       </div>
                     </div>
@@ -262,7 +262,7 @@ export default function IntelligencePage() {
                     <div key={i} className="flex items-start gap-3 py-2.5 border-b border-gray-50 last:border-0">
                       <span className="h-5 w-5 rounded-full bg-blue-50 text-blue-500 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{r.priority}</span>
                       <div>
-                        <p className="text-sm font-bold text-gray-900">{r.target.subtopicId ?? r.target.subjectId ?? 'Targeted practice'}</p>
+                        <p className="text-sm font-bold text-gray-900">{r.target.subtopicId ?? (r.target.subjectId ? subjectNameMap[r.target.subjectId] ?? r.target.subjectId : 'Targeted practice')}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{r.reason}</p>
                       </div>
                     </div>
