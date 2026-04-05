@@ -194,19 +194,60 @@ function QuizSetupContent() {
     try {
       useQuizStore.getState().resetQuiz()
       const allQuestions: Question[] = []
-      const batches = await Promise.all(
-        mock.subject_weights.map(weight =>
-          getQuestions({
+
+      for (const weight of mock.subject_weights) {
+        // Path A — subtopic groups (e.g. History: ancient / medieval / modern)
+        if (weight.subtopic_groups && weight.subtopic_groups.length > 0) {
+          const pool = (await getQuestions({
             examType: 'INDICORE_MOCK',
             subjectId: weight.subjectId,
-            limit: weight.count * 2,
-          }).then(result => {
-            const batch = result.documents as unknown as Question[]
-            return shuffleArray(batch).slice(0, weight.count)
-          })
-        )
-      )
-      for (const batch of batches) allQuestions.push(...batch)
+            limit: 500,
+          })).documents as unknown as Question[]
+
+          for (const group of weight.subtopic_groups) {
+            const matched = shuffleArray(
+              pool.filter(q =>
+                group.keywords.some(kw =>
+                  (q.subtopic ?? '').toLowerCase().includes(kw.toLowerCase())
+                )
+              )
+            ).slice(0, group.count)
+            allQuestions.push(...matched)
+          }
+          continue
+        }
+
+        // Path B — per-difficulty counts
+        if (weight.easy_count !== undefined || weight.medium_count !== undefined || weight.hard_count !== undefined) {
+          const slots = [
+            { difficulty: 'easy',   count: weight.easy_count   ?? 0 },
+            { difficulty: 'medium', count: weight.medium_count ?? 0 },
+            { difficulty: 'hard',   count: weight.hard_count   ?? 0 },
+          ].filter(s => s.count > 0)
+
+          const diffBatches = await Promise.all(
+            slots.map(slot =>
+              getQuestions({
+                examType: 'INDICORE_MOCK',
+                subjectId: weight.subjectId,
+                difficulty: slot.difficulty,
+                limit: slot.count * 3,
+              }).then(r => shuffleArray(r.documents as unknown as Question[]).slice(0, slot.count))
+            )
+          )
+          for (const b of diffBatches) allQuestions.push(...b)
+          continue
+        }
+
+        // Path C — legacy: random selection, no difficulty spec
+        const pool = (await getQuestions({
+          examType: 'INDICORE_MOCK',
+          subjectId: weight.subjectId,
+          limit: weight.count * 2,
+        })).documents as unknown as Question[]
+        allQuestions.push(...shuffleArray(pool).slice(0, weight.count))
+      }
+
       if (allQuestions.length === 0) {
         toast.error('No mock questions available yet. Upload questions first.')
         setLoadingMockId(null)

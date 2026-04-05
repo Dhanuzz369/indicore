@@ -14,9 +14,21 @@ export interface Subject {
   color?: string
 }
 
+export interface MockSubjectTopicGroup {
+  label: string
+  keywords: string[]
+  count: number
+}
+
 export interface MockSubjectWeight {
   subjectId: string
   count: number
+  // Optional per-difficulty breakdown; if absent, selection is random
+  easy_count?: number
+  medium_count?: number
+  hard_count?: number
+  // Optional subtopic groups (e.g. History: ancient / medieval / modern)
+  subtopic_groups?: MockSubjectTopicGroup[]
 }
 
 export interface Mock {
