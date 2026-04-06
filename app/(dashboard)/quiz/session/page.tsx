@@ -266,15 +266,34 @@ export default function TestSessionPage() {
     const confidenceTag: 'sure' | 'fifty_fifty' | 'guess' | null = 
       isSure ? 'sure' : is5050 ? 'fifty_fifty' : isGuess ? 'guess' : null
     
+    const existingAnswer = answers[currentQuestion.$id]
+    if (existingAnswer) {
+      track('answer_changed', {
+        question_id: currentQuestion.$id,
+        from_option: existingAnswer.selectedOption,
+        to_option: optionKey,
+        was_correct_before: existingAnswer.isCorrect,
+      })
+    }
     submitAnswer(
-      currentQuestion.$id, 
-      optionKey, 
-      currentQuestion.correct_option, 
-      timeTaken, 
-      is5050, 
-      isGuess, 
+      currentQuestion.$id,
+      optionKey,
+      currentQuestion.correct_option,
+      timeTaken,
+      is5050,
+      isGuess,
       isSure
     )
+    if (!existingAnswer) {
+      track('question_answered', {
+        question_id: currentQuestion.$id,
+        subject: currentQuestion.subject_id,
+        difficulty: currentQuestion.difficulty,
+        is_correct: optionKey === currentQuestion.correct_option,
+        time_taken_seconds: timeTaken,
+        option_selected: optionKey,
+      })
+    }
     if (!testMode) {
       try {
         const user = await getCurrentUser()
@@ -319,6 +338,15 @@ export default function TestSessionPage() {
       if (tag === 'fifty_fifty') incrementButtonUsage('used5050')
       if (tag === 'guess') incrementButtonUsage('guessed')
       if (tag === 'sure') incrementButtonUsage('areYouSure')
+      if (tag === 'fifty_fifty') {
+        track('lifeline_used', { type: 'fifty_fifty', question_id: currentQuestion.$id, subject: currentQuestion.subject_id })
+      }
+      if (tag === 'guess') {
+        track('lifeline_used', { type: 'guess', question_id: currentQuestion.$id, subject: currentQuestion.subject_id })
+      }
+      if (tag === 'sure') {
+        track('lifeline_used', { type: 'are_you_sure', question_id: currentQuestion.$id, subject: currentQuestion.subject_id })
+      }
     }
   }
 
@@ -327,6 +355,14 @@ export default function TestSessionPage() {
     if (currentQuestion) {
       const currentTime = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
       updateTimeForAnswer(currentQuestion.$id, currentTime)
+    }
+    if (!answers[currentQuestion.$id]) {
+      track('question_skipped', {
+        question_id: currentQuestion.$id,
+        subject: currentQuestion.subject_id,
+        difficulty: currentQuestion.difficulty,
+        question_index: currentIndex,
+      })
     }
     if (currentIndex < total - 1) {
       nextQuestion()  // also marks next as visited in store
@@ -338,6 +374,12 @@ export default function TestSessionPage() {
     if (currentQuestion) {
       const currentTime = Math.floor(getTimeForQuestion(currentQuestion.$id) / 1000)
       updateTimeForAnswer(currentQuestion.$id, currentTime)
+    }
+    if (!markedForReview.has(currentQuestion.$id)) {
+      track('question_flagged', {
+        question_id: currentQuestion.$id,
+        subject: currentQuestion.subject_id,
+      })
     }
     toggleMarkForReview(currentQuestion.$id)
     if (currentIndex < total - 1) {
@@ -408,6 +450,16 @@ export default function TestSessionPage() {
           total_questions: questions.length,
           correct: totalCorrect,
           score_pct: scorePercent,
+        })
+        track('quiz_completed', {
+          mock_name: paperLabel,
+          exam_type: questions[0]?.exam_type ?? 'unknown',
+          total_questions: questions.length,
+          correct: totalCorrect,
+          wrong: totalWrong,
+          skipped: questions.length - numAttempted,
+          score_pct: scorePercent,
+          duration_seconds: elapsedSeconds,
         })
         const submittedAt = new Date().toISOString()
         const startedAt = startTime ? new Date(startTime).toISOString() : submittedAt
