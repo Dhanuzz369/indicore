@@ -466,19 +466,19 @@ function QuizSetupContent() {
       <div className="max-w-3xl mx-auto px-3 md:px-6 mt-3 md:mt-4">
         <div className="bg-gray-100 p-1 md:p-1.5 rounded-[1.5rem] md:rounded-[2rem] flex h-11 md:h-16">
           <button
-            onClick={() => { setActiveTab('mock'); setMockConfigSubject(null); setMockSelectedDifficulty('All'); setMockQuestionCount(20) }}
+            onClick={() => { track('tab_switched', { from_tab: activeTab, to_tab: 'mock' }); setActiveTab('mock'); setMockConfigSubject(null); setMockSelectedDifficulty('All'); setMockQuestionCount(20) }}
             className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'mock' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Mock Test
           </button>
           <button
-            onClick={() => { setActiveTab('full'); setConfigSubject(null) }}
+            onClick={() => { track('tab_switched', { from_tab: activeTab, to_tab: 'full' }); setActiveTab('full'); setConfigSubject(null) }}
             className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'full' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
             PYQ
           </button>
           <button
-            onClick={() => { setActiveTab('subject'); setConfigSubject(null) }}
+            onClick={() => { track('tab_switched', { from_tab: activeTab, to_tab: 'subject' }); setActiveTab('subject'); setConfigSubject(null) }}
             className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'subject' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Subject Practice
@@ -514,7 +514,7 @@ function QuizSetupContent() {
                     : mocks.filter(m => m.subject_weights.length > 1).map((mock, idx) => {
                         const theme = idx === 0 ? 'blue' : idx === 1 ? 'black' : 'gray'
                         return (
-                          <div key={mock.$id} className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col">
+                          <div key={mock.$id} className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col" onMouseEnter={() => track('mock_card_viewed', { mock_name: mock.name, total_questions: mock.subject_weights?.reduce((sum: number, w: any) => sum + w.count, 0) ?? 0 })}>
                             <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">INDICORE MOCK</p>
                             <h3 className="text-lg md:text-2xl font-black text-gray-900 mb-4 md:mb-6">{mock.name}</h3>
                             <div className="grid grid-cols-3 gap-2 md:gap-4 mb-5 md:mb-8 mt-auto">

@@ -3,8 +3,10 @@ export const dynamic = 'force-dynamic'
 
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useInView } from 'framer-motion'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { getProfile, getUserStats, getSubjectsWithCounts, getSubjectAccuracyFromHistory } from '@/lib/supabase/queries'
+import { useAnalytics } from '@/hooks/useAnalytics'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Flame, ChevronRight, AlertCircle, Grid3x3, ArrowRight,
@@ -385,12 +387,26 @@ function WeakSubjectCard({ subject, accuracy }: { subject: Subject; accuracy: nu
 
 // ─── Main Dashboard ────────────────────────────────────────────────
 export default function DashboardPage() {
+  const router = useRouter()
+  const { track } = useAnalytics()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState<UserStats | null>(null)
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [subjectAccuracy, setSubjectAccuracy] = useState<Map<string, number>>(new Map())
+
+  // Section visibility refs for dashboard_section_viewed tracking
+  const streakRef  = useRef(null)
+  const weakRef    = useRef(null)
+  const testsRef   = useRef(null)
+  const streakView = useInView(streakRef,  { once: true })
+  const weakView   = useInView(weakRef,    { once: true })
+  const testsView  = useInView(testsRef,   { once: true })
+
+  useEffect(() => { if (streakView) track('dashboard_section_viewed', { section: 'streak' }) },       [streakView])
+  useEffect(() => { if (weakView)   track('dashboard_section_viewed', { section: 'weak_areas' }) },   [weakView])
+  useEffect(() => { if (testsView)  track('dashboard_section_viewed', { section: 'recent_tests' }) }, [testsView])
 
   const fetchData = async () => {
     setLoading(true)
@@ -428,6 +444,13 @@ export default function DashboardPage() {
 
   const firstName = profile?.full_name?.split(' ')[0] || 'Aspirant'
   const streakDays = stats?.streak_days ?? 0
+
+  // Streak milestone tracking
+  useEffect(() => {
+    if (streakDays > 0 && [3, 7, 14, 30].includes(streakDays)) {
+      track('streak_milestone', { days: streakDays })
+    }
+  }, [streakDays])
 
   // Build weak subjects from real accuracy data — only subjects attempted, sorted worst first
   const weakSubjects = subjects
@@ -476,7 +499,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#F5F5F7]">
 
       {/* HEADER */}
-      <div className="bg-white border-b border-gray-100">
+      <div ref={streakRef} className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6 md:pt-10 pb-5 md:pb-8">
           <p className="text-[10px] font-black tracking-[0.25em] text-gray-400 uppercase mb-1.5">Overview</p>
           <div className="flex items-end gap-2 md:gap-3 flex-wrap">
@@ -553,7 +576,7 @@ export default function DashboardPage() {
         </div>
 
         {/* FOCUS ON WEAK AREAS */}
-        <div>
+        <div ref={weakRef}>
           <div className="flex items-start justify-between mb-3 md:mb-4">
             <h2 className="text-lg md:text-2xl font-black text-gray-900">Focus on Weak Areas</h2>
             <div className="flex items-center gap-1 bg-red-50 border border-red-100 text-red-500 text-[9px] font-black tracking-wide uppercase px-3 py-1.5 rounded-full shrink-0">
@@ -570,13 +593,16 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {weakSubjects.map(({ subject, accuracy: acc }) => (
-                <WeakSubjectCard key={subject.$id} subject={subject} accuracy={acc} />
+                <div key={subject.$id} className="cursor-pointer" onClick={() => { track('weak_area_clicked', { subject_name: subject.Name, accuracy: acc }); router.push('/quiz') }}>
+                  <WeakSubjectCard subject={subject} accuracy={acc} />
+                </div>
               ))}
             </div>
           )}
         </div>
 
         {/* MY TESTS QUICK LINK */}
+        <div ref={testsRef}>
         <Link href="/tests">
           <div className="flex items-center justify-between bg-white rounded-[1.5rem] md:rounded-[2rem] px-4 md:px-8 py-4 md:py-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
             <div className="flex items-center gap-3 md:gap-5">
@@ -591,6 +617,7 @@ export default function DashboardPage() {
             <ChevronRight className="h-5 md:h-6 w-5 md:w-6 text-gray-300 group-hover:text-[#4A90E2] group-hover:translate-x-1 transition-all" />
           </div>
         </Link>
+        </div>
 
       </div>
     </div>
