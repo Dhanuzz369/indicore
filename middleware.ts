@@ -38,7 +38,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/tests') ||
     pathname.startsWith('/notes') ||
     pathname.startsWith('/intelligence') ||
-    pathname.startsWith('/onboarding')
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/admin')
 
   if (isProtectedRoute && !session) {
     const loginUrl = new URL('/login', request.url)
@@ -63,6 +64,7 @@ export const config = {
     '/notes(.*)',
     '/intelligence(.*)',
     '/onboarding(.*)',
+    '/admin(.*)',
     '/login',
     '/signup',
   ],

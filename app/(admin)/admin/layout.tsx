@@ -1,18 +1,25 @@
 // app/(admin)/admin/layout.tsx
 import { redirect } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 const ADMIN_EMAIL = 'indicoredotai@gmail.com'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // Use service role to read the current auth session server-side
-  const sb = createClient(
+  const cookieStore = await cookies()
+
+  // Use anon key + SSR client so it can read the auth cookie
+  const sb = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll() { /* read-only in layout */ },
+      },
+    }
   )
 
-  // Read the auth cookie — Next.js passes cookies automatically in server components
   const { data: { session } } = await sb.auth.getSession()
 
   if (!session || session.user.email !== ADMIN_EMAIL) {
