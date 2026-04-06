@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { getSkillProfile, getSessionCount, getSubjectsWithCounts } from '@/lib/supabase/queries'
@@ -9,11 +9,22 @@ import { Loader2, Brain, TrendingDown, AlertTriangle, Zap, BookOpen, Lightbulb, 
 import { toast } from 'sonner'
 import type { SkillProfile, SubjectScore, SubtopicRating, BehaviorSignals, Recommendation } from '@/types'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useInView } from 'framer-motion'
 
 
 export default function IntelligencePage() {
   const router = useRouter()
   const { track } = useAnalytics()
+  const confusedRef  = useRef(null)
+  const actionRef    = useRef(null)
+  const chartRef     = useRef(null)
+  const confusedView = useInView(confusedRef, { once: true })
+  const actionView   = useInView(actionRef,   { once: true })
+  const chartView    = useInView(chartRef,    { once: true })
+
+  useEffect(() => { if (confusedView) track('intelligence_section_viewed', { section: 'confused_topics' }) }, [confusedView])
+  useEffect(() => { if (actionView)   track('intelligence_section_viewed', { section: 'action_plan' }) },     [actionView])
+  useEffect(() => { if (chartView)    track('intelligence_section_viewed', { section: 'subject_chart' }) },   [chartView])
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<SkillProfile | null>(null)
   const [sessionCount, setSessionCount] = useState(0)
@@ -165,7 +176,7 @@ export default function IntelligencePage() {
         )}
 
         {/* Weaker Subjects — <50% accuracy */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
+        <div ref={chartRef} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
           <div className="flex items-center gap-2 mb-5">
             <TrendingDown className="h-4 w-4 text-red-500" />
             <h2 className="font-black text-gray-900 text-base">Weaker Subjects</h2>
@@ -200,7 +211,7 @@ export default function IntelligencePage() {
         </div>
 
         {/* Confused Topics — rotational batch */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
+        <div ref={confusedRef} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="h-4 w-4 text-blue-500" />
             <h2 className="font-black text-gray-900 text-base">Confused Topics</h2>
@@ -235,7 +246,7 @@ export default function IntelligencePage() {
 
         {/* Action Plan */}
         {recommendations.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
+          <div ref={actionRef} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
             <div className="flex items-center gap-2 mb-5">
               <Lightbulb className="h-4 w-4 text-[#4A90E2]" />
               <h2 className="font-black text-gray-900 text-base">Your Action Plan</h2>
