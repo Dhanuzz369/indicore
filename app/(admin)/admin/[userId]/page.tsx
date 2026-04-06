@@ -26,12 +26,13 @@ function EntryIcon({ mode }: { mode: string }) {
   return <span className="text-lg">{icons[mode] ?? '📋'}</span>
 }
 
-export default async function UserDetailPage({ params }: { params: { userId: string } }) {
+export default async function UserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
+  const { userId } = await params
   const [allUsers, timeline] = await Promise.all([
     getAllUsersWithStats(),
-    getUserTimeline(params.userId),
+    getUserTimeline(userId),
   ])
-  const user = allUsers.find(u => u.id === params.userId)
+  const user = allUsers.find(u => u.id === userId)
   if (!user) return <div className="p-10 text-gray-500">User not found.</div>
 
   const posthogLink = `${POSTHOG_PROJECT}/persons?search=${encodeURIComponent(user.email)}`

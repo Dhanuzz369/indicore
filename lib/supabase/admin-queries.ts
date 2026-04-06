@@ -17,17 +17,15 @@ function adminClient() {
 export async function getAllUsersWithStats(): Promise<AdminUser[]> {
   const sb = adminClient()
 
-  // 1. All profiles
-  const { data: profiles, error: pErr } = await sb
-    .from('profiles')
-    .select('id, full_name, target_exam, target_year')
-  if (pErr) throw pErr
-
-  // 2. Auth emails via admin API
+  // 1. Auth users are the source of truth (captures all signups, not just onboarded users)
   const { data: authData, error: aErr } = await sb.auth.admin.listUsers({ perPage: 1000 })
   if (aErr) throw aErr
-  const emailMap = new Map(authData.users.map(u => [u.id, u.email ?? '']))
-  const createdAtMap = new Map(authData.users.map(u => [u.id, u.created_at]))
+
+  // 2. Profiles (only exists for users who completed onboarding — may be missing for some)
+  const { data: profiles } = await sb
+    .from('profiles')
+    .select('id, full_name, target_exam, target_year')
+  const profileMap = new Map((profiles ?? []).map(p => [p.id, p]))
 
   // 3. Session aggregates per user
   const { data: sessions, error: sErr } = await sb
@@ -52,19 +50,20 @@ export async function getAllUsersWithStats(): Promise<AdminUser[]> {
   const { data: stats } = await sb.from('user_stats').select('user_id, streak_days')
   const streakMap = new Map((stats ?? []).map(s => [s.user_id, s.streak_days ?? 0]))
 
-  return (profiles ?? []).map(p => {
-    const agg = sessionMap.get(p.id)
+  return authData.users.map(u => {
+    const profile = profileMap.get(u.id)
+    const agg = sessionMap.get(u.id)
     return {
-      id: p.id,
-      full_name: p.full_name,
-      email: emailMap.get(p.id) ?? '',
-      target_exam: p.target_exam,
-      target_year: p.target_year,
-      created_at: createdAtMap.get(p.id) ?? '',
+      id: u.id,
+      full_name: profile?.full_name ?? null,
+      email: u.email ?? '',
+      target_exam: profile?.target_exam ?? null,
+      target_year: profile?.target_year ?? null,
+      created_at: u.created_at,
       total_sessions: agg?.count ?? 0,
       avg_score: agg ? Math.round(agg.scoreSum / agg.count) : 0,
       last_active: agg?.lastActive ?? null,
-      streak_days: streakMap.get(p.id) ?? 0,
+      streak_days: streakMap.get(u.id) ?? 0,
     }
   }).sort((a, b) => {
     if (!a.last_active) return 1
