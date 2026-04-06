@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { getDueNotes, updateNote } from '@/lib/supabase/queries'
@@ -18,6 +18,7 @@ type RatingCount = { again: number; hard: number; good: number; easy: number }
 export default function ReviewPage() {
   const router = useRouter()
   const { track } = useAnalytics()
+  const sessionStartRef = useRef(Date.now())
   const [cards, setCards] = useState<Note[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
@@ -108,6 +109,10 @@ export default function ReviewPage() {
 
   const handleNext = () => {
     if (currentIndex + 1 >= cards.length) {
+      track('flashcard_session_completed', {
+        cards_reviewed: cards.length,
+        duration_seconds: Math.floor((Date.now() - sessionStartRef.current) / 1000),
+      })
       setDone(true)
     } else {
       setCurrentIndex(i => i + 1)
