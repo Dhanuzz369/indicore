@@ -101,8 +101,9 @@ export default function UserCharts({ user, timeline }: { user: AdminUser; timeli
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                 <Tooltip
-                  formatter={(value: number, _name: string, props: { payload?: { label: string } }) => [
-                    `${value}% (${props.payload?.label ?? ''})`, 'Accuracy'
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any, _name: any, props: any) => [
+                    `${value ?? 0}% (${props?.payload?.label ?? ''})`, 'Accuracy'
                   ]}
                   contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 12 }}
                 />
@@ -129,7 +130,8 @@ export default function UserCharts({ user, timeline }: { user: AdminUser; timeli
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                 <YAxis type="category" dataKey="subject" tick={{ fontSize: 10, fill: '#64748b' }} width={80} />
                 <Tooltip
-                  formatter={(value: number) => [`${value}%`, 'Accuracy']}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any) => [`${value ?? 0}%`, 'Accuracy']}
                   contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: 12 }}
                 />
                 <Bar dataKey="accuracy" radius={[0, 4, 4, 0]}>
