@@ -113,6 +113,16 @@ function QuizSetupContent() {
   const [mockSessions, setMockSessions] = useState<TestSession[]>([])
   const [loadingSessions, setLoadingSessions] = useState(true)
 
+  // Highlight Mock 1 when navigated from nudge modal
+  const highlightParam = searchParams.get('highlight')
+  const [highlighted, setHighlighted] = useState(highlightParam === 'mock1')
+
+  useEffect(() => {
+    if (!highlighted) return
+    const timer = setTimeout(() => setHighlighted(false), 5000)
+    return () => clearTimeout(timer)
+  }, [highlighted])
+
   useEffect(() => {
     getCurrentUser().then(user => {
       if (user) {
@@ -513,8 +523,14 @@ function QuizSetupContent() {
                     )
                     : mocks.filter(m => m.subject_weights.length > 1).map((mock, idx) => {
                         const theme = idx === 0 ? 'blue' : idx === 1 ? 'black' : 'gray'
+                        const isMock1 = idx === 0
                         return (
                           <div key={mock.$id} className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col" onMouseEnter={() => track('mock_card_viewed', { mock_name: mock.name, total_questions: mock.subject_weights?.reduce((sum: number, w: any) => sum + w.count, 0) ?? 0 })}>
+                            {highlighted && isMock1 && (
+                              <p className="text-[10px] font-black uppercase tracking-wider text-[#4A90E2] mb-1">
+                                ✨ Recommended for you
+                              </p>
+                            )}
                             <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">INDICORE MOCK</p>
                             <h3 className="text-lg md:text-2xl font-black text-gray-900 mb-4 md:mb-6">{mock.name}</h3>
                             <div className="grid grid-cols-3 gap-2 md:gap-4 mb-5 md:mb-8 mt-auto">
@@ -544,6 +560,9 @@ function QuizSetupContent() {
                             >
                               {loadingMockId === mock.$id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Attempt Test <ArrowRight className="h-4 w-4" /></>}
                             </button>
+                            {highlighted && isMock1 && (
+                              <span className="absolute inset-0 rounded-[inherit] ring-2 ring-[#4A90E2] ring-offset-2 animate-pulse pointer-events-none" />
+                            )}
                           </div>
                         )
                       })}
