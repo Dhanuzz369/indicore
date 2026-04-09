@@ -36,23 +36,32 @@ export default function FullMockNudgeModal({ sessionScore, sessionSubject }: Pro
     // Skip if cooldown active
     if (isCoolingDown()) return
 
-    // Check if user has ever completed a full-length mock
     const sb = createClient()
     let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | null = null
 
-    sb.from('test_sessions')
-      .select('id', { count: 'exact', head: true })
-      .eq('exam_type', 'INDICORE_MOCK')
-      .then(({ count }) => {
-        if (cancelled) return
-        if ((count ?? 0) === 0) {
-          // Fire after 1.5s delay so user can absorb their score first
-          const timer = setTimeout(() => setOpen(true), 1500)
-          return () => clearTimeout(timer)
-        }
-      })
+    ;(async () => {
+      // Get current user — must be explicit; RLS alone may not filter by user
+      const { data: { user } } = await sb.auth.getUser()
+      if (cancelled || !user) return
 
-    return () => { cancelled = true }
+      const { count } = await sb
+        .from('test_sessions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('exam_type', 'INDICORE_MOCK')
+
+      if (cancelled) return
+      if ((count ?? 0) === 0) {
+        // Fire after 1.5s delay so user can absorb their score first
+        timer = setTimeout(() => setOpen(true), 1500)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
   }, [])
 
   function handleTryNow() {
