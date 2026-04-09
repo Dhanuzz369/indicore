@@ -12,9 +12,30 @@ import type { Question, SelectionEvent } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { toast } from 'sonner'
 import { FeedbackCard } from './FeedbackCard'
+import FullMockNudgeModal from '@/components/modals/FullMockNudgeModal'
 
 
 // ─── Helpers ──────────────────────────────────────────────────
+
+function resolveSubjectName(session: {
+  paper_label?: string | null
+  analytics?: string | Record<string, unknown> | null
+}): string {
+  // Priority 1: paper_label (e.g. "Polity Practice")
+  if (session.paper_label) return session.paper_label
+
+  // Priority 2: first subject from analytics.subjectStats
+  try {
+    const analytics = typeof session.analytics === 'string'
+      ? JSON.parse(session.analytics)
+      : session.analytics
+    const firstSubject = analytics?.subjectStats?.[0]?.subject
+    if (firstSubject) return firstSubject
+  } catch { /* ignore */ }
+
+  // Priority 3: fallback
+  return 'this subject'
+}
 
 function confLabel(tag: string | null | undefined) {
   if (tag === 'sure') return '100% Sure'
@@ -1102,6 +1123,16 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
         />
 
       </main>
+
+      {!isFullLength && (
+        <FullMockNudgeModal
+          sessionScore={score.percentage ?? 0}
+          sessionSubject={resolveSubjectName({
+            paper_label: displayPaperLabel,
+            analytics: storedAnalytics,
+          })}
+        />
+      )}
     </div>
   )
 }
