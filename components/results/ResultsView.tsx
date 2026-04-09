@@ -1124,15 +1124,14 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
       </main>
 
-      {!isFullLength && (
-        <FullMockNudgeModal
-          sessionScore={score.percentage ?? 0}
-          sessionSubject={resolveSubjectName({
-            paper_label: displayPaperLabel,
-            analytics: storedAnalytics,
-          })}
-        />
-      )}
+      <FullMockNudgeModal
+        sessionId={sessionId}
+        sessionScore={score.percentage ?? 0}
+        sessionSubject={resolveSubjectName({
+          paper_label: displayPaperLabel,
+          analytics: storedAnalytics,
+        })}
+      />
     </div>
   )
 }

@@ -24,11 +24,12 @@ function markDismissed() {
 }
 
 interface Props {
+  sessionId: string
   sessionScore: number          // 0–100 accuracy %
   sessionSubject: string        // e.g. "Polity"
 }
 
-export default function FullMockNudgeModal({ sessionScore, sessionSubject }: Props) {
+export default function FullMockNudgeModal({ sessionId, sessionScore, sessionSubject }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
 
@@ -40,21 +41,46 @@ export default function FullMockNudgeModal({ sessionScore, sessionSubject }: Pro
     let cancelled = false
     let timer: ReturnType<typeof setTimeout> | null = null
 
+    const schedule = () => {
+      if (!cancelled) timer = setTimeout(() => setOpen(true), 1500)
+    }
+
     ;(async () => {
-      // Get current user — must be explicit; RLS alone may not filter by user
-      const { data: { user } } = await sb.auth.getUser()
-      if (cancelled || !user) return
+      try {
+        // getSession reads the local cookie — no network round-trip
+        const { data: { session } } = await sb.auth.getSession()
+        if (cancelled) return
 
-      const { count } = await sb
-        .from('test_sessions')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('exam_type', 'INDICORE_MOCK')
+        if (!session?.user?.id) return  // not logged in
 
-      if (cancelled) return
-      if ((count ?? 0) === 0) {
-        // Fire after 1.5s delay so user can absorb their score first
-        timer = setTimeout(() => setOpen(true), 1500)
+        // Check 1: is this session actually a practice session (not a mock)?
+        const { data: sessionRow } = await sb
+          .from('test_sessions')
+          .select('mode')
+          .eq('id', sessionId)
+          .eq('user_id', session.user.id)
+          .single()
+
+        if (cancelled) return
+        // Only show after practice sessions, not full-length mocks or PYQs
+        if (sessionRow && sessionRow.mode !== 'practice') return
+
+        // Check 2: has the user ever completed a full-length mock?
+        const { data: mockData, error: mockError } = await sb
+          .from('test_sessions')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('exam_type', 'INDICORE_MOCK')
+          .limit(1)
+
+        if (cancelled) return
+        // Fail-open: only suppress if we cleanly confirm mocks exist
+        if (!mockError && mockData && mockData.length > 0) return
+
+        schedule()
+      } catch {
+        // Any unexpected error → show the modal
+        schedule()
       }
     })()
 
@@ -62,7 +88,7 @@ export default function FullMockNudgeModal({ sessionScore, sessionSubject }: Pro
       cancelled = true
       if (timer) clearTimeout(timer)
     }
-  }, [])
+  }, [sessionId])
 
   function handleTryNow() {
     setOpen(false)
