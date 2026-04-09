@@ -66,11 +66,14 @@ export default function FullMockNudgeModal({ sessionId, sessionScore, sessionSub
         if (sessionRow && sessionRow.mode === 'full_length') return
 
         // Check 2: has the user ever completed a full-length mock?
+        // Only count actual full-length mock attempts — NOT subject practice sessions
+        // (subject practice also uses exam_type='INDICORE_MOCK' questions, but mode='subject_practice')
         const { data: mockData, error: mockError } = await sb
           .from('test_sessions')
           .select('id')
           .eq('user_id', session.user.id)
           .eq('exam_type', 'INDICORE_MOCK')
+          .eq('mode', 'full_length')
           .limit(1)
 
         if (cancelled) return
