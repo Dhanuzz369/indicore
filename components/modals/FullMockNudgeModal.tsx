@@ -62,8 +62,8 @@ export default function FullMockNudgeModal({ sessionId, sessionScore, sessionSub
           .single()
 
         if (cancelled) return
-        // Only show after practice sessions, not full-length mocks or PYQs
-        if (sessionRow && sessionRow.mode !== 'practice') return
+        // Only suppress for full-length mocks — subject_practice and practice both qualify
+        if (sessionRow && sessionRow.mode === 'full_length') return
 
         // Check 2: has the user ever completed a full-length mock?
         const { data: mockData, error: mockError } = await sb
