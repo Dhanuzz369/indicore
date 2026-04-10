@@ -76,8 +76,9 @@ export default function HeroSection() {
           animate="visible"
           className="text-base sm:text-lg md:text-xl text-[#43494D] max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          Experience an editorial-first approach to competitive exams. Advanced analytics
-          meets distraction-free studying for the modern scholar.
+          Analyze your UPSC prelims mock tests with advanced performance analytics.
+          Identify weak areas, fix decision-making mistakes, and improve your UPSC Prelims
+          2026 score faster.
         </m.p>
 
         {/* CTAs */}
@@ -91,13 +92,7 @@ export default function HeroSection() {
             href="/signup"
             className="w-full sm:w-auto px-10 py-4 bg-[#4A90E2] text-white rounded-full font-black text-base uppercase tracking-wider hover:bg-[#3a7fd4] hover:shadow-xl hover:shadow-[#4A90E2]/30 transition-all active:scale-95"
           >
-            Start Your Trial
-          </Link>
-          <Link
-            href="/login"
-            className="w-full sm:w-auto px-10 py-4 bg-white/80 backdrop-blur text-[#1A1C1C] rounded-full font-black text-base uppercase tracking-wider border border-black/10 hover:bg-white transition-all active:scale-95"
-          >
-            View the App
+            Analyse Now
           </Link>
           <a
             href="https://t.me/IndicoreUpsc"
