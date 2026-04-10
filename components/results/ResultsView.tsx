@@ -626,11 +626,12 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const revisionCardRef = useRef<HTMLDivElement>(null)
 
   // ── Potential score calculation ──────────────────────────────
+  const MARKS_PER_QUESTION = 2.667
   const bu = analytics.buttonUsageStats || {}
-  const sureWrong         = (bu.totalAreYouSure ?? 0) - (bu.correctAreYouSure ?? 0)
+  const sureWrong         = Math.max(0, (bu.totalAreYouSure ?? 0) - (bu.correctAreYouSure ?? 0))
   const revisionWrong     = revisionSummary?.correctToWrong?.length ?? 0
-  const marksLostSure     = sureWrong * 2.667
-  const marksLostRevision = revisionWrong * 2.667
+  const marksLostSure     = sureWrong * MARKS_PER_QUESTION
+  const marksLostRevision = revisionWrong * MARKS_PER_QUESTION
   const rawPotential      = (score.marksScored ?? 0) + marksLostSure + marksLostRevision
   const potentialScore    = Math.min(rawPotential, 200)
   const hasRecoverableMarks = sureWrong > 0 || revisionWrong > 0
@@ -638,7 +639,8 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const handleShowLostMarks = () => {
     setLostMarksHighlighted(true)
     setTimeout(() => {
-      sureCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const target = sureWrong > 0 ? sureCardRef.current : revisionCardRef.current
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 100)
   }
 
@@ -932,7 +934,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
         {/* ── Revision card — only shown when user changed a correct answer to wrong ── */}
         {revisionSummary && revisionSummary.correctToWrong.length > 0 && (() => {
           const nLost    = revisionSummary.correctToWrong.length
-          const marksLost = parseFloat((nLost * 2.67).toFixed(2))
+          const marksLost = parseFloat((nLost * MARKS_PER_QUESTION).toFixed(2))
           return (
             <div
               ref={revisionCardRef}
@@ -972,7 +974,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   </p>
                   <p className="text-xs text-red-600 font-semibold mb-3">
                     {isFullLength
-                      ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × 2.67 — forfeited +2 &amp; incurred −0.67 penalty)</>
+                      ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × {MARKS_PER_QUESTION} — forfeited +2 &amp; incurred −0.67 penalty)</>
                       : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
                     }
                   </p>
