@@ -752,7 +752,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
       <main className="max-w-7xl mx-auto px-3 md:px-6 mt-5 md:mt-8 space-y-6 md:space-y-8">
 
         {/* ── Score cards + Subject chart — single row on desktop ── */}
-        <div className="grid grid-cols-1 md:grid-cols-[160px_160px_1fr] gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-[160px_160px_1fr] gap-4 items-start">
 
           {/* ── Marks Scored (compact square) ── */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
