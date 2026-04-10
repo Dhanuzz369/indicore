@@ -934,7 +934,14 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           const nLost    = revisionSummary.correctToWrong.length
           const marksLost = parseFloat((nLost * 2.67).toFixed(2))
           return (
-            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+            <div
+              ref={revisionCardRef}
+              className={`rounded-2xl bg-white border shadow-sm overflow-hidden transition-all duration-300 ${
+                lostMarksHighlighted
+                  ? 'border-[#4A90E2] ring-2 ring-[#4A90E2] ring-offset-2 shadow-[0_0_0_6px_rgba(74,144,226,0.15)]'
+                  : 'border-gray-200'
+              }`}
+            >
 
               {/* Header */}
               <div className="flex items-center justify-between gap-3 px-5 md:px-6 py-4 border-b border-gray-100 bg-gray-50">
@@ -1001,7 +1008,14 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             const mistakes = total - correct
             const insight = getSureInsight(mistakes)
             return (
-              <div className="bg-emerald-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-100 shadow-sm p-5 md:p-6 flex flex-col gap-4">
+              <div
+                ref={sureCardRef}
+                className={`bg-emerald-50/60 rounded-[1.5rem] md:rounded-[2rem] border shadow-sm p-5 md:p-6 flex flex-col gap-4 transition-all duration-300 ${
+                  lostMarksHighlighted
+                    ? 'border-[#4A90E2] ring-2 ring-[#4A90E2] ring-offset-2 shadow-[0_0_0_6px_rgba(74,144,226,0.15)]'
+                    : 'border-emerald-100'
+                }`}
+              >
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center">
