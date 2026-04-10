@@ -783,9 +783,62 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </div>
           </div>
 
-          {/* Potential Score card — Task 3 will fill this */}
-          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-center min-h-[180px]">
-            <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Potential Score</p>
+          {/* Potential Score card — 3-state flip */}
+          <div
+            className="relative cursor-pointer"
+            style={{ perspective: '1000px' }}
+            onClick={() => !potentialRevealed && setPotentialRevealed(true)}
+          >
+            <div
+              className="relative w-full transition-transform duration-500 ease-in-out [transform-style:preserve-3d]"
+              style={{ transform: potentialRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)', minHeight: '180px' }}
+            >
+              {/* ── FRONT FACE ── */}
+              <div className="absolute inset-0 [backface-visibility:hidden] bg-white rounded-[2rem] border-2 border-[#4A90E2]/30 shadow-sm overflow-hidden flex flex-col items-center justify-center gap-3 p-5">
+                <div className="absolute inset-0 rounded-[2rem] ring-2 ring-[#4A90E2]/20 animate-pulse pointer-events-none" />
+                <div className="w-10 h-10 rounded-2xl bg-[#4A90E2]/10 flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-[#4A90E2]" />
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-[#4A90E2] uppercase tracking-widest mb-1">Potential Score</p>
+                  <p className="text-4xl font-black text-gray-200 blur-[6px] select-none">???</p>
+                </div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
+                  Tap to reveal your potential
+                </p>
+              </div>
+
+              {/* ── BACK FACE ── */}
+              <div
+                className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gradient-to-br from-[#4A90E2]/5 to-[#4A90E2]/10 rounded-[2rem] border-2 border-[#4A90E2]/40 shadow-sm overflow-hidden flex flex-col items-center justify-center gap-4 p-5"
+                onClick={e => e.stopPropagation()}
+              >
+                <div>
+                  <p className="text-[10px] font-black text-[#4A90E2] uppercase tracking-widest text-center mb-1">Potential Score</p>
+                  <div className="flex items-baseline gap-1 justify-center">
+                    <span className="text-5xl font-black text-gray-900">{potentialScore.toFixed(1)}</span>
+                    <span className="text-xl font-bold text-gray-400">/200</span>
+                  </div>
+                </div>
+                {hasRecoverableMarks ? (
+                  <button
+                    onClick={lostMarksHighlighted ? undefined : handleShowLostMarks}
+                    disabled={lostMarksHighlighted}
+                    className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+                      lostMarksHighlighted
+                        ? 'bg-[#4A90E2]/10 border-[#4A90E2]/30 text-[#4A90E2] cursor-default'
+                        : 'bg-[#4A90E2] border-[#4A90E2] text-white hover:bg-[#3a7fd4] active:scale-95'
+                    }`}
+                  >
+                    {lostMarksHighlighted ? 'Showing lost marks ✓' : 'See where you lost marks →'}
+                  </button>
+                ) : (
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
+                    No recoverable marks found
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
