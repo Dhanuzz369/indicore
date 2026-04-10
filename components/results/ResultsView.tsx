@@ -6,7 +6,7 @@ import { useQuizStore } from '@/store/quiz-store'
 import { getTestSession, listAttemptsBySession, getQuestionsByIds, getSubjects } from '@/lib/supabase/queries'
 import {
   CheckCircle, XCircle, ChevronDown, BookOpen, Clock, RefreshCw, Home,
-  Lightbulb, Brain, Target, Zap, Loader2, ArrowLeft
+  Lightbulb, Brain, Target, Zap, Loader2, ArrowLeft, TrendingDown, Sparkles
 } from 'lucide-react'
 import type { Question, SelectionEvent } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
@@ -752,100 +752,178 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
       <main className="max-w-7xl mx-auto px-3 md:px-6 mt-5 md:mt-8 space-y-6 md:space-y-8">
 
         {/* ── Score cards + Subject chart — single row on desktop ── */}
-        <div className="grid grid-cols-1 md:grid-cols-[160px_160px_1fr] gap-4 items-start">
+        <div className="grid grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)] gap-4 items-start">
 
-          {/* ── Marks Scored (compact square) ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-4 flex-1 flex flex-col justify-between">
-              <div>
-                <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.18em] mb-2 leading-tight">
-                  {displayQuestions.length} Qs
-                </p>
-                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Marks Scored</p>
-                <div className="flex items-baseline gap-0.5">
-                  <span className="text-3xl font-black text-gray-900">
-                    {score.marksScored ?? score.correct}
-                  </span>
-                  <span className="text-sm font-bold text-gray-400">
-                    /{score.totalMarks ?? displayQuestions.length * 2}
-                  </span>
-                </div>
-                <p className="text-[8px] text-gray-400 mt-1">
-                  +{score.correct * 2} − {(score.wrong * (2 / 3)).toFixed(2)} neg
-                </p>
+          {/* ── Marks Scored card ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {/* Header label */}
+            <div className="px-4 pt-4 pb-1 flex items-center gap-1.5">
+              <TrendingDown className="h-3 w-3 text-gray-400" />
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.18em]">Current Score</span>
+            </div>
+
+            {/* Big score number */}
+            <div className="px-4 pt-2 pb-3">
+              <div className="flex items-baseline gap-1 leading-none">
+                <span className={`text-[2.6rem] font-black tracking-tight leading-none ${(score.marksScored ?? 0) < 0 ? 'text-red-500' : 'text-gray-900'}`}>
+                  {typeof score.marksScored === 'number' ? score.marksScored.toFixed(2) : score.correct}
+                </span>
               </div>
-              <div className="mt-2">
-                <span className="text-2xl font-black text-[#4A90E2]">{score.percentage}%</span>
-                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">accuracy</p>
+              <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                out of {(score.totalMarks ?? displayQuestions.length * 2).toFixed(2)}
+              </p>
+            </div>
+
+            {/* Divider */}
+            <div className="mx-4 h-px bg-gray-100" />
+
+            {/* Stats rows */}
+            <div className="px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-gray-400 font-medium">Negatives</span>
+                <span className="text-[11px] font-black text-red-500">−{(score.wrong * (2 / 3)).toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-gray-400 font-medium">Accuracy</span>
+                <span className="text-[11px] font-black text-gray-800">{score.percentage}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-gray-400 font-medium">Attempted</span>
+                <span className="text-[11px] font-black text-gray-800">{score.correct + score.wrong} / {displayQuestions.length}</span>
               </div>
             </div>
-            <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100">
-              <div className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100 bg-gray-50/60">
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
                 {Math.floor(displayElapsed / 3600)}h {Math.floor((displayElapsed % 3600) / 60)}m
-              </div>
+              </span>
               <button
                 onClick={() => handleQuestionClick(0)}
-                className="bg-[#4A90E2]/10 hover:bg-[#4A90E2]/20 text-[#4A90E2] px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
+                className="flex items-center gap-1 text-[9px] font-black text-[#4A90E2] uppercase tracking-widest hover:underline transition-colors"
               >
                 <Clock className="h-2.5 w-2.5" /> Review
               </button>
             </div>
           </div>
 
-          {/* ── Potential Score card — 3-state flip (compact square) ── */}
+          {/* ── Potential Score card — 3-state flip ── */}
           <div
-            className="relative cursor-pointer"
-            style={{ perspective: '1000px', minHeight: '160px' }}
+            className={`relative ${!potentialRevealed ? 'cursor-pointer' : ''}`}
+            style={{ perspective: '1000px' }}
             onClick={() => !potentialRevealed && setPotentialRevealed(true)}
           >
+            {/* Wrapper that holds both faces and sets card height */}
             <div
-              className="absolute inset-0 transition-transform duration-500 ease-in-out [transform-style:preserve-3d]"
-              style={{ transform: potentialRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+              className="relative w-full transition-transform duration-[550ms] ease-in-out [transform-style:preserve-3d]"
+              style={{ transform: potentialRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)', minHeight: '210px' }}
             >
-              {/* ── FRONT FACE ── */}
-              <div className="absolute inset-0 [backface-visibility:hidden] bg-white rounded-2xl border-2 border-[#4A90E2]/30 shadow-sm overflow-hidden flex flex-col items-center justify-center gap-2 p-4">
-                <div className="absolute inset-0 rounded-2xl ring-2 ring-[#4A90E2]/20 animate-pulse pointer-events-none" />
-                <div className="w-9 h-9 rounded-xl bg-[#4A90E2]/10 flex items-center justify-center">
-                  <Zap className="h-4 w-4 text-[#4A90E2]" />
-                </div>
-                <div className="text-center">
-                  <p className="text-[8px] font-black text-[#4A90E2] uppercase tracking-widest mb-1">Potential Score</p>
-                  <p className="text-3xl font-black text-gray-200 blur-[6px] select-none">???</p>
-                </div>
-                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest text-center leading-tight">
-                  Tap to reveal
-                </p>
-              </div>
-
-              {/* ── BACK FACE ── */}
+              {/* ── FRONT — unrevealed ── */}
               <div
-                className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gradient-to-br from-[#4A90E2]/5 to-[#4A90E2]/10 rounded-2xl border-2 border-[#4A90E2]/40 shadow-sm overflow-hidden flex flex-col items-center justify-center gap-3 p-4"
-                onClick={e => e.stopPropagation()}
+                className="absolute inset-0 [backface-visibility:hidden] rounded-2xl overflow-hidden flex flex-col"
+                style={{ background: 'linear-gradient(140deg, #3b82f6 0%, #1d4ed8 100%)' }}
               >
-                <div className="text-center">
-                  <p className="text-[8px] font-black text-[#4A90E2] uppercase tracking-widest mb-1">Potential Score</p>
-                  <div className="flex items-baseline gap-0.5 justify-center">
-                    <span className="text-3xl font-black text-gray-900">{potentialScore.toFixed(1)}</span>
-                    <span className="text-base font-bold text-gray-400">/200</span>
+                {/* Subtle radial glow */}
+                <div className="absolute inset-0 rounded-2xl pointer-events-none"
+                     style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 70%)' }} />
+                {/* Pulsing ring */}
+                <div className="absolute inset-0 rounded-2xl ring-[3px] ring-white/20 animate-pulse pointer-events-none" />
+
+                <div className="relative flex flex-col items-start justify-between h-full p-4">
+                  {/* Label */}
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3 text-white/70" />
+                    <span className="text-[9px] font-black text-white/70 uppercase tracking-[0.18em]">Potential</span>
+                  </div>
+
+                  {/* Hidden number */}
+                  <div className="w-full text-center py-2">
+                    <p className="text-[2.6rem] font-black text-white/20 select-none tracking-tight leading-none"
+                       style={{ filter: 'blur(8px)' }}>00.00</p>
+                    <p className="text-[9px] text-white/50 font-medium mt-1.5 uppercase tracking-widest">tap to reveal</p>
+                  </div>
+
+                  {/* Progress shimmer */}
+                  <div className="w-full">
+                    <div className="h-1 bg-white/15 rounded-full overflow-hidden">
+                      <div className="h-full w-1/3 bg-white/35 rounded-full animate-pulse" />
+                    </div>
                   </div>
                 </div>
-                {hasRecoverableMarks ? (
-                  <button
-                    onClick={lostMarksHighlighted ? undefined : handleShowLostMarks}
-                    disabled={lostMarksHighlighted}
-                    className={`px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border transition-all leading-tight ${
-                      lostMarksHighlighted
-                        ? 'bg-[#4A90E2]/10 border-[#4A90E2]/30 text-[#4A90E2] cursor-default'
-                        : 'bg-[#4A90E2] border-[#4A90E2] text-white hover:bg-[#3a7fd4] active:scale-95'
-                    }`}
-                  >
-                    {lostMarksHighlighted ? 'Showing ✓' : 'See lost marks →'}
-                  </button>
-                ) : (
-                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest text-center">
-                    No recoverable marks
-                  </p>
-                )}
+              </div>
+
+              {/* ── BACK — revealed ── */}
+              <div
+                className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-2xl overflow-hidden flex flex-col"
+                style={{ background: 'linear-gradient(140deg, #3b82f6 0%, #1d4ed8 100%)' }}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Radial glow */}
+                <div className="absolute inset-0 rounded-2xl pointer-events-none"
+                     style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 70%)' }} />
+
+                <div className="relative flex flex-col justify-between h-full p-4">
+                  {/* Label */}
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3 text-white/70" />
+                    <span className="text-[9px] font-black text-white/70 uppercase tracking-[0.18em]">Potential</span>
+                  </div>
+
+                  {/* Score */}
+                  <div className="mt-2">
+                    <div className="flex items-baseline gap-1 leading-none">
+                      <span className="text-[2.6rem] font-black text-white tracking-tight leading-none">
+                        {potentialScore.toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-white/60 font-medium mt-0.5">projected score</p>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="my-2 h-px bg-white/15" />
+
+                  {/* Insight */}
+                  {hasRecoverableMarks ? (
+                    <div className="flex-1">
+                      <p className="text-[9px] font-black text-white/50 uppercase tracking-wider mb-1">Missed Opportunity</p>
+                      <p className="text-[11px] text-white/90 font-medium leading-snug">
+                        Eliminating silly mistakes would raise your score by{' '}
+                        <span className="font-black text-white">
+                          +{Math.max(0, potentialScore - (score.marksScored ?? 0)).toFixed(2)}
+                        </span>
+                      </p>
+                      <button
+                        onClick={lostMarksHighlighted ? undefined : handleShowLostMarks}
+                        disabled={lostMarksHighlighted}
+                        className={`mt-2.5 text-[9px] font-black uppercase tracking-wider transition-all ${
+                          lostMarksHighlighted
+                            ? 'text-white/40 cursor-default'
+                            : 'text-white/70 hover:text-white underline underline-offset-2'
+                        }`}
+                      >
+                        {lostMarksHighlighted ? 'Showing lost marks ✓' : 'See where you lost marks →'}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-white/60 font-medium">No recoverable marks found</p>
+                  )}
+
+                  {/* Progress bar */}
+                  {hasRecoverableMarks && (
+                    <div className="mt-3">
+                      <div className="h-1 bg-white/15 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-white/60 rounded-full transition-all duration-1000"
+                          style={{
+                            width: `${Math.min(100, Math.max(4,
+                              (Math.max(0, potentialScore - (score.marksScored ?? 0)) / 200) * 100
+                            ))}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
