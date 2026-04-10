@@ -113,4 +113,4 @@ No new files required — the Potential Score card is inlined as a local sub-com
 
 - **No sure items tagged AND no revisions:** `potentialScore === score.marksScored`. Card still shows but pill button is replaced with `"No recoverable marks found"` (disabled, grey).
 - **potentialScore > totalMarks:** Cap at `score.totalMarks`.
-- **Practice mode (not full mock):** `totalMarks` may be less than 200 — show `/ {score.totalMarks}` instead of hardcoded `/ 200`.
+- **Practice mode (not full mock):** Potential card always shows `/ 200` regardless of question count — it benchmarks against the full UPSC Prelims total.
