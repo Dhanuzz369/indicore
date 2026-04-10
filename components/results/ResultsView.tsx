@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/store/quiz-store'
 import { getTestSession, listAttemptsBySession, getQuestionsByIds, getSubjects } from '@/lib/supabase/queries'
@@ -618,6 +618,29 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
       neutral:        revised.filter(r => !r.firstWasCorrect && !r.finalIsCorrect),
     }
   }, [displayQuestions, displayAnswers])
+
+  // ── Potential Score state ──────────────────────────────────
+  const [potentialRevealed, setPotentialRevealed] = useState(false)
+  const [lostMarksHighlighted, setLostMarksHighlighted] = useState(false)
+  const sureCardRef    = useRef<HTMLDivElement>(null)
+  const revisionCardRef = useRef<HTMLDivElement>(null)
+
+  // ── Potential score calculation ──────────────────────────────
+  const bu = analytics.buttonUsageStats || {}
+  const sureWrong         = (bu.totalAreYouSure ?? 0) - (bu.correctAreYouSure ?? 0)
+  const revisionWrong     = revisionSummary?.correctToWrong?.length ?? 0
+  const marksLostSure     = sureWrong * 2.667
+  const marksLostRevision = revisionWrong * 2.667
+  const rawPotential      = (score.marksScored ?? 0) + marksLostSure + marksLostRevision
+  const potentialScore    = Math.min(rawPotential, 200)
+  const hasRecoverableMarks = sureWrong > 0 || revisionWrong > 0
+
+  const handleShowLostMarks = () => {
+    setLostMarksHighlighted(true)
+    setTimeout(() => {
+      sureCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+  }
 
   const handleQuestionClick = (index: number) => {
     if (replayMode) {
