@@ -596,14 +596,22 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
       if (changeCount === 0) return
 
-      // Determine first answer: 'select' event option OR first 'change' event's 'from' field
-      const selectEvt  = events.find((e: SelectionEvent) => e.type === 'select')
-      const changeEvt  = events.find((e: SelectionEvent) => e.type === 'change')
-      const firstOption: string | null = selectEvt?.option ?? changeEvt?.from ?? null
+      // Determine first answer.
+      // Priority: first 'change' event's 'from' (most reliable — records original pick)
+      // then 'select' event's 'option' (first explicit selection before any change)
+      const firstChangeEvt = events.find((e: SelectionEvent) => e.type === 'change')
+      const selectEvt      = events.find((e: SelectionEvent) => e.type === 'select')
+      const firstOption: string | null = firstChangeEvt?.from ?? selectEvt?.option ?? null
 
-      const firstWasCorrect = firstOption != null
-        ? firstOption === q.correct_option
-        : false   // unknown — treat as wrong for safety
+      // If we can determine the first option AND the question has a correct_option, use it.
+      // Otherwise fall back to isCorrect inversion: if the final answer is wrong, treat first as correct (conservative).
+      let firstWasCorrect: boolean
+      if (firstOption != null && q.correct_option) {
+        firstWasCorrect = firstOption === q.correct_option
+      } else {
+        // Fallback: assume the original answer was correct (shows the card conservatively)
+        firstWasCorrect = !answer.isCorrect
+      }
       const finalIsCorrect = !!answer.isCorrect
 
       revised.push({ qNum: idx + 1, firstWasCorrect, finalIsCorrect })
@@ -930,9 +938,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           </div>
         </div>
 
-        {/* ── Revision card — only shown when user changed a correct answer to wrong ── */}
-        {revisionSummary && revisionSummary.correctToWrong.length > 0 && (() => {
-          const nLost    = revisionSummary.correctToWrong.length
+        {/* ── Revision card — shown whenever any answer was changed ── */}
+        {revisionSummary && revisionSummary.total > 0 && (() => {
+          const ctw     = revisionSummary.correctToWrong
+          const nLost   = ctw.length
           const marksLost = parseFloat((nLost * MARKS_PER_QUESTION).toFixed(2))
           return (
             <div
@@ -943,7 +952,6 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   : 'border-gray-200'
               }`}
             >
-
               {/* Header */}
               <div className="flex items-center justify-between gap-3 px-5 md:px-6 py-4 border-b border-gray-100 bg-gray-50">
                 <div className="flex items-center gap-3">
@@ -959,42 +967,73 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                     </p>
                   </div>
                 </div>
-                {isFullLength && (
+                {isFullLength && nLost > 0 && (
                   <div className="shrink-0 rounded-xl px-3 py-1.5 text-xs font-black border bg-red-50 border-red-200 text-red-700">
                     −{marksLost} marks
                   </div>
                 )}
               </div>
 
-              <div className="px-5 md:px-6 py-4">
-                <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
-                  <p className="text-sm font-bold text-red-800 leading-snug mb-1">
-                    Changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
-                  </p>
-                  <p className="text-xs text-red-600 font-semibold mb-3">
-                    {isFullLength
-                      ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × {MARKS_PER_QUESTION} — forfeited +2 &amp; incurred −0.67 penalty)</>
-                      : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
-                    }
-                  </p>
-                  <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.15em] mb-2">
-                    Click to review
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {revisionSummary.correctToWrong.map(r => (
-                      <button
-                        key={r.qNum}
-                        onClick={() => handleQuestionClick(r.qNum - 1)}
-                        className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-red-100 border-red-300 text-red-700 hover:bg-red-200"
-                        title={`Q${r.qNum} — revised correct → wrong`}
-                      >
-                        {r.qNum}
-                      </button>
-                    ))}
+              <div className="px-5 md:px-6 py-4 space-y-3">
+                {/* Correct → Wrong section */}
+                {nLost > 0 && (
+                  <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
+                    <p className="text-sm font-bold text-red-800 leading-snug mb-1">
+                      Changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
+                    </p>
+                    <p className="text-xs text-red-600 font-semibold mb-3">
+                      {isFullLength
+                        ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × {MARKS_PER_QUESTION} — forfeited +2 &amp; incurred −0.67 penalty)</>
+                        : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
+                      }
+                    </p>
+                    <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.15em] mb-2">Click to review</p>
+                    <div className="flex flex-wrap gap-2">
+                      {ctw.map(r => (
+                        <button
+                          key={r.qNum}
+                          onClick={() => handleQuestionClick(r.qNum - 1)}
+                          className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-red-100 border-red-300 text-red-700 hover:bg-red-200"
+                          title={`Q${r.qNum} — revised correct → wrong`}
+                        >
+                          {r.qNum}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </div>
+                )}
 
+                {/* Wrong → Correct section (good news) */}
+                {revisionSummary.wrongToCorrect.length > 0 && (
+                  <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                    <p className="text-sm font-bold text-emerald-800 leading-snug mb-1">
+                      Changed <span className="text-red-600">wrong</span> → <span className="text-emerald-700">correct</span>
+                    </p>
+                    <p className="text-xs text-emerald-600 font-semibold mb-2">
+                      {revisionSummary.wrongToCorrect.length} good revision{revisionSummary.wrongToCorrect.length !== 1 ? 's' : ''} — your instinct was right
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {revisionSummary.wrongToCorrect.map(r => (
+                        <button
+                          key={r.qNum}
+                          onClick={() => handleQuestionClick(r.qNum - 1)}
+                          className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200"
+                          title={`Q${r.qNum} — revised wrong → correct`}
+                        >
+                          {r.qNum}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Neutral (wrong → wrong) */}
+                {nLost === 0 && revisionSummary.wrongToCorrect.length === 0 && revisionSummary.neutral.length > 0 && (
+                  <p className="text-xs text-gray-500 font-medium">
+                    {revisionSummary.neutral.length} neutral revision{revisionSummary.neutral.length !== 1 ? 's' : ''} — changed between wrong options
+                  </p>
+                )}
+              </div>
             </div>
           )
         })()}
