@@ -422,7 +422,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             used5050: !!att.used_5050,
             isGuess: !!(att.is_guess || att.used_guess),
             usedAreYouSure: !!att.used_areyousure,
-            selectionHistory: att.selection_history ? JSON.parse(att.selection_history) : { events: [], change_count: 0 },
+            selectionHistory: (() => { if (!att.selection_history) return { events: [], change_count: 0 }; const p = JSON.parse(att.selection_history); return p.selections ?? p })(),
           }
           if (att.confidence_tag) reconstructedConfMap[att.question_id] = att.confidence_tag
         })
@@ -505,7 +505,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             used5050: !!att.used_5050,
             isGuess: !!(att.is_guess || att.used_guess),
             usedAreYouSure: !!att.used_areyousure,
-            selectionHistory: att.selection_history ? JSON.parse(att.selection_history) : { events: [], change_count: 0 },
+            selectionHistory: (() => { if (!att.selection_history) return { events: [], change_count: 0 }; const p = JSON.parse(att.selection_history); return p.selections ?? p })(),
           }
           if (att.confidence_tag) setConfidenceForQuestion(att.question_id, att.confidence_tag)
         })
@@ -546,7 +546,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           used_areyousure: finalTag === 'sure',
           is_guess: finalTag === 'guess',
           confidence_tag: finalTag,
-          selection_history: ans.selectionHistory ? JSON.stringify({ selections: ans.selectionHistory }) : undefined,
+          selection_history: ans.selectionHistory ? JSON.stringify(ans.selectionHistory) : undefined,
         }
       }),
       totalTestTime: displayElapsed,
@@ -743,113 +743,111 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
       <main className="max-w-7xl mx-auto px-3 md:px-6 mt-5 md:mt-8 space-y-6 md:space-y-8">
 
-        {/* ── Marks Scored + Potential Score ── */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Reduced Marks Scored card */}
-          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-5 md:p-6 flex-1">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 leading-tight">
-                {displayPaperLabel || 'Analysis'} · {displayQuestions.length} Qs
-              </p>
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Marks Scored</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black text-gray-900">
-                      {score.marksScored ?? score.correct}
-                    </span>
-                    <span className="text-base font-bold text-gray-400">
-                      /{score.totalMarks ?? displayQuestions.length * 2}
-                    </span>
-                  </div>
-                  <p className="text-[9px] text-gray-400 mt-1">
-                    +{score.correct * 2} − {(score.wrong * (2 / 3)).toFixed(2)} neg
-                  </p>
+        {/* ── Score cards + Subject chart — single row on desktop ── */}
+        <div className="grid grid-cols-1 md:grid-cols-[160px_160px_1fr] gap-4 items-stretch">
+
+          {/* ── Marks Scored (compact square) ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 flex-1 flex flex-col justify-between">
+              <div>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.18em] mb-2 leading-tight">
+                  {displayQuestions.length} Qs
+                </p>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Marks Scored</p>
+                <div className="flex items-baseline gap-0.5">
+                  <span className="text-3xl font-black text-gray-900">
+                    {score.marksScored ?? score.correct}
+                  </span>
+                  <span className="text-sm font-bold text-gray-400">
+                    /{score.totalMarks ?? displayQuestions.length * 2}
+                  </span>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-3xl font-black text-[#4A90E2]">{score.percentage}%</span>
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">accuracy</p>
-                </div>
+                <p className="text-[8px] text-gray-400 mt-1">
+                  +{score.correct * 2} − {(score.wrong * (2 / 3)).toFixed(2)} neg
+                </p>
+              </div>
+              <div className="mt-2">
+                <span className="text-2xl font-black text-[#4A90E2]">{score.percentage}%</span>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">accuracy</p>
               </div>
             </div>
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100">
+              <div className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">
                 {Math.floor(displayElapsed / 3600)}h {Math.floor((displayElapsed % 3600) / 60)}m
               </div>
               <button
                 onClick={() => handleQuestionClick(0)}
-                className="bg-[#4A90E2]/10 hover:bg-[#4A90E2]/20 text-[#4A90E2] px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+                className="bg-[#4A90E2]/10 hover:bg-[#4A90E2]/20 text-[#4A90E2] px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
               >
-                <Clock className="h-3 w-3" /> Review
+                <Clock className="h-2.5 w-2.5" /> Review
               </button>
             </div>
           </div>
 
-          {/* Potential Score card — 3-state flip */}
+          {/* ── Potential Score card — 3-state flip (compact square) ── */}
           <div
             className="relative cursor-pointer"
-            style={{ perspective: '1000px' }}
+            style={{ perspective: '1000px', minHeight: '160px' }}
             onClick={() => !potentialRevealed && setPotentialRevealed(true)}
           >
             <div
-              className="relative w-full transition-transform duration-500 ease-in-out [transform-style:preserve-3d]"
-              style={{ transform: potentialRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)', minHeight: '180px' }}
+              className="absolute inset-0 transition-transform duration-500 ease-in-out [transform-style:preserve-3d]"
+              style={{ transform: potentialRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
               {/* ── FRONT FACE ── */}
-              <div className="absolute inset-0 [backface-visibility:hidden] bg-white rounded-[2rem] border-2 border-[#4A90E2]/30 shadow-sm overflow-hidden flex flex-col items-center justify-center gap-3 p-5">
-                <div className="absolute inset-0 rounded-[2rem] ring-2 ring-[#4A90E2]/20 animate-pulse pointer-events-none" />
-                <div className="w-10 h-10 rounded-2xl bg-[#4A90E2]/10 flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-[#4A90E2]" />
+              <div className="absolute inset-0 [backface-visibility:hidden] bg-white rounded-2xl border-2 border-[#4A90E2]/30 shadow-sm overflow-hidden flex flex-col items-center justify-center gap-2 p-4">
+                <div className="absolute inset-0 rounded-2xl ring-2 ring-[#4A90E2]/20 animate-pulse pointer-events-none" />
+                <div className="w-9 h-9 rounded-xl bg-[#4A90E2]/10 flex items-center justify-center">
+                  <Zap className="h-4 w-4 text-[#4A90E2]" />
                 </div>
                 <div className="text-center">
-                  <p className="text-[10px] font-black text-[#4A90E2] uppercase tracking-widest mb-1">Potential Score</p>
-                  <p className="text-4xl font-black text-gray-200 blur-[6px] select-none">???</p>
+                  <p className="text-[8px] font-black text-[#4A90E2] uppercase tracking-widest mb-1">Potential Score</p>
+                  <p className="text-3xl font-black text-gray-200 blur-[6px] select-none">???</p>
                 </div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
-                  Tap to reveal your potential
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest text-center leading-tight">
+                  Tap to reveal
                 </p>
               </div>
 
               {/* ── BACK FACE ── */}
               <div
-                className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gradient-to-br from-[#4A90E2]/5 to-[#4A90E2]/10 rounded-[2rem] border-2 border-[#4A90E2]/40 shadow-sm overflow-hidden flex flex-col items-center justify-center gap-4 p-5"
+                className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gradient-to-br from-[#4A90E2]/5 to-[#4A90E2]/10 rounded-2xl border-2 border-[#4A90E2]/40 shadow-sm overflow-hidden flex flex-col items-center justify-center gap-3 p-4"
                 onClick={e => e.stopPropagation()}
               >
-                <div>
-                  <p className="text-[10px] font-black text-[#4A90E2] uppercase tracking-widest text-center mb-1">Potential Score</p>
-                  <div className="flex items-baseline gap-1 justify-center">
-                    <span className="text-5xl font-black text-gray-900">{potentialScore.toFixed(1)}</span>
-                    <span className="text-xl font-bold text-gray-400">/200</span>
+                <div className="text-center">
+                  <p className="text-[8px] font-black text-[#4A90E2] uppercase tracking-widest mb-1">Potential Score</p>
+                  <div className="flex items-baseline gap-0.5 justify-center">
+                    <span className="text-3xl font-black text-gray-900">{potentialScore.toFixed(1)}</span>
+                    <span className="text-base font-bold text-gray-400">/200</span>
                   </div>
                 </div>
                 {hasRecoverableMarks ? (
                   <button
                     onClick={lostMarksHighlighted ? undefined : handleShowLostMarks}
                     disabled={lostMarksHighlighted}
-                    className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+                    className={`px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border transition-all leading-tight ${
                       lostMarksHighlighted
                         ? 'bg-[#4A90E2]/10 border-[#4A90E2]/30 text-[#4A90E2] cursor-default'
                         : 'bg-[#4A90E2] border-[#4A90E2] text-white hover:bg-[#3a7fd4] active:scale-95'
                     }`}
                   >
-                    {lostMarksHighlighted ? 'Showing lost marks ✓' : 'See where you lost marks →'}
+                    {lostMarksHighlighted ? 'Showing ✓' : 'See lost marks →'}
                   </button>
                 ) : (
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
-                    No recoverable marks found
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest text-center">
+                    No recoverable marks
                   </p>
                 )}
               </div>
             </div>
           </div>
-        </div>
 
-        {/* ── Subject bar chart ── */}
-        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 md:p-8 flex flex-col">
-          <div className="mb-4 md:mb-6">
-            <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.15em] mb-3 md:mb-4">
-              Subject Performance — Accuracy &amp; Marks Lost
-            </h3>
+          {/* ── Subject bar chart (takes remaining width) ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col">
+            <div className="mb-3 md:mb-4">
+              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.15em] mb-3">
+                Subject Performance — Accuracy &amp; Marks Lost
+              </h3>
 
             {/* Legend */}
             <div className="flex items-center gap-3 md:gap-6 mb-5 md:mb-8 flex-wrap">
@@ -928,6 +926,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 )
               })}
             </div>
+          </div>
           </div>
         </div>
 
