@@ -741,157 +741,137 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
       <main className="max-w-7xl mx-auto px-3 md:px-6 mt-5 md:mt-8 space-y-6 md:space-y-8">
 
-        {/* ── Score + Subject bar chart ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Score card */}
+        {/* ── Marks Scored + Potential Score ── */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Reduced Marks Scored card */}
           <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-7 flex-1">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">
-                {displayPaperLabel || 'Mock Analysis'} · {displayQuestions.length} Qs
+            <div className="p-5 md:p-6 flex-1">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 leading-tight">
+                {displayPaperLabel || 'Analysis'} · {displayQuestions.length} Qs
               </p>
-              <div className="flex items-end justify-between">
+              <div className="flex items-end justify-between gap-2">
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Marks Scored</p>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Marks Scored</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-5xl font-black text-gray-900">
+                    <span className="text-4xl font-black text-gray-900">
                       {score.marksScored ?? score.correct}
                     </span>
-                    <span className="text-xl font-bold text-gray-400">
+                    <span className="text-base font-bold text-gray-400">
                       /{score.totalMarks ?? displayQuestions.length * 2}
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    +{score.correct * 2} − {(score.wrong * (2/3)).toFixed(2)} neg
+                  <p className="text-[9px] text-gray-400 mt-1">
+                    +{score.correct * 2} − {(score.wrong * (2 / 3)).toFixed(2)} neg
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="text-4xl font-black text-[#4A90E2]">{score.percentage}%</span>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">accuracy</p>
-                </div>
-              </div>
-              <div className="mt-5">
-                <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                  <span>{Object.keys(displayAnswers).length} of {displayQuestions.length} attempted</span>
-                </div>
-                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#4A90E2] rounded-full transition-all duration-1000"
-                    style={{ width: `${(Object.keys(displayAnswers).length / displayQuestions.length) * 100}%` }}
-                  />
+                <div className="text-right shrink-0">
+                  <span className="text-3xl font-black text-[#4A90E2]">{score.percentage}%</span>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">accuracy</p>
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 border-t border-gray-100">
-              <div className="py-4 text-center border-r border-gray-100">
-                <p className="text-xl font-black text-emerald-600">{score.correct}</p>
-                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mt-0.5">Correct</p>
-              </div>
-              <div className="py-4 text-center border-r border-gray-100">
-                <p className="text-xl font-black text-red-600">{score.wrong}</p>
-                <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mt-0.5">Wrong</p>
-              </div>
-              <div className="py-4 text-center">
-                <p className="text-xl font-black text-gray-400">{displayQuestions.length - Object.keys(displayAnswers).length}</p>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Skipped</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 {Math.floor(displayElapsed / 3600)}h {Math.floor((displayElapsed % 3600) / 60)}m
               </div>
               <button
                 onClick={() => handleQuestionClick(0)}
-                className="bg-[#4A90E2]/10 hover:bg-[#4A90E2]/20 text-[#4A90E2] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+                className="bg-[#4A90E2]/10 hover:bg-[#4A90E2]/20 text-[#4A90E2] px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors"
               >
-                <Clock className="h-3 w-3" /> Review Test
+                <Clock className="h-3 w-3" /> Review
               </button>
             </div>
           </div>
 
-          {/* Subject performance bar chart */}
-          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 md:p-8 flex flex-col">
-            <div className="mb-4 md:mb-6">
-              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.15em] mb-3 md:mb-4">
-                Subject Performance — Accuracy &amp; Marks Lost
-              </h3>
+          {/* Potential Score card — Task 3 will fill this */}
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-center min-h-[180px]">
+            <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Potential Score</p>
+          </div>
+        </div>
 
-              {/* Legend */}
-              <div className="flex items-center gap-3 md:gap-6 mb-5 md:mb-8 flex-wrap">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#E54B4B]" />
-                  <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">Below 50%</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#E59935]" />
-                  <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">50-70%</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#6DA42A]" />
-                  <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">Above 70%</span>
-                </div>
+        {/* ── Subject bar chart ── */}
+        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 md:p-8 flex flex-col">
+          <div className="mb-4 md:mb-6">
+            <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.15em] mb-3 md:mb-4">
+              Subject Performance — Accuracy &amp; Marks Lost
+            </h3>
+
+            {/* Legend */}
+            <div className="flex items-center gap-3 md:gap-6 mb-5 md:mb-8 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#E54B4B]" />
+                <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">Below 50%</span>
               </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#E59935]" />
+                <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">50-70%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#6DA42A]" />
+                <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">Above 70%</span>
+              </div>
+            </div>
 
-              {/* Subject list — stacked on mobile, inline on desktop */}
-              <div className="space-y-4 md:space-y-6">
-                {analytics.subjectStats.map((stat: any) => {
-                  const accuracy = stat.accuracy || 0
-                  const color = accuracy >= 70 ? '#6DA42A' : accuracy >= 50 ? '#E59935' : '#E54B4B'
-                  const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
+            {/* Subject list — stacked on mobile, inline on desktop */}
+            <div className="space-y-4 md:space-y-6">
+              {analytics.subjectStats.map((stat: any) => {
+                const accuracy = stat.accuracy || 0
+                const color = accuracy >= 70 ? '#6DA42A' : accuracy >= 50 ? '#E59935' : '#E54B4B'
+                const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
 
-                  return (
-                    <div key={stat.subject}>
-                      {/* Mobile: name + badges in one row, bar full-width below */}
-                      <div className="flex items-center justify-between mb-1.5 md:hidden">
+                return (
+                  <div key={stat.subject}>
+                    {/* Mobile: name + badges in one row, bar full-width below */}
+                    <div className="flex items-center justify-between mb-1.5 md:hidden">
+                      <span className="text-[11px] font-black text-gray-900 uppercase tracking-tight">
+                        {subjectName}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                          {stat.correct}/{stat.total}
+                        </span>
+                        <span className="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
+                          -{stat.marksLost.toFixed(1)}m
+                        </span>
+                      </div>
+                    </div>
+                    {/* Mobile: full-width bar */}
+                    <div className="md:hidden h-8 bg-gray-100 rounded-lg overflow-hidden">
+                      <div
+                        className="h-full transition-all duration-1000 ease-out flex items-center px-3"
+                        style={{ width: `${Math.max(12, accuracy)}%`, backgroundColor: color }}
+                      >
+                        <span className="text-[11px] font-black text-white whitespace-nowrap">{accuracy}%</span>
+                      </div>
+                    </div>
+
+                    {/* Desktop: horizontal row */}
+                    <div className="hidden md:flex items-center gap-4">
+                      <div className="w-24 shrink-0 text-right">
                         <span className="text-[11px] font-black text-gray-900 uppercase tracking-tight">
                           {subjectName}
                         </span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                            {stat.correct}/{stat.total}
-                          </span>
-                          <span className="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
-                            -{stat.marksLost.toFixed(1)}m
-                          </span>
-                        </div>
                       </div>
-                      {/* Mobile: full-width bar */}
-                      <div className="md:hidden h-8 bg-gray-100 rounded-lg overflow-hidden">
+                      <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
                         <div
                           className="h-full transition-all duration-1000 ease-out flex items-center px-3"
-                          style={{ width: `${Math.max(12, accuracy)}%`, backgroundColor: color }}
+                          style={{ width: `${Math.max(15, accuracy)}%`, backgroundColor: color }}
                         >
-                          <span className="text-[11px] font-black text-white whitespace-nowrap">{accuracy}%</span>
+                          <span className="text-[11px] font-black text-white">{accuracy}%</span>
                         </div>
                       </div>
-
-                      {/* Desktop: horizontal row */}
-                      <div className="hidden md:flex items-center gap-4">
-                        <div className="w-24 shrink-0 text-right">
-                          <span className="text-[11px] font-black text-gray-900 uppercase tracking-tight">
-                            {subjectName}
-                          </span>
+                      <div className="flex flex-col gap-1 w-20 shrink-0">
+                        <div className="bg-gray-100 rounded px-2 py-0.5 text-center">
+                          <span className="text-[9px] font-bold text-gray-600">{stat.correct}/{stat.total} correct</span>
                         </div>
-                        <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
-                          <div
-                            className="h-full transition-all duration-1000 ease-out flex items-center px-3"
-                            style={{ width: `${Math.max(15, accuracy)}%`, backgroundColor: color }}
-                          >
-                            <span className="text-[11px] font-black text-white">{accuracy}%</span>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1 w-20 shrink-0">
-                          <div className="bg-gray-100 rounded px-2 py-0.5 text-center">
-                            <span className="text-[9px] font-bold text-gray-600">{stat.correct}/{stat.total} correct</span>
-                          </div>
-                          <div className="bg-red-50 rounded px-2 py-0.5 text-center">
-                            <span className="text-[9px] font-bold text-red-600">-{stat.marksLost.toFixed(2)} marks</span>
-                          </div>
+                        <div className="bg-red-50 rounded px-2 py-0.5 text-center">
+                          <span className="text-[9px] font-bold text-red-600">-{stat.marksLost.toFixed(2)} marks</span>
                         </div>
                       </div>
                     </div>
-                  )
-                })}
-              </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
