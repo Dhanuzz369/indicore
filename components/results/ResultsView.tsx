@@ -769,23 +769,17 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   {typeof score.marksScored === 'number' ? score.marksScored.toFixed(2) : score.correct}
                 </span>
               </div>
-              <p className="text-[10px] text-gray-400 font-medium mt-0.5">
-                out of {(score.totalMarks ?? displayQuestions.length * 2).toFixed(2)}
-              </p>
+              <p className="text-[10px] text-gray-400 font-medium mt-0.5">out of 200.00</p>
             </div>
 
             {/* Divider */}
             <div className="mx-4 h-px bg-gray-100" />
 
-            {/* Stats rows */}
+            {/* Stats rows — Negatives removed, Accuracy highlighted */}
             <div className="px-4 py-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-400 font-medium">Negatives</span>
-                <span className="text-[11px] font-black text-red-500">−{(score.wrong * (2 / 3)).toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-400 font-medium">Accuracy</span>
-                <span className="text-[11px] font-black text-gray-800">{score.percentage}%</span>
+                <span className="text-[10px] text-gray-500 font-semibold">Accuracy</span>
+                <span className="text-[13px] font-black text-[#4A90E2]">{score.percentage}%</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-gray-400 font-medium">Attempted</span>
@@ -793,10 +787,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer — time in minutes */}
             <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100 bg-gray-50/60">
               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                {Math.floor(displayElapsed / 3600)}h {Math.floor((displayElapsed % 3600) / 60)}m
+                {Math.floor(displayElapsed / 60)} min
               </span>
               <button
                 onClick={() => handleQuestionClick(0)}
@@ -871,10 +865,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
                   {/* Score */}
                   <div className="mt-2">
-                    <div className="flex items-baseline gap-1 leading-none">
+                    <div className="flex items-baseline gap-1.5 leading-none">
                       <span className="text-[2.6rem] font-black text-white tracking-tight leading-none">
                         {potentialScore.toFixed(2)}
                       </span>
+                      <span className="text-base font-bold text-white/40">/ 200</span>
                     </div>
                     <p className="text-[10px] text-white/60 font-medium mt-0.5">projected score</p>
                   </div>
@@ -895,10 +890,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                       <button
                         onClick={lostMarksHighlighted ? undefined : handleShowLostMarks}
                         disabled={lostMarksHighlighted}
-                        className={`mt-2.5 text-[9px] font-black uppercase tracking-wider transition-all ${
+                        className={`mt-3 w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
                           lostMarksHighlighted
-                            ? 'text-white/40 cursor-default'
-                            : 'text-white/70 hover:text-white underline underline-offset-2'
+                            ? 'bg-white/10 text-white/40 cursor-default'
+                            : 'bg-white text-[#1d4ed8] hover:bg-white/90 shadow-sm'
                         }`}
                       >
                         {lostMarksHighlighted ? 'Showing lost marks ✓' : 'See where you lost marks →'}
@@ -906,22 +901,6 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                     </div>
                   ) : (
                     <p className="text-[11px] text-white/60 font-medium">No recoverable marks found</p>
-                  )}
-
-                  {/* Progress bar */}
-                  {hasRecoverableMarks && (
-                    <div className="mt-3">
-                      <div className="h-1 bg-white/15 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-white/60 rounded-full transition-all duration-1000"
-                          style={{
-                            width: `${Math.min(100, Math.max(4,
-                              (Math.max(0, potentialScore - (score.marksScored ?? 0)) / 200) * 100
-                            ))}%`
-                          }}
-                        />
-                      </div>
-                    </div>
                   )}
                 </div>
               </div>
