@@ -103,6 +103,7 @@ export interface TestSession {
   snapshot?: string    // JSON string of full replay snapshot (questions, answers, confidenceMap, etc.)
   ai_feedback: string  // AI generated feedback or empty string
   question_ids?: string // JSON array of question IDs in order
+  source_session_id?: string | null  // set when this session is a reattempt of another
 }
 
 export interface UserTestSummary {

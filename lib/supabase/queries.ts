@@ -434,6 +434,7 @@ export async function createTestSession(data: Omit<TestSession, '$id'>): Promise
       question_ids: data.question_ids
         ? (typeof data.question_ids === 'string' ? JSON.parse(data.question_ids) : data.question_ids)
         : null,
+      source_session_id: data.source_session_id ?? null,
     })
     .select()
     .single()
