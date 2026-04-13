@@ -405,6 +405,7 @@ function mapSession(doc: Record<string, any>): TestSession {
     snapshot: doc.snapshot ? JSON.stringify(doc.snapshot) : undefined,
     // Serialize question_ids array back to JSON string
     question_ids: doc.question_ids ? JSON.stringify(doc.question_ids) : undefined,
+    source_session_id: doc.source_session_id ?? null,
   } as unknown as TestSession
 }
 
