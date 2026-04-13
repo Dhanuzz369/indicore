@@ -38,6 +38,9 @@ interface QuizStore {
     guessed: number
   }
 
+  isReattempt: boolean
+  reattemptSourceSessionId: string | null
+
   setQuestions: (questions: Question[]) => void
   submitAnswer: (questionId: string, selected: string, correct: string, timeTaken: number, used5050: boolean, isGuess: boolean, usedAreYouSure: boolean) => void
   nextQuestion: () => void
@@ -67,6 +70,7 @@ interface QuizStore {
   setConfidenceMap: (map: Record<string, 'fifty_fifty' | 'guess' | 'sure'>) => void
   recordQuestionViewed: (questionId: string) => void
   recordAnswerChange: (questionId: string, from: string, to: string) => void
+  startReattempt: (questions: Question[], sourceSessionId: string) => void
 }
 
 export const useQuizStore = create<QuizStore>((set, get) => ({
@@ -77,6 +81,8 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   markedForReview: new Set<string>(),
   isAnswered: false,
   sessionId: '',
+  isReattempt: false,
+  reattemptSourceSessionId: null,
 
   testMode: false,
   practiceTimerTotal: 0,
@@ -221,6 +227,8 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     activeStartTimes: {},
     confidenceMap: {},
     buttonStats: { areYouSure: 0, used5050: 0, guessed: 0 },
+    isReattempt: false,
+    reattemptSourceSessionId: null,
   }),
 
   resetQuiz: () => set({
@@ -241,6 +249,8 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     activeStartTimes: {},
     confidenceMap: {},
     buttonStats: { areYouSure: 0, used5050: 0, guessed: 0 },
+    isReattempt: false,
+    reattemptSourceSessionId: null,
   }),
 
   getScore: () => {
@@ -397,4 +407,13 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
         },
       }
     }),
+
+  startReattempt: (questions: Question[], sourceSessionId: string) => {
+    get().reset()
+    get().setQuestions(questions)
+    set({
+      isReattempt: true,
+      reattemptSourceSessionId: sourceSessionId,
+    })
+  },
 }))
