@@ -322,6 +322,8 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
     setTestMode, setPaperLabel, setElapsed, setConfidenceMap,
   } = useQuizStore()
 
+  const startReattempt = useQuizStore(s => s.startReattempt)
+
   // ── Local state (replay mode only — fully isolated from store) ──
   const [localData, setLocalData] = useState<LocalData | null>(null)
 
@@ -344,6 +346,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const displayConfMap    = replayMode ? (localData?.confidenceMap ?? {}) : storeConfidenceMap
   const displayElapsed    = replayMode ? (localData?.elapsedSeconds ?? 0) : storeElapsed
   const displayPaperLabel = replayMode ? (localData?.paperLabel ?? '') : storePaperLabel
+
+  const reattemptQuestions = displayQuestions.filter(q => {
+    const ans = displayAnswers[q.$id]
+    return !ans || !ans.isCorrect
+  })
 
   // ─── REPLAY REHYDRATION (local state, never touches store) ───
   useEffect(() => {
@@ -644,6 +651,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const potentialScore    = Math.min(rawPotential, 200)
   const hasRecoverableMarks = sureWrong > 0 || revisionWrong > 0
 
+  const handleReattempt = () => {
+    startReattempt(reattemptQuestions, sessionId)
+    router.push('/quiz/session?mode=reattempt')
+  }
+
   const handleShowLostMarks = () => {
     setLostMarksHighlighted(true)
     setTimeout(() => {
@@ -750,6 +762,20 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
       </div>
 
       <main className="max-w-7xl mx-auto px-3 md:px-6 mt-5 md:mt-8 space-y-6 md:space-y-8">
+
+        {/* ── Reattempt Test CTA ── */}
+        {!replayMode && (
+          <div className="flex justify-center">
+            <button
+              onClick={handleReattempt}
+              disabled={reattemptQuestions.length === 0}
+              className="px-8 py-3 bg-[#4A90E2] text-white rounded-full font-black text-sm uppercase tracking-wider hover:bg-[#3a7fd4] hover:shadow-lg hover:shadow-[#4A90E2]/30 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Reattempt Test
+            </button>
+          </div>
+        )}
 
         {/* ── Score cards + Subject chart — single row on desktop ── */}
         <div className="grid grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)] gap-4 items-start">
