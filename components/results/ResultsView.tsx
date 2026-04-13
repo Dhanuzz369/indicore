@@ -347,10 +347,13 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const displayElapsed    = replayMode ? (localData?.elapsedSeconds ?? 0) : storeElapsed
   const displayPaperLabel = replayMode ? (localData?.paperLabel ?? '') : storePaperLabel
 
-  const reattemptQuestions = displayQuestions.filter(q => {
-    const ans = displayAnswers[q.$id]
-    return !ans || !ans.isCorrect
-  })
+  const reattemptQuestions = useMemo(
+    () => displayQuestions.filter(q => {
+      const ans = displayAnswers[q.$id]
+      return !ans || !ans.isCorrect
+    }),
+    [displayQuestions, displayAnswers]
+  )
 
   // ─── REPLAY REHYDRATION (local state, never touches store) ───
   useEffect(() => {
