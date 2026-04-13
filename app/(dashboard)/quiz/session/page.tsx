@@ -142,10 +142,14 @@ export default function TestSessionPage() {
     updateTimeForAnswer,
   } = useQuizStore()
 
+  const isReattempt = useQuizStore(s => s.isReattempt)
+  const reattemptSourceSessionId = useQuizStore(s => s.reattemptSourceSessionId)
+
   const { track } = useAnalytics()
 
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [revealedQuestions, setRevealedQuestions] = useState<Set<string>>(new Set())
   // Mobile palette drawer
   const [showMobilePalette, setShowMobilePalette] = useState(false)
   // Report issue modal
@@ -284,6 +288,14 @@ export default function TestSessionPage() {
       isGuess,
       isSure
     )
+    // Reattempt mode: reveal answer instantly
+    if (isReattempt) {
+      setRevealedQuestions(prev => {
+        const next = new Set(prev)
+        next.add(currentQuestion.$id)
+        return next
+      })
+    }
     if (!existingAnswer) {
       track('question_answered', {
         question_id: currentQuestion.$id,
@@ -499,6 +511,7 @@ export default function TestSessionPage() {
             }),
             ai_feedback: '',
             question_ids: JSON.stringify(questions.map(q => q.$id)),
+            source_session_id: isReattempt ? reattemptSourceSessionId : null,
           })
           sessionDocId = sessDoc.$id
         } catch (e) {
@@ -641,6 +654,14 @@ export default function TestSessionPage() {
   const getOptionState = (optionKey: 'A' | 'B' | 'C' | 'D') => {
     const sel = currentAnswer?.selectedOption
     const correct = currentQuestion.correct_option
+    // Reattempt mode: reveal immediately after selection
+    const isRevealed = isReattempt && revealedQuestions.has(currentQuestion.$id)
+    if (isRevealed) {
+      if (optionKey === sel && optionKey === correct) return 'correct'
+      if (optionKey === sel && optionKey !== correct) return 'incorrect'
+      if (optionKey === correct && sel !== correct) return 'revealed'
+      return 'default'
+    }
     if (testMode) {
       if (isSubmitted) {
         if (optionKey === sel && optionKey === correct) return 'correct'
@@ -843,7 +864,10 @@ export default function TestSessionPage() {
                   text={currentQuestion[`option_${key.toLowerCase()}` as keyof typeof currentQuestion] as string}
                   state={getOptionState(key)}
                   onClick={() => handleOptionClick(key)}
-                  disabled={testMode ? isSubmitted : isAnswered}
+                  disabled={
+                    (isReattempt && revealedQuestions.has(currentQuestion.$id)) ||
+                    (testMode ? isSubmitted : isAnswered)
+                  }
                 />
               ))}
             </div>
@@ -892,7 +916,8 @@ export default function TestSessionPage() {
             )}
 
             {/* Explanation (practice mode after answering, or test mode after submit) */}
-            {(testMode ? isSubmitted : isAnswered) && (
+            {((isReattempt && revealedQuestions.has(currentQuestion.$id)) ||
+              (testMode ? isSubmitted : isAnswered)) && (
               <ExplanationBox
                 explanation={currentQuestion.explanation}
                 correctOption={currentQuestion.correct_option}
