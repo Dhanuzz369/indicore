@@ -306,7 +306,7 @@ export default function TestSessionPage() {
         option_selected: optionKey,
       })
     }
-    if (!testMode) {
+    if (!testMode && !isReattempt) {
       try {
         const user = await getCurrentUser()
         if (user) {
