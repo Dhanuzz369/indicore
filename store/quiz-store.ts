@@ -409,9 +409,27 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     }),
 
   startReattempt: (questions: Question[], sourceSessionId: string) => {
-    get().reset()
-    get().setQuestions(questions)
+    if (questions.length === 0) return
     set({
+      // full reset
+      questions,
+      currentIndex: 0,
+      answers: {},
+      visitedQuestions: new Set<string>(),
+      markedForReview: new Set<string>(),
+      isAnswered: false,
+      sessionId: typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
+      testMode: false,
+      practiceTimerTotal: 0,
+      paperLabel: '',
+      startTime: null,
+      elapsedSeconds: 0,
+      isSubmitted: false,
+      timers: {},
+      activeStartTimes: {},
+      confidenceMap: {},
+      buttonStats: { areYouSure: 0, used5050: 0, guessed: 0 },
+      // reattempt flags
       isReattempt: true,
       reattemptSourceSessionId: sourceSessionId,
     })
