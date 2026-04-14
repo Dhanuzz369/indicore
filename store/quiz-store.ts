@@ -40,6 +40,7 @@ interface QuizStore {
 
   isReattempt: boolean
   reattemptSourceSessionId: string | null
+  pendingReattempt: { questions: Question[]; sourceSessionId: string } | null
 
   setQuestions: (questions: Question[]) => void
   submitAnswer: (questionId: string, selected: string, correct: string, timeTaken: number, used5050: boolean, isGuess: boolean, usedAreYouSure: boolean) => void
@@ -71,6 +72,8 @@ interface QuizStore {
   recordQuestionViewed: (questionId: string) => void
   recordAnswerChange: (questionId: string, from: string, to: string) => void
   startReattempt: (questions: Question[], sourceSessionId: string) => void
+  setPendingReattempt: (questions: Question[], sourceSessionId: string) => void
+  clearPendingReattempt: () => void
 }
 
 export const useQuizStore = create<QuizStore>((set, get) => ({
@@ -83,6 +86,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   sessionId: '',
   isReattempt: false,
   reattemptSourceSessionId: null,
+  pendingReattempt: null,
 
   testMode: false,
   practiceTimerTotal: 0,
@@ -229,6 +233,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     buttonStats: { areYouSure: 0, used5050: 0, guessed: 0 },
     isReattempt: false,
     reattemptSourceSessionId: null,
+    pendingReattempt: null,
   }),
 
   resetQuiz: () => set({
@@ -251,6 +256,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     buttonStats: { areYouSure: 0, used5050: 0, guessed: 0 },
     isReattempt: false,
     reattemptSourceSessionId: null,
+    pendingReattempt: null,
   }),
 
   getScore: () => {
@@ -433,5 +439,12 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       isReattempt: true,
       reattemptSourceSessionId: sourceSessionId,
     })
+  },
+
+  setPendingReattempt: (questions, sourceSessionId) => {
+    set({ pendingReattempt: { questions, sourceSessionId } })
+  },
+  clearPendingReattempt: () => {
+    set({ pendingReattempt: null })
   },
 }))

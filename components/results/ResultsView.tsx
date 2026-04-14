@@ -322,7 +322,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
     setTestMode, setPaperLabel, setElapsed, setConfidenceMap,
   } = useQuizStore()
 
-  const startReattempt = useQuizStore(s => s.startReattempt)
+  const setPendingReattempt = useQuizStore(s => s.setPendingReattempt)
 
   // ── Local state (replay mode only — fully isolated from store) ──
   const [localData, setLocalData] = useState<LocalData | null>(null)
@@ -655,7 +655,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const hasRecoverableMarks = sureWrong > 0 || revisionWrong > 0
 
   const handleReattempt = () => {
-    startReattempt(reattemptQuestions, sessionId)
+    setPendingReattempt(reattemptQuestions, sessionId)
     router.push('/quiz/session?mode=reattempt')
   }
 

@@ -144,6 +144,8 @@ export default function TestSessionPage() {
 
   const isReattempt = useQuizStore(s => s.isReattempt)
   const reattemptSourceSessionId = useQuizStore(s => s.reattemptSourceSessionId)
+  const pendingReattempt = useQuizStore(s => s.pendingReattempt)
+  const startReattempt = useQuizStore(s => s.startReattempt)
 
   const { track } = useAnalytics()
 
@@ -159,9 +161,21 @@ export default function TestSessionPage() {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [subjects, setSubjects] = useState<Subject[]>([])
 
+  // ── 0. Apply pending reattempt on mount — must run before the redirect guard ──
+  useEffect(() => {
+    const pending = useQuizStore.getState().pendingReattempt
+    if (pending) {
+      startReattempt(pending.questions, pending.sourceSessionId)
+      useQuizStore.getState().clearPendingReattempt()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // run once on mount
+
   // ── 1. Redirect if no questions ──
   useEffect(() => {
-    if (questions.length === 0) router.push('/quiz')
+    if (questions.length === 0 && !useQuizStore.getState().pendingReattempt) {
+      router.push('/quiz')
+    }
   }, [questions.length, router])
 
   // ── 2a. Mark first question as visited on load ──
@@ -208,7 +222,7 @@ export default function TestSessionPage() {
     getSubjects().then(res => setSubjects(res.documents as unknown as Subject[]))
   }, [])
 
-  if (questions.length === 0) return null
+  if (questions.length === 0 && !pendingReattempt) return null
 
   const currentQuestion = questions[currentIndex]
   const currentAnswer = answers[currentQuestion.$id]
