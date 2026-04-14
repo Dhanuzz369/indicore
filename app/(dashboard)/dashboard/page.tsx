@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { Profile, UserStats, Subject } from '@/types'
 import Link from 'next/link'
+import { WeakSubjectModal } from '@/components/dashboard/WeakSubjectModal'
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
@@ -395,6 +396,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<UserStats | null>(null)
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [subjectAccuracy, setSubjectAccuracy] = useState<Map<string, number>>(new Map())
+  const [weakPracticeSubject, setWeakPracticeSubject] = useState<{ subject: Subject; accuracy: number } | null>(null)
 
   // Section visibility refs for dashboard_section_viewed tracking
   const streakRef  = useRef(null)
@@ -593,7 +595,10 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {weakSubjects.map(({ subject, accuracy: acc }) => (
-                <div key={subject.$id} className="cursor-pointer" onClick={() => { track('weak_area_clicked', { subject_name: subject.Name, accuracy: acc }); router.push('/quiz') }}>
+                <div key={subject.$id} className="cursor-pointer" onClick={() => {
+  track('weak_area_clicked', { subject_name: subject.Name, accuracy: acc })
+  setWeakPracticeSubject({ subject, accuracy: acc })
+}}>
                   <WeakSubjectCard subject={subject} accuracy={acc} />
                 </div>
               ))}
@@ -620,6 +625,12 @@ export default function DashboardPage() {
         </div>
 
       </div>
+
+      <WeakSubjectModal
+        subject={weakPracticeSubject?.subject ?? null}
+        accuracy={weakPracticeSubject?.accuracy ?? 0}
+        onClose={() => setWeakPracticeSubject(null)}
+      />
     </div>
   )
 }
