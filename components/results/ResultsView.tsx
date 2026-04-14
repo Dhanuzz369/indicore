@@ -980,9 +980,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               </div>
             </div>
 
-            {/* Vertical bar chart */}
+            {/* Vertical bar chart — ascending accuracy (weakest first) */}
             <div className="flex items-end justify-around gap-2 h-28 mt-2">
-              {analytics.subjectStats.map((stat: any) => {
+              {[...analytics.subjectStats].sort((a: any, b: any) => (a.accuracy || 0) - (b.accuracy || 0)).map((stat: any) => {
                 const accuracy = stat.accuracy || 0
                 const color = accuracy >= 70 ? '#6DA42A' : accuracy >= 50 ? '#E59935' : '#E54B4B'
                 const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
@@ -1011,9 +1011,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 )
               })}
             </div>
-            {/* Marks lost row */}
+            {/* Marks lost row — same sort order */}
             <div className="flex items-center justify-around gap-2 mt-2 flex-wrap">
-              {analytics.subjectStats.map((stat: any) => {
+              {[...analytics.subjectStats].sort((a: any, b: any) => (a.accuracy || 0) - (b.accuracy || 0)).map((stat: any) => {
                 const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
                 return stat.marksLost > 0 ? (
                   <span key={stat.subject} className="text-[8px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded" title={subjectName}>
@@ -1121,6 +1121,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               const correct = bu.correct5050 ?? 0
               const hitRate = total > 0 ? Math.round((correct / total) * 100) : null
               const insight = hitRate !== null ? getHitRateInsight(hitRate) : null
+              const wrong50 = total - correct
               return (
                 <div className="bg-blue-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm overflow-hidden transition-all duration-300">
                   {/* ── Clickable header ── */}
@@ -1140,6 +1141,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {wrong50 > 0 && (
+                        <span className="hidden sm:inline text-xs font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                          −{(wrong50 * MARKS_PER_QUESTION).toFixed(1)} marks
+                        </span>
+                      )}
                       <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${isExpanded5050 ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
@@ -1169,6 +1175,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               const bu = analytics.buttonUsageStats || {}
               const total   = bu.totalGuess   ?? 0
               const correct = bu.correctGuess ?? 0
+              const wrongGuess = total - correct
               return (
                 <div className="bg-violet-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-violet-100 shadow-sm overflow-hidden transition-all duration-300">
                   {/* ── Clickable header ── */}
@@ -1188,6 +1195,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {wrongGuess > 0 && (
+                        <span className="hidden sm:inline text-xs font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                          −{(wrongGuess * MARKS_PER_QUESTION).toFixed(1)} marks
+                        </span>
+                      )}
                       <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${isExpandedGuesses ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
@@ -1314,7 +1326,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </div>
           </div>
           <div className="space-y-4">
-            {analytics.subjectStats.map((stat: any) => {
+            {[...analytics.subjectStats].sort((a: any, b: any) => (a.accuracy || 0) - (b.accuracy || 0)).map((stat: any) => {
               // stat.subject is the resolved name; filter questions by UUID
               const subjectUUID = Object.keys(subjectMap).find(id => subjectMap[id] === stat.subject) ?? stat.subject
               return (
