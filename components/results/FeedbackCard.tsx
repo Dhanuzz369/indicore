@@ -9,9 +9,11 @@ const CATEGORIES = ['UI/UX', 'Content Quality', 'Bug Report', 'Feature Request',
 interface FeedbackCardProps {
   sessionId: string
   testMode?: string
+  onDone?: () => void   // called after successful submit
+  onSkip?: () => void   // called when user skips
 }
 
-export function FeedbackCard({ sessionId, testMode }: FeedbackCardProps) {
+export function FeedbackCard({ sessionId, testMode, onDone, onSkip }: FeedbackCardProps) {
   const [rating, setRating] = useState(0)
   const [hovered, setHovered] = useState(0)
   const [category, setCategory] = useState('')
@@ -52,6 +54,7 @@ export function FeedbackCard({ sessionId, testMode }: FeedbackCardProps) {
       })
       if (!res.ok) throw new Error('Server error')
       setSubmitted(true)
+      setTimeout(() => onDone?.(), 1500)
     } catch {
       setError('Failed to submit. Please try again.')
     } finally {
@@ -134,14 +137,24 @@ export function FeedbackCard({ sessionId, testMode }: FeedbackCardProps) {
       {/* Submit */}
       <div className="flex items-center justify-between mt-3">
         <p className="text-xs text-gray-400">Your feedback goes directly to the backend team.</p>
-        <button
-          onClick={handleSubmit}
-          disabled={submitting || !text.trim()}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#4A90E2] text-white text-sm font-black rounded-xl hover:bg-[#3a7fd4] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <Send className="h-3.5 w-3.5" />
-          {submitting ? 'Sending…' : 'Send Feedback'}
-        </button>
+        <div className="flex items-center gap-2">
+          {onSkip && (
+            <button
+              onClick={onSkip}
+              className="text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2 transition-colors ml-2"
+            >
+              Skip for now
+            </button>
+          )}
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !text.trim()}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#4A90E2] text-white text-sm font-black rounded-xl hover:bg-[#3a7fd4] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Send className="h-3.5 w-3.5" />
+            {submitting ? 'Sending…' : 'Send Feedback'}
+          </button>
+        </div>
       </div>
     </div>
   )

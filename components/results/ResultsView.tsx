@@ -12,6 +12,7 @@ import type { Question, SelectionEvent } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { toast } from 'sonner'
 import { FeedbackCard } from './FeedbackCard'
+import { FeedbackModal } from './FeedbackModal'
 import FullMockNudgeModal from '@/components/modals/FullMockNudgeModal'
 
 
@@ -342,6 +343,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
   // ── Local state (replay mode only — fully isolated from store) ──
   const [localData, setLocalData] = useState<LocalData | null>(null)
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null)
 
   const [isRehydrating, setIsRehydrating] = useState(false)
   const [storedAnalytics, setStoredAnalytics] = useState<any>(null)
@@ -760,7 +762,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           <div className="flex items-center gap-3">
             {replayMode ? (
               <button
-                onClick={() => router.push('/tests')}
+                onClick={() => setPendingNavigation(() => () => router.push('/tests'))}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" /> My Tests
@@ -768,13 +770,13 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             ) : (
               <>
                 <button
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => setPendingNavigation(() => () => router.push('/dashboard'))}
                   className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   <Home className="h-4 w-4" /> Dashboard
                 </button>
                 <button
-                  onClick={() => { reset(); router.push('/quiz') }}
+                  onClick={() => setPendingNavigation(() => () => { reset(); router.push('/quiz') })}
                   className="bg-white border border-gray-200 px-5 py-2.5 rounded-2xl text-sm font-black text-gray-900 hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm"
                 >
                   <RefreshCw className="h-4 w-4" /> Retake
@@ -1346,13 +1348,25 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           </div>
         </div>
 
-        {/* ── Feedback ── */}
-        <FeedbackCard
+      </main>
+
+      {/* ── Feedback modal — shown when navigating away ── */}
+      {pendingNavigation && (
+        <FeedbackModal
           sessionId={sessionId}
           testMode={isFullLength ? 'full_length' : 'practice'}
+          onDone={() => {
+            const nav = pendingNavigation
+            setPendingNavigation(null)
+            nav()
+          }}
+          onSkip={() => {
+            const nav = pendingNavigation
+            setPendingNavigation(null)
+            nav()
+          }}
         />
-
-      </main>
+      )}
 
       <FullMockNudgeModal
         sessionId={sessionId}
