@@ -37,11 +37,17 @@ export function WeakSubjectModal({ subject, accuracy, onClose }: WeakSubjectModa
   useEffect(() => {
     if (!subject) return
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') handleClose()
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [subject, onClose])
+
+  const handleClose = () => {
+    setLoading(false)
+    setError(null)
+    onClose()
+  }
 
   if (!subject) return null
 
@@ -77,15 +83,18 @@ export function WeakSubjectModal({ subject, accuracy, onClose }: WeakSubjectModa
   return (
     <div
       className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col gap-4"
         onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="weak-subject-modal-title"
       >
         {/* Header */}
         <div>
-          <h2 className="text-xl font-black text-gray-900">{subject.Name}</h2>
+          <h2 id="weak-subject-modal-title" className="text-xl font-black text-gray-900">{subject.Name}</h2>
           <div className="flex items-center gap-1.5 mt-1">
             <span className={`text-sm font-bold ${perf.color}`}>{accuracy}%</span>
             <span className={`text-xs font-semibold ${perf.color}`}>— {perf.label}</span>
@@ -120,7 +129,7 @@ export function WeakSubjectModal({ subject, accuracy, onClose }: WeakSubjectModa
 
         {/* Dismiss */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="text-sm text-gray-400 font-medium hover:text-gray-600 transition-colors text-center"
         >
           Maybe later
