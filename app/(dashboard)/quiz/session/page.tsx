@@ -598,14 +598,24 @@ export default function TestSessionPage() {
         }
 
         toast.success('Test submitted and saved! 🎉')
-        router.push(sessionDocId ? `/results?session=${sessionDocId}` : '/results')
+        // Reattempt sessions redirect back to the original session results
+        if (isReattempt && reattemptSourceSessionId) {
+          router.push(`/results?session=${reattemptSourceSessionId}&replay=true`)
+        } else {
+          router.push(sessionDocId ? `/results?session=${sessionDocId}` : '/results')
+        }
         return
       }
     } catch (e) {
       console.error('Failed to save attempts:', e)
       toast.error('Submission saved locally. Some data may not have synced.')
     }
-    router.push('/results')
+    // Reattempt fallback: also redirect to original session
+    if (isReattempt && reattemptSourceSessionId) {
+      router.push(`/results?session=${reattemptSourceSessionId}&replay=true`)
+    } else {
+      router.push('/results')
+    }
   }
 
   // ── Report Issue ──

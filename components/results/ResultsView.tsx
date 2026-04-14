@@ -766,7 +766,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
       <main className="max-w-7xl mx-auto px-3 md:px-6 mt-5 md:mt-8 space-y-6 md:space-y-8">
 
-        {/* ── Reattempt Test CTA ── */}
+        {/* ── Reattempt Wrong Questions CTA ── */}
         {!replayMode && (
           <div className="flex justify-center">
             <button
@@ -775,7 +775,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               className="px-8 py-3 bg-[#4A90E2] text-white rounded-full font-black text-sm uppercase tracking-wider hover:bg-[#3a7fd4] hover:shadow-lg hover:shadow-[#4A90E2]/30 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              Reattempt Test
+              Reattempt Wrong Questions
             </button>
           </div>
         )}
