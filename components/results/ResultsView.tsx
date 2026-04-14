@@ -148,6 +148,22 @@ function SubjectPerformanceCard({
           </div>
         </div>
       </div>
+      {/* ── Mini stacked progress bar ── */}
+      <div className="h-1.5 flex overflow-hidden">
+        {(() => {
+          const correct = subjectQuestions.filter(q => answers[q.$id]?.isCorrect === true).length
+          const wrong = subjectQuestions.filter(q => answers[q.$id]?.isCorrect === false).length
+          const skipped = subjectQuestions.length - correct - wrong
+          const total = subjectQuestions.length || 1
+          return (
+            <>
+              <div className="bg-emerald-400 transition-all duration-1000" style={{ width: `${(correct / total) * 100}%` }} />
+              <div className="bg-red-400 transition-all duration-1000" style={{ width: `${(wrong / total) * 100}%` }} />
+              <div className="bg-gray-200 transition-all duration-1000" style={{ width: `${(skipped / total) * 100}%` }} />
+            </>
+          )
+        })()}
+      </div>
       {isExpanded && (
         <div className="px-6 pb-6 md:px-8 md:pb-8 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="border-t border-gray-100 pt-6">
@@ -640,6 +656,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   // ── Potential Score state ──────────────────────────────────
   const [potentialRevealed, setPotentialRevealed] = useState(false)
   const [lostMarksHighlighted, setLostMarksHighlighted] = useState(false)
+
+  // ── Confidence accordion state ──────────────────────────────
+  const [isExpandedSure, setIsExpandedSure] = useState(false)
+  const [isExpanded5050, setIsExpanded5050] = useState(false)
+  const [isExpandedGuesses, setIsExpandedGuesses] = useState(false)
   const sureCardRef    = useRef<HTMLDivElement>(null)
   const revisionCardRef = useRef<HTMLDivElement>(null)
 
@@ -959,315 +980,336 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               </div>
             </div>
 
-            {/* Subject list — stacked on mobile, inline on desktop */}
-            <div className="space-y-4 md:space-y-6">
+            {/* Vertical bar chart */}
+            <div className="flex items-end justify-around gap-2 h-28 mt-2">
               {analytics.subjectStats.map((stat: any) => {
                 const accuracy = stat.accuracy || 0
                 const color = accuracy >= 70 ? '#6DA42A' : accuracy >= 50 ? '#E59935' : '#E54B4B'
                 const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
-
+                const barHeight = Math.max(10, accuracy) // minimum 10% height for visibility
                 return (
-                  <div key={stat.subject}>
-                    {/* Mobile: name + badges in one row, bar full-width below */}
-                    <div className="flex items-center justify-between mb-1.5 md:hidden">
-                      <span className="text-[11px] font-black text-gray-900 uppercase tracking-tight">
-                        {subjectName}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                          {stat.correct}/{stat.total}
-                        </span>
-                        <span className="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
-                          -{stat.marksLost.toFixed(1)}m
-                        </span>
-                      </div>
-                    </div>
-                    {/* Mobile: full-width bar */}
-                    <div className="md:hidden h-8 bg-gray-100 rounded-lg overflow-hidden">
+                  <div key={stat.subject} className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                    {/* Accuracy label above bar */}
+                    <span className="text-[9px] font-black" style={{ color }}>{accuracy}%</span>
+                    {/* Bar */}
+                    <div className="w-full bg-gray-100 rounded-t-lg overflow-hidden flex flex-col justify-end" style={{ height: '72px' }}>
                       <div
-                        className="h-full transition-all duration-1000 ease-out flex items-center px-3"
-                        style={{ width: `${Math.max(12, accuracy)}%`, backgroundColor: color }}
-                      >
-                        <span className="text-[11px] font-black text-white whitespace-nowrap">{accuracy}%</span>
-                      </div>
+                        className="w-full rounded-t-lg transition-all duration-1000 ease-out"
+                        style={{ height: `${barHeight}%`, backgroundColor: color }}
+                      />
                     </div>
-
-                    {/* Desktop: horizontal row */}
-                    <div className="hidden md:flex items-center gap-4">
-                      <div className="w-24 shrink-0 text-right">
-                        <span className="text-[11px] font-black text-gray-900 uppercase tracking-tight">
-                          {subjectName}
-                        </span>
-                      </div>
-                      <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
-                        <div
-                          className="h-full transition-all duration-1000 ease-out flex items-center px-3"
-                          style={{ width: `${Math.max(15, accuracy)}%`, backgroundColor: color }}
-                        >
-                          <span className="text-[11px] font-black text-white">{accuracy}%</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-1 w-20 shrink-0">
-                        <div className="bg-gray-100 rounded px-2 py-0.5 text-center">
-                          <span className="text-[9px] font-bold text-gray-600">{stat.correct}/{stat.total} correct</span>
-                        </div>
-                        <div className="bg-red-50 rounded px-2 py-0.5 text-center">
-                          <span className="text-[9px] font-bold text-red-600">-{stat.marksLost.toFixed(2)} marks</span>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Subject name below bar — truncated */}
+                    <span
+                      className="text-[8px] font-bold text-gray-500 uppercase tracking-tight text-center w-full truncate"
+                      title={subjectName}
+                    >
+                      {subjectName.length > 8 ? subjectName.slice(0, 7) + '…' : subjectName}
+                    </span>
+                    {/* Correct count */}
+                    <span className="text-[8px] font-bold text-gray-400">{stat.correct}/{stat.total}</span>
                   </div>
                 )
+              })}
+            </div>
+            {/* Marks lost row */}
+            <div className="flex items-center justify-around gap-2 mt-2 flex-wrap">
+              {analytics.subjectStats.map((stat: any) => {
+                const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
+                return stat.marksLost > 0 ? (
+                  <span key={stat.subject} className="text-[8px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded" title={subjectName}>
+                    -{stat.marksLost.toFixed(1)}m
+                  </span>
+                ) : null
               })}
             </div>
           </div>
           </div>
         </div>
 
-        {/* ── Revision card — shown whenever any answer was changed ── */}
-        {revisionSummary && revisionSummary.total > 0 && (() => {
-          const ctw     = revisionSummary.correctToWrong
-          const nLost   = ctw.length
-          const marksLost = parseFloat((nLost * MARKS_PER_QUESTION).toFixed(2))
-          return (
-            <div
-              ref={revisionCardRef}
-              className={`rounded-2xl bg-white border shadow-sm overflow-hidden transition-all duration-300 ${
-                lostMarksHighlighted
-                  ? 'border-[#4A90E2] ring-2 ring-[#4A90E2] ring-offset-2 shadow-[0_0_0_6px_rgba(74,144,226,0.15)]'
-                  : 'border-gray-200'
-              }`}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between gap-3 px-5 md:px-6 py-4 border-b border-gray-100 bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                    <RefreshCw className="h-4 w-4 text-amber-600" />
+        {/* ── Strategy suggestions ── */}
+        {analytics.suggestions.length > 0 && (
+          <div className="bg-gray-900 rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-10 opacity-10"><Lightbulb className="h-40 w-40" /></div>
+            <div className="relative z-10">
+              <h3 className="text-xl font-black uppercase tracking-widest mb-6 flex items-center gap-3">
+                <Zap className="h-6 w-6 text-[#4A90E2]" /> Strategy Protocol
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                {analytics.suggestions.map((s: string, idx: number) => (
+                  <div key={idx} className="flex gap-4">
+                    <span className="text-[#4A90E2] font-black italic">#{idx + 1}</span>
+                    <p className="text-sm font-medium text-gray-300 leading-relaxed">{s}</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-black text-gray-900">Answer Revisions</p>
-                    <p className="text-xs text-gray-400 font-medium">
-                      You changed{' '}
-                      <span className="font-black text-gray-700">{revisionSummary.total}</span>
-                      {' '}answer{revisionSummary.total !== 1 ? 's' : ''} during this test
-                    </p>
-                  </div>
-                </div>
-                {isFullLength && nLost > 0 && (
-                  <div className="shrink-0 rounded-xl px-3 py-1.5 text-xs font-black border bg-red-50 border-red-200 text-red-700">
-                    −{marksLost} marks
-                  </div>
-                )}
-              </div>
-
-              <div className="px-5 md:px-6 py-4 space-y-3">
-                {/* Correct → Wrong section */}
-                {nLost > 0 && (
-                  <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
-                    <p className="text-sm font-bold text-red-800 leading-snug mb-1">
-                      Changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
-                    </p>
-                    <p className="text-xs text-red-600 font-semibold mb-3">
-                      {isFullLength
-                        ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × {MARKS_PER_QUESTION} — forfeited +2 &amp; incurred −0.67 penalty)</>
-                        : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
-                      }
-                    </p>
-                    <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.15em] mb-2">Click to review</p>
-                    <div className="flex flex-wrap gap-2">
-                      {ctw.map(r => (
-                        <button
-                          key={r.qNum}
-                          onClick={() => handleQuestionClick(r.qNum - 1)}
-                          className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-red-100 border-red-300 text-red-700 hover:bg-red-200"
-                          title={`Q${r.qNum} — revised correct → wrong`}
-                        >
-                          {r.qNum}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Wrong → Correct section (good news) */}
-                {revisionSummary.wrongToCorrect.length > 0 && (
-                  <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
-                    <p className="text-sm font-bold text-emerald-800 leading-snug mb-1">
-                      Changed <span className="text-red-600">wrong</span> → <span className="text-emerald-700">correct</span>
-                    </p>
-                    <p className="text-xs text-emerald-600 font-semibold mb-2">
-                      {revisionSummary.wrongToCorrect.length} good revision{revisionSummary.wrongToCorrect.length !== 1 ? 's' : ''} — your instinct was right
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {revisionSummary.wrongToCorrect.map(r => (
-                        <button
-                          key={r.qNum}
-                          onClick={() => handleQuestionClick(r.qNum - 1)}
-                          className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200"
-                          title={`Q${r.qNum} — revised wrong → correct`}
-                        >
-                          {r.qNum}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Neutral (wrong → wrong) */}
-                {nLost === 0 && revisionSummary.wrongToCorrect.length === 0 && revisionSummary.neutral.length > 0 && (
-                  <p className="text-xs text-gray-500 font-medium">
-                    {revisionSummary.neutral.length} neutral revision{revisionSummary.neutral.length !== 1 ? 's' : ''} — changed between wrong options
-                  </p>
-                )}
+                ))}
               </div>
             </div>
-          )
-        })()}
+          </div>
+        )}
 
-        {/* ── Confidence panels ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Sure Items */}
-          {(() => {
-            const bu = analytics.buttonUsageStats || {}
-            const total   = bu.totalAreYouSure   ?? 0
-            const correct = bu.correctAreYouSure ?? 0
-            const mistakes = total - correct
-            const insight = getSureInsight(mistakes)
-            return (
-              <div
-                ref={sureCardRef}
-                className={`bg-emerald-50/60 rounded-[1.5rem] md:rounded-[2rem] border shadow-sm p-5 md:p-6 flex flex-col gap-4 transition-all duration-300 ${
-                  lostMarksHighlighted
-                    ? 'border-[#4A90E2] ring-2 ring-[#4A90E2] ring-offset-2 shadow-[0_0_0_6px_rgba(74,144,226,0.15)]'
-                    : 'border-emerald-100'
-                }`}
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Mastery</span>
-                </div>
-                {/* Title + stats */}
-                <div>
-                  <h4 className="text-xl font-black text-gray-900 mb-2">Sure Items</h4>
-                  {total > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <span className="bg-emerald-500 text-white text-[11px] font-black px-3 py-1 rounded-full">
-                        {correct} / {total} correct
-                      </span>
-                      <span className="text-xs text-gray-500 font-semibold">
-                        {mistakes} mistake{mistakes !== 1 ? 's' : ''}
-                      </span>
+        {/* ── Confidence & Revision — 2-column layout ── */}
+        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-6 items-start">
+          {/* Left: accordion confidence panels */}
+          <div className="space-y-4">
+            {/* Sure Items accordion */}
+            {(() => {
+              const bu = analytics.buttonUsageStats || {}
+              const total   = bu.totalAreYouSure   ?? 0
+              const correct = bu.correctAreYouSure ?? 0
+              const mistakes = total - correct
+              const insight = getSureInsight(mistakes)
+              return (
+                <div
+                  ref={sureCardRef}
+                  className={`bg-emerald-50/60 rounded-[1.5rem] md:rounded-[2rem] border shadow-sm overflow-hidden transition-all duration-300 ${
+                    lostMarksHighlighted
+                      ? 'border-[#4A90E2] ring-2 ring-[#4A90E2] ring-offset-2 shadow-[0_0_0_6px_rgba(74,144,226,0.15)]'
+                      : 'border-emerald-100'
+                  }`}
+                >
+                  {/* ── Clickable header ── */}
+                  <button
+                    onClick={() => setIsExpandedSure(v => !v)}
+                    className="w-full flex items-center justify-between px-5 md:px-6 py-4 text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
+                        <CheckCircle className="h-4 w-4 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">Sure Items</p>
+                        <p className="text-xs text-gray-400 font-medium">
+                          {total > 0 ? `${correct} / ${total} correct · ${mistakes} mistake${mistakes !== 1 ? 's' : ''}` : 'No sure answers tagged'}
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <span className="text-xs text-gray-400 font-medium">No sure answers tagged</span>
+                    <div className="flex items-center gap-2">
+                      {mistakes > 0 && (
+                        <span className="hidden sm:inline text-xs font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                          −{(mistakes * 2.667).toFixed(1)} marks
+                        </span>
+                      )}
+                      <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${isExpandedSure ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {/* ── Expanded content ── */}
+                  {isExpandedSure && (
+                    <div className="px-5 md:px-6 pb-5 md:pb-6 pt-2 border-t border-emerald-100 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
+                      {/* Message box */}
+                      <div className="bg-white rounded-2xl p-4 shadow-sm">
+                        {insight ? (
+                          <>
+                            <p className="text-sm font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                            <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                            {total > 0 ? 'Perfect accuracy on sure items — your confident answers are reliable.' : 'Tag questions as "Sure" during the test to track your confident answers.'}
+                          </p>
+                        )}
+                      </div>
+                      <TaggedQuestionsDropdown tag="sure" title="Review Sure Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
+                    </div>
                   )}
                 </div>
-                {/* Message box */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm flex-1">
-                  {insight ? (
-                    <>
-                      <p className="text-sm font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
-                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                      {total > 0 ? 'Perfect accuracy on sure items — your confident answers are reliable.' : 'Tag questions as "Sure" during the test to track your confident answers.'}
-                    </p>
-                  )}
-                </div>
-                <TaggedQuestionsDropdown tag="sure" title="Review Sure Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
-              </div>
-            )
-          })()}
+              )
+            })()}
 
-          {/* 50:50 Logic */}
-          {(() => {
-            const bu = analytics.buttonUsageStats || {}
-            const total   = bu.total5050   ?? 0
-            const correct = bu.correct5050 ?? 0
-            const hitRate = total > 0 ? Math.round((correct / total) * 100) : null
-            const insight = hitRate !== null ? getHitRateInsight(hitRate) : null
-            return (
-              <div className="bg-blue-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm p-5 md:p-6 flex flex-col gap-4">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center">
-                    <Brain className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Learning</span>
-                </div>
-                {/* Title + stats */}
-                <div>
-                  <h4 className="text-xl font-black text-gray-900 mb-2">50:50 Logic</h4>
-                  {total > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <span className="bg-blue-500 text-white text-[11px] font-black px-3 py-1 rounded-full">
-                        {correct} / {total} correct
-                      </span>
-                      <span className="text-xs text-gray-500 font-semibold">{hitRate}% hit rate</span>
+            {/* 50:50 Logic accordion */}
+            {(() => {
+              const bu = analytics.buttonUsageStats || {}
+              const total   = bu.total5050   ?? 0
+              const correct = bu.correct5050 ?? 0
+              const hitRate = total > 0 ? Math.round((correct / total) * 100) : null
+              const insight = hitRate !== null ? getHitRateInsight(hitRate) : null
+              return (
+                <div className="bg-blue-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-blue-100 shadow-sm overflow-hidden transition-all duration-300">
+                  {/* ── Clickable header ── */}
+                  <button
+                    onClick={() => setIsExpanded5050(v => !v)}
+                    className="w-full flex items-center justify-between px-5 md:px-6 py-4 text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-2xl bg-blue-100 flex items-center justify-center shrink-0">
+                        <Brain className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">50:50 Logic</p>
+                        <p className="text-xs text-gray-400 font-medium">
+                          {total > 0 ? `${correct} / ${total} correct · ${hitRate}% hit rate` : 'No 50:50 answers tagged'}
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <span className="text-xs text-gray-400 font-medium">No 50:50 answers tagged</span>
+                    <div className="flex items-center gap-2">
+                      <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${isExpanded5050 ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {/* ── Expanded content ── */}
+                  {isExpanded5050 && (
+                    <div className="px-5 md:px-6 pb-5 md:pb-6 pt-2 border-t border-blue-100 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
+                      {/* Message box */}
+                      <div className="bg-white rounded-2xl p-4 shadow-sm">
+                        {insight ? (
+                          <>
+                            <p className="text-sm font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                            <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500 font-medium leading-relaxed">Tag questions where you narrowed to two options to track your elimination accuracy.</p>
+                        )}
+                      </div>
+                      <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
+                    </div>
                   )}
                 </div>
-                {/* Message box */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm flex-1">
-                  {insight ? (
-                    <>
-                      <p className="text-sm font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
-                      <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-500 font-medium leading-relaxed">Tag questions where you narrowed to two options to track your elimination accuracy.</p>
-                  )}
-                </div>
-                <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
-              </div>
-            )
-          })()}
+              )
+            })()}
 
-          {/* Guesses */}
-          {(() => {
-            const bu = analytics.buttonUsageStats || {}
-            const total   = bu.totalGuess   ?? 0
-            const correct = bu.correctGuess ?? 0
-            return (
-              <div className="bg-violet-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-violet-100 shadow-sm p-5 md:p-6 flex flex-col gap-4">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-2xl bg-violet-100 flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-violet-600" />
-                  </div>
-                  <span className="text-[10px] font-black text-violet-600 uppercase tracking-widest">Luck Factor</span>
-                </div>
-                {/* Title + stats */}
-                <div>
-                  <h4 className="text-xl font-black text-gray-900 mb-2">Guesses</h4>
-                  {total > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <span className="bg-violet-500 text-white text-[11px] font-black px-3 py-1 rounded-full">
-                        {correct} / {total} correct
-                      </span>
-                      <span className="text-xs text-gray-500 font-semibold">in this zone</span>
+            {/* Guesses accordion */}
+            {(() => {
+              const bu = analytics.buttonUsageStats || {}
+              const total   = bu.totalGuess   ?? 0
+              const correct = bu.correctGuess ?? 0
+              return (
+                <div className="bg-violet-50/60 rounded-[1.5rem] md:rounded-[2rem] border border-violet-100 shadow-sm overflow-hidden transition-all duration-300">
+                  {/* ── Clickable header ── */}
+                  <button
+                    onClick={() => setIsExpandedGuesses(v => !v)}
+                    className="w-full flex items-center justify-between px-5 md:px-6 py-4 text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-2xl bg-violet-100 flex items-center justify-center shrink-0">
+                        <Zap className="h-4 w-4 text-violet-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">Guesses</p>
+                        <p className="text-xs text-gray-400 font-medium">
+                          {total > 0 ? `${correct} / ${total} correct · in this zone` : 'No guess answers tagged'}
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <span className="text-xs text-gray-400 font-medium">No guess answers tagged</span>
+                    <div className="flex items-center gap-2">
+                      <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${isExpandedGuesses ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {/* ── Expanded content ── */}
+                  {isExpandedGuesses && (
+                    <div className="px-5 md:px-6 pb-5 md:pb-6 pt-2 border-t border-violet-100 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
+                      <TaggedQuestionsDropdown tag="guess" title="Review Guess Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
+                    </div>
                   )}
                 </div>
-                <TaggedQuestionsDropdown tag="guess" title="Review Guess Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
-              </div>
-            )
-          })()}
+              )
+            })()}
+          </div>
+
+          {/* Right: Revision card */}
+          <div>
+            {revisionSummary && revisionSummary.total > 0 && (() => {
+              const ctw     = revisionSummary.correctToWrong
+              const nLost   = ctw.length
+              const marksLost = parseFloat((nLost * MARKS_PER_QUESTION).toFixed(2))
+              return (
+                <div
+                  ref={revisionCardRef}
+                  className={`rounded-2xl bg-white border shadow-sm overflow-hidden transition-all duration-300 ${
+                    lostMarksHighlighted
+                      ? 'border-[#4A90E2] ring-2 ring-[#4A90E2] ring-offset-2 shadow-[0_0_0_6px_rgba(74,144,226,0.15)]'
+                      : 'border-gray-200'
+                  }`}
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-3 px-5 md:px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                        <RefreshCw className="h-4 w-4 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">Answer Revisions</p>
+                        <p className="text-xs text-gray-400 font-medium">
+                          You changed{' '}
+                          <span className="font-black text-gray-700">{revisionSummary.total}</span>
+                          {' '}answer{revisionSummary.total !== 1 ? 's' : ''} during this test
+                        </p>
+                      </div>
+                    </div>
+                    {isFullLength && nLost > 0 && (
+                      <div className="shrink-0 rounded-xl px-3 py-1.5 text-xs font-black border bg-red-50 border-red-200 text-red-700">
+                        −{marksLost} marks
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="px-5 md:px-6 py-4 space-y-3">
+                    {/* Correct → Wrong section */}
+                    {nLost > 0 && (
+                      <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
+                        <p className="text-sm font-bold text-red-800 leading-snug mb-1">
+                          Changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
+                        </p>
+                        <p className="text-xs text-red-600 font-semibold mb-3">
+                          {isFullLength
+                            ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × {MARKS_PER_QUESTION} — forfeited +2 &amp; incurred −0.67 penalty)</>
+                            : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
+                          }
+                        </p>
+                        <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.15em] mb-2">Click to review</p>
+                        <div className="flex flex-wrap gap-2">
+                          {ctw.map(r => (
+                            <button
+                              key={r.qNum}
+                              onClick={() => handleQuestionClick(r.qNum - 1)}
+                              className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-red-100 border-red-300 text-red-700 hover:bg-red-200"
+                              title={`Q${r.qNum} — revised correct → wrong`}
+                            >
+                              {r.qNum}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Wrong → Correct section (good news) */}
+                    {revisionSummary.wrongToCorrect.length > 0 && (
+                      <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                        <p className="text-sm font-bold text-emerald-800 leading-snug mb-1">
+                          Changed <span className="text-red-600">wrong</span> → <span className="text-emerald-700">correct</span>
+                        </p>
+                        <p className="text-xs text-emerald-600 font-semibold mb-2">
+                          {revisionSummary.wrongToCorrect.length} good revision{revisionSummary.wrongToCorrect.length !== 1 ? 's' : ''} — your instinct was right
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {revisionSummary.wrongToCorrect.map(r => (
+                            <button
+                              key={r.qNum}
+                              onClick={() => handleQuestionClick(r.qNum - 1)}
+                              className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200"
+                              title={`Q${r.qNum} — revised wrong → correct`}
+                            >
+                              {r.qNum}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Neutral (wrong → wrong) */}
+                    {nLost === 0 && revisionSummary.wrongToCorrect.length === 0 && revisionSummary.neutral.length > 0 && (
+                      <p className="text-xs text-gray-500 font-medium">
+                        {revisionSummary.neutral.length} neutral revision{revisionSummary.neutral.length !== 1 ? 's' : ''} — changed between wrong options
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
         </div>
 
         {/* ── Subject drill-down ── */}
         <div className="pt-8 border-t border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight italic">Engine Drill-Down</h2>
+              <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight italic">Subject wise performance</h2>
               <p className="text-xs text-gray-500 font-medium">Subject-wise question breakdown — click a question number to review</p>
             </div>
           </div>
@@ -1291,26 +1333,6 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             })}
           </div>
         </div>
-
-        {/* ── Strategy suggestions ── */}
-        {analytics.suggestions.length > 0 && (
-          <div className="bg-gray-900 rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-10 opacity-10"><Lightbulb className="h-40 w-40" /></div>
-            <div className="relative z-10">
-              <h3 className="text-xl font-black uppercase tracking-widest mb-6 flex items-center gap-3">
-                <Zap className="h-6 w-6 text-[#4A90E2]" /> Strategy Protocol
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                {analytics.suggestions.map((s: string, idx: number) => (
-                  <div key={idx} className="flex gap-4">
-                    <span className="text-[#4A90E2] font-black italic">#{idx + 1}</span>
-                    <p className="text-sm font-medium text-gray-300 leading-relaxed">{s}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ── Feedback ── */}
         <FeedbackCard
