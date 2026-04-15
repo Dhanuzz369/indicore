@@ -90,7 +90,7 @@ export default function PricingPage() {
   // Fetch user info for Razorpay prefill
   useEffect(() => {
     getCurrentUser().then(u => {
-      if (u) setUserInfo({ name: u.full_name ?? '', email: u.email ?? '' })
+      if (u) setUserInfo({ name: u.name ?? '', email: u.email ?? '' })
     }).catch(() => {})
   }, [])
 
