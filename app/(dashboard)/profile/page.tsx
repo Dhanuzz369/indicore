@@ -431,7 +431,7 @@ export default function ProfilePage() {
             <div className="divide-y divide-gray-50">
               <PreferenceItem icon={<ShieldCheck className="h-5 w-5 text-gray-400" />} label="Account Security" />
               <PreferenceItem icon={<Bell className="h-5 w-5 text-gray-400" />} label="Notification Preferences" />
-              <PreferenceItem icon={<Crown className="h-5 w-5 text-blue-700" />} label="Subscription" badge="Plus" />
+              <PreferenceItem icon={<Crown className="h-5 w-5 text-blue-700" />} label="Subscription" badge="Plus" href="/pricing" />
               <PreferenceItem icon={<HelpCircle className="h-5 w-5 text-gray-400" />} label="Help & Support" />
             </div>
           </div>
@@ -539,9 +539,9 @@ export default function ProfilePage() {
   )
 }
 
-function PreferenceItem({ icon, label, badge }: { icon: React.ReactNode; label: string; badge?: string }) {
-  return (
-    <button className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors group">
+function PreferenceItem({ icon, label, badge, href, onClick }: { icon: React.ReactNode; label: string; badge?: string; href?: string; onClick?: () => void }) {
+  const content = (
+    <>
       <div className="flex items-center gap-4">
         <div className="shrink-0">{icon}</div>
         <div className="flex items-center gap-2">
@@ -554,6 +554,20 @@ function PreferenceItem({ icon, label, badge }: { icon: React.ReactNode; label: 
         </div>
       </div>
       <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-900 group-hover:translate-x-0.5 transition-all" />
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors group">
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <button onClick={onClick} className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors group">
+      {content}
     </button>
   )
 }
