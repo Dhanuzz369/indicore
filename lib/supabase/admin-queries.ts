@@ -1,13 +1,26 @@
 // lib/supabase/admin-queries.ts
-// IMPORTANT: Uses service role key — never import from client components.
+// IMPORTANT: Server-only — never import from client components.
+//
+// KEY STRATEGY:
+//   - auth.admin.listUsers() requires the service_role JWT — Secret API keys
+//     cannot call auth.admin.* endpoints (Supabase limitation).
+//   - To eliminate service_role entirely, replace auth.admin.listUsers() with
+//     an RPC function (SECURITY DEFINER) that reads auth.users at DB level.
+//     SQL to create it is in docs/supabase/rpc-get-auth-users.sql
+//   - Once that RPC is deployed, swap SUPABASE_SERVICE_ROLE_KEY for
+//     SUPABASE_ADMIN_SECRET_KEY (a scoped Secret API key) below.
 
 import { createClient } from '@supabase/supabase-js'
 import type { AdminUser, TimelineEntry, PlatformMetrics } from '@/types/admin'
 
 function adminClient() {
+  // Prefer a scoped Secret API key if available (requires get_all_auth_users RPC).
+  // Falls back to service role key for auth.admin.* calls if RPC is not yet deployed.
+  const key = process.env.SUPABASE_ADMIN_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!key) throw new Error('No admin Supabase key configured')
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    key,
     { auth: { persistSession: false } }
   )
 }
@@ -16,9 +29,11 @@ function adminClient() {
 export async function getAllUsersWithStats(from?: string, to?: string): Promise<AdminUser[]> {
   const sb = adminClient()
 
-  // 1. Auth users — source of truth for all signups
-  const { data: authData, error: aErr } = await sb.auth.admin.listUsers({ perPage: 1000 })
-  if (aErr) throw aErr
+  // 1. Auth users — via RPC (no service_role needed once get_all_auth_users() is deployed)
+  //    Falls back gracefully: if RPC not deployed, throws with a clear message.
+  const { data: authRows, error: aErr } = await sb.rpc('get_all_auth_users')
+  if (aErr) throw new Error(`get_all_auth_users RPC failed: ${aErr.message}. Deploy docs/supabase/rpc-get-auth-users.sql first.`)
+  const authData = { users: (authRows ?? []) as { id: string; email: string; created_at: string }[] }
 
   // 2. Profiles — only present for users who completed onboarding
   const { data: profiles } = await sb
@@ -160,10 +175,10 @@ export async function getUserTimeline(userId: string): Promise<TimelineEntry[]> 
 export async function getPlatformMetrics(from?: string, to?: string): Promise<PlatformMetrics> {
   const sb = adminClient()
 
-  // total_users = always full auth count, never filtered
-  const { data: authData, error: aErr } = await sb.auth.admin.listUsers({ perPage: 1000 })
-  if (aErr) throw aErr
-  const total_users = authData.users.length
+  // total_users — via RPC (same get_all_auth_users function, just counting rows)
+  const { data: authRows, error: aErr } = await sb.rpc('get_all_auth_users')
+  if (aErr) throw new Error(`get_all_auth_users RPC failed: ${aErr.message}`)
+  const total_users = (authRows ?? []).length
 
   const now = new Date()
   const defaultFrom = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
