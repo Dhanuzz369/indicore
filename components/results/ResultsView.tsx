@@ -659,6 +659,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const [potentialRevealed, setPotentialRevealed] = useState(false)
   const [lostMarksHighlighted, setLostMarksHighlighted] = useState(false)
 
+  // ── Subject bar chart hover state ───────────────────────────
+  const [hoveredStat, setHoveredStat] = useState<{ subject: string; accuracy: number; correct: number; total: number; marksLost: number } | null>(null)
+
   // ── Confidence accordion state ──────────────────────────────
   const [isExpandedSure, setIsExpandedSure] = useState(false)
   const [isExpanded5050, setIsExpanded5050] = useState(false)
@@ -985,25 +988,29 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </div>
 
             {/* Horizontal bar chart — ascending accuracy (weakest first) */}
-            <div className="space-y-3 mt-2">
+            <div className="space-y-2.5 mt-2" onMouseLeave={() => setHoveredStat(null)}>
               {[...analytics.subjectStats].sort((a: any, b: any) => (a.accuracy || 0) - (b.accuracy || 0)).map((stat: any) => {
                 const accuracy = stat.accuracy || 0
                 const color = accuracy >= 70 ? '#6DA42A' : accuracy >= 50 ? '#E59935' : '#E54B4B'
                 const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
+                const isHovered = hoveredStat?.subject === subjectName
                 return (
-                  <div key={stat.subject} className="flex items-center gap-2 group">
+                  <div
+                    key={stat.subject}
+                    className="flex items-center gap-2 cursor-pointer"
+                    onMouseEnter={() => setHoveredStat({ subject: subjectName, accuracy, correct: stat.correct, total: stat.total, marksLost: stat.marksLost ?? 0 })}
+                  >
                     {/* Subject label */}
                     <div className="w-16 md:w-20 shrink-0 text-right">
-                      <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-tight truncate block" title={subjectName}>
+                      <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-tight truncate block transition-colors ${isHovered ? 'text-gray-900' : 'text-gray-400'}`} title={subjectName}>
                         {subjectName.length > 8 ? subjectName.slice(0, 8) : subjectName}
                       </span>
                     </div>
                     {/* Bar track */}
-                    <div className="relative flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden">
-                      {/* Fill bar */}
+                    <div className={`flex-1 h-7 rounded-lg overflow-hidden relative transition-all ${isHovered ? 'ring-2 ring-offset-1' : ''}`} style={{ backgroundColor: '#f3f4f6', ...(isHovered ? { ringColor: color } : {}) }}>
                       <div
-                        className="absolute left-0 top-0 h-full rounded-lg transition-all duration-1000 ease-out flex items-center px-2"
-                        style={{ width: `${Math.max(8, accuracy)}%`, backgroundColor: color }}
+                        className="absolute left-0 top-0 h-full rounded-lg transition-all duration-700 ease-out flex items-center px-2"
+                        style={{ width: `${Math.max(8, accuracy)}%`, backgroundColor: color, opacity: isHovered ? 1 : 0.75 }}
                       >
                         {accuracy >= 20 && (
                           <span className="text-[10px] font-black text-white whitespace-nowrap">{accuracy}%</span>
@@ -1012,22 +1019,38 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                       {accuracy < 20 && (
                         <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-black whitespace-nowrap" style={{ color }}>{accuracy}%</span>
                       )}
-                      {/* Tooltip on hover */}
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-10">
-                        <div className="bg-white rounded-xl shadow-lg border border-gray-100 px-2.5 py-1.5 text-center">
-                          <p className="text-[10px] font-black text-gray-900">{subjectName}</p>
-                          <p className="text-[9px] font-bold text-gray-500">Accuracy : {accuracy}%</p>
-                          {stat.marksLost > 0 && <p className="text-[9px] font-bold text-red-500">-{stat.marksLost.toFixed(1)} marks</p>}
-                        </div>
-                      </div>
                     </div>
                     {/* Correct count */}
                     <div className="w-10 shrink-0 text-right">
-                      <span className="text-[9px] font-bold text-gray-400">{stat.correct}/{stat.total}</span>
+                      <span className={`text-[9px] font-bold transition-colors ${isHovered ? 'text-gray-700' : 'text-gray-400'}`}>{stat.correct}/{stat.total}</span>
                     </div>
                   </div>
                 )
               })}
+            </div>
+
+            {/* Hover detail panel — shown below the bars when a subject is hovered */}
+            <div className={`mt-3 transition-all duration-200 overflow-hidden ${hoveredStat ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
+              {hoveredStat && (
+                <div className="rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap" style={{ backgroundColor: hoveredStat.accuracy >= 70 ? '#f0fdf4' : hoveredStat.accuracy >= 50 ? '#fffbeb' : '#fff1f2' }}>
+                  <div>
+                    <p className="text-[11px] font-black text-gray-800 uppercase tracking-wide">{hoveredStat.subject}</p>
+                    <p className="text-[10px] text-gray-500 font-medium mt-0.5">{hoveredStat.correct} of {hoveredStat.total} correct</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <p className="text-base font-black" style={{ color: hoveredStat.accuracy >= 70 ? '#6DA42A' : hoveredStat.accuracy >= 50 ? '#E59935' : '#E54B4B' }}>{hoveredStat.accuracy}%</p>
+                      <p className="text-[9px] text-gray-400 font-semibold uppercase">Accuracy</p>
+                    </div>
+                    {hoveredStat.marksLost > 0 && (
+                      <div className="text-center">
+                        <p className="text-base font-black text-red-500">−{hoveredStat.marksLost.toFixed(1)}</p>
+                        <p className="text-[9px] text-gray-400 font-semibold uppercase">Marks Lost</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           </div>
