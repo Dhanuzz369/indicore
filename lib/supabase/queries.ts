@@ -645,3 +645,20 @@ export async function getSessionCount(userId: string): Promise<number> {
   if (error) return 0
   return count ?? 0
 }
+
+export async function getScoreTrend(userId: string, limit = 15): Promise<{ date: string; score: number; label: string }[]> {
+  const sb = createClient()
+  const { data, error } = await sb
+    .from('test_sessions')
+    .select('submitted_at, score, paper_label, mode')
+    .eq('user_id', userId)
+    .not('score', 'is', null)
+    .order('submitted_at', { ascending: true })
+    .limit(limit)
+  if (error || !data) return []
+  return data.map(row => ({
+    date: row.submitted_at,
+    score: typeof row.score === 'number' ? Math.round(row.score) : 0,
+    label: row.paper_label || row.mode || 'Test',
+  }))
+}

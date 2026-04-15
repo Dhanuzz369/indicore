@@ -864,7 +864,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             {/* Wrapper that holds both faces and sets card height */}
             <div
               className="relative w-full transition-transform duration-[550ms] ease-in-out [transform-style:preserve-3d]"
-              style={{ transform: potentialRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)', minHeight: '190px' }}
+              style={{ transform: potentialRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)', minHeight: potentialRevealed ? '230px' : '190px' }}
             >
               {/* ── FRONT — unrevealed ── */}
               <div
@@ -910,7 +910,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 <div className="absolute inset-0 rounded-2xl pointer-events-none"
                      style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 70%)' }} />
 
-                <div className="relative flex flex-col justify-between h-full p-4">
+                <div className="relative flex flex-col justify-between h-full p-3 md:p-4">
                   {/* Label */}
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="h-3 w-3 text-white/70" />
@@ -920,7 +920,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   {/* Score */}
                   <div className="mt-2">
                     <div className="flex items-baseline gap-1.5 leading-none">
-                      <span className="text-[2.6rem] font-black text-white tracking-tight leading-none">
+                      <span className="text-[2rem] md:text-[2.6rem] font-black text-white tracking-tight leading-none">
                         {potentialScore.toFixed(2)}
                       </span>
                       <span className="text-base font-bold text-white/40">/ 200</span>
@@ -984,46 +984,49 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               </div>
             </div>
 
-            {/* Vertical bar chart — ascending accuracy (weakest first) */}
-            <div className="flex items-end justify-around gap-2 h-28 mt-2">
+            {/* Horizontal bar chart — ascending accuracy (weakest first) */}
+            <div className="space-y-3 mt-2">
               {[...analytics.subjectStats].sort((a: any, b: any) => (a.accuracy || 0) - (b.accuracy || 0)).map((stat: any) => {
                 const accuracy = stat.accuracy || 0
                 const color = accuracy >= 70 ? '#6DA42A' : accuracy >= 50 ? '#E59935' : '#E54B4B'
                 const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
-                const barHeight = Math.max(10, accuracy) // minimum 10% height for visibility
                 return (
-                  <div key={stat.subject} className="flex flex-col items-center gap-1 flex-1 min-w-0">
-                    {/* Accuracy label above bar */}
-                    <span className="text-[9px] font-black" style={{ color }}>{accuracy}%</span>
-                    {/* Bar */}
-                    <div className="w-full bg-gray-100 rounded-t-lg overflow-hidden flex flex-col justify-end" style={{ height: '72px' }}>
-                      <div
-                        className="w-full rounded-t-lg transition-all duration-1000 ease-out"
-                        style={{ height: `${barHeight}%`, backgroundColor: color }}
-                      />
+                  <div key={stat.subject} className="flex items-center gap-2 group">
+                    {/* Subject label */}
+                    <div className="w-16 md:w-20 shrink-0 text-right">
+                      <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-tight truncate block" title={subjectName}>
+                        {subjectName.length > 8 ? subjectName.slice(0, 8) : subjectName}
+                      </span>
                     </div>
-                    {/* Subject name below bar — truncated */}
-                    <span
-                      className="text-[8px] font-bold text-gray-500 uppercase tracking-tight text-center w-full truncate"
-                      title={subjectName}
-                    >
-                      {subjectName.length > 8 ? subjectName.slice(0, 7) + '…' : subjectName}
-                    </span>
+                    {/* Bar track */}
+                    <div className="relative flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden">
+                      {/* Fill bar */}
+                      <div
+                        className="absolute left-0 top-0 h-full rounded-lg transition-all duration-1000 ease-out flex items-center px-2"
+                        style={{ width: `${Math.max(8, accuracy)}%`, backgroundColor: color }}
+                      >
+                        {accuracy >= 20 && (
+                          <span className="text-[10px] font-black text-white whitespace-nowrap">{accuracy}%</span>
+                        )}
+                      </div>
+                      {accuracy < 20 && (
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-black whitespace-nowrap" style={{ color }}>{accuracy}%</span>
+                      )}
+                      {/* Tooltip on hover */}
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-10">
+                        <div className="bg-white rounded-xl shadow-lg border border-gray-100 px-2.5 py-1.5 text-center">
+                          <p className="text-[10px] font-black text-gray-900">{subjectName}</p>
+                          <p className="text-[9px] font-bold text-gray-500">Accuracy : {accuracy}%</p>
+                          {stat.marksLost > 0 && <p className="text-[9px] font-bold text-red-500">-{stat.marksLost.toFixed(1)} marks</p>}
+                        </div>
+                      </div>
+                    </div>
                     {/* Correct count */}
-                    <span className="text-[8px] font-bold text-gray-400">{stat.correct}/{stat.total}</span>
+                    <div className="w-10 shrink-0 text-right">
+                      <span className="text-[9px] font-bold text-gray-400">{stat.correct}/{stat.total}</span>
+                    </div>
                   </div>
                 )
-              })}
-            </div>
-            {/* Marks lost row — same sort order */}
-            <div className="flex items-center justify-around gap-2 mt-2 flex-wrap">
-              {[...analytics.subjectStats].sort((a: any, b: any) => (a.accuracy || 0) - (b.accuracy || 0)).map((stat: any) => {
-                const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
-                return stat.marksLost > 0 ? (
-                  <span key={stat.subject} className="text-[8px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded" title={subjectName}>
-                    -{stat.marksLost.toFixed(1)}m
-                  </span>
-                ) : null
               })}
             </div>
           </div>

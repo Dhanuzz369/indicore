@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
-import { getSkillProfile, getSessionCount, getSubjectsWithCounts } from '@/lib/supabase/queries'
+import { getSkillProfile, getSessionCount, getSubjectsWithCounts, getScoreTrend } from '@/lib/supabase/queries'
 import { Loader2, Brain, TrendingDown, AlertTriangle, Zap, BookOpen, Lightbulb, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SkillProfile, SubjectScore, SubtopicRating, BehaviorSignals, Recommendation } from '@/types'
@@ -33,17 +33,20 @@ export default function IntelligencePage() {
   const [subtopics, setSubtopics] = useState<SubtopicRating[]>([])
   const [behavior, setBehavior] = useState<BehaviorSignals | null>(null)
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
+  const [scoreTrend, setScoreTrend] = useState<{ date: string; score: number; label: string }[]>([])
 
   useEffect(() => {
     const load = async () => {
       try {
         const user = await getCurrentUser()
         if (!user) { router.push('/login'); return }
-        const [prof, count, subjectsData] = await Promise.all([
+        const [prof, count, subjectsData, trendData] = await Promise.all([
           getSkillProfile(user.$id),
           getSessionCount(user.$id),
           getSubjectsWithCounts(),
+          getScoreTrend(user.$id, 15),
         ])
+        setScoreTrend(trendData)
         const nameMap: Record<string, string> = {}
         for (const s of subjectsData.documents as unknown as { $id: string; Name: string }[]) {
           nameMap[s.$id] = s.Name
@@ -111,6 +114,103 @@ export default function IntelligencePage() {
     )
   }
 
+  // Pure SVG line chart — no external deps
+  function ScoreTrendChart({ data }: { data: { date: string; score: number; label: string }[] }) {
+    if (data.length < 2) return (
+      <div className="flex items-center justify-center h-32 text-xs text-gray-400 font-medium">
+        Complete more tests to see your trend
+      </div>
+    )
+
+    const width = 500
+    const height = 120
+    const padL = 32, padR = 16, padT = 16, padB = 28
+
+    const scores = data.map(d => d.score)
+    const minS = Math.max(0, Math.min(...scores) - 5)
+    const maxS = Math.min(100, Math.max(...scores) + 5)
+    const range = maxS - minS || 1
+
+    const toX = (i: number) => padL + (i / (data.length - 1)) * (width - padL - padR)
+    const toY = (s: number) => padT + (1 - (s - minS) / range) * (height - padT - padB)
+
+    const points = data.map((d, i) => `${toX(i)},${toY(d.score)}`).join(' ')
+    const areaPoints = `${toX(0)},${height - padB} ${points} ${toX(data.length - 1)},${height - padB}`
+
+    // trend direction
+    const first = scores[0], last = scores[scores.length - 1]
+    const trend = last > first + 3 ? 'IMPROVING' : last < first - 3 ? 'DECLINING' : 'STEADY'
+    const trendColor = trend === 'IMPROVING' ? '#6DA42A' : trend === 'DECLINING' ? '#E54B4B' : '#E59935'
+
+    // Format date label
+    const fmtDate = (iso: string) => {
+      const d = new Date(iso)
+      return `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })}`
+    }
+
+    const [tooltip, setTooltip] = useState<{ x: number; y: number; d: typeof data[0] } | null>(null)
+
+    return (
+      <div className="relative select-none">
+        {/* Trend label */}
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Score Trend</span>
+          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ color: trendColor, backgroundColor: trendColor + '18' }}>
+            → {trend}
+          </span>
+        </div>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="w-full overflow-visible"
+          style={{ height: '120px' }}
+          onMouseLeave={() => setTooltip(null)}
+        >
+          {/* Grid lines */}
+          {[0, 25, 50, 75, 100].filter(v => v >= minS && v <= maxS).map(v => (
+            <g key={v}>
+              <line x1={padL} x2={width - padR} y1={toY(v)} y2={toY(v)} stroke="#f0f0f0" strokeWidth="1" />
+              <text x={padL - 4} y={toY(v) + 3} textAnchor="end" fontSize="8" fill="#94a3b8">{v}</text>
+            </g>
+          ))}
+          {/* Area fill */}
+          <polygon points={areaPoints} fill="#4A90E2" fillOpacity="0.08" />
+          {/* Line */}
+          <polyline points={points} fill="none" stroke="#4A90E2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          {/* Dots */}
+          {data.map((d, i) => (
+            <circle
+              key={i}
+              cx={toX(i)}
+              cy={toY(d.score)}
+              r="4"
+              fill="white"
+              stroke="#4A90E2"
+              strokeWidth="2"
+              className="cursor-pointer hover:r-6 transition-all"
+              onMouseEnter={() => setTooltip({ x: toX(i), y: toY(d.score), d })}
+            />
+          ))}
+          {/* X-axis date labels — show first, middle, last */}
+          {[0, Math.floor(data.length / 2), data.length - 1].filter((v, i, a) => a.indexOf(v) === i).map(i => (
+            <text key={i} x={toX(i)} y={height - 4} textAnchor="middle" fontSize="8" fill="#94a3b8">
+              {fmtDate(data[i].date)}
+            </text>
+          ))}
+        </svg>
+        {/* Tooltip */}
+        {tooltip && (
+          <div
+            className="absolute pointer-events-none z-10 bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 text-center transform -translate-x-1/2 -translate-y-full -mt-2 whitespace-nowrap"
+            style={{ left: `${(tooltip.x / width) * 100}%`, top: `${(tooltip.y / 120) * 100}%` }}
+          >
+            <p className="text-[11px] font-black text-gray-900">{tooltip.d.score}%</p>
+            <p className="text-[9px] text-gray-400 font-medium">{fmtDate(tooltip.d.date)}</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // Subjects below 50% accuracy — shown in Weaker Subjects frame
   const weakSubjects = subjects.filter(s => s.accuracy < 50).sort((a, b) => a.accuracy - b.accuracy)
 
@@ -154,6 +254,13 @@ export default function IntelligencePage() {
             <p className="text-xs md:text-sm text-gray-500 font-medium">Based on {sessionCount} sessions · Updated after every test</p>
           </div>
         </div>
+
+        {/* Score Trend */}
+        {scoreTrend.length >= 2 && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
+            <ScoreTrendChart data={scoreTrend} />
+          </div>
+        )}
 
         {/* Sure But Wrong — slim banner */}
         {behavior && (
