@@ -29,8 +29,8 @@ Expected: packages added to `node_modules/`, no errors.
 Append these lines to `.env.local`:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://wnbeuxmllrkczbbjcjyj.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduYmV1eG1sbHJrY3piYmpjanlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MDUyMTUsImV4cCI6MjA5MDA4MTIxNX0.O4_A9tH0GeB7UlNAeBDZBwzelIVC1n8njKalRNPxuaU
+NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 SUPABASE_SERVICE_ROLE_KEY=<paste_service_role_key_from_supabase_dashboard>
 ```
 
@@ -1338,8 +1338,8 @@ In Vercel dashboard → your project → Settings → Environment Variables, add
 
 | Key | Value | Environment |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://wnbeuxmllrkczbbjcjyj.supabase.co` | Production, Preview, Development |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (full key) | Production, Preview, Development |
+| `NEXT_PUBLIC_SUPABASE_URL` | `<your-supabase-url>` | Production, Preview, Development |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `<your-supabase-anon-key>` | Production, Preview, Development |
 
 Do NOT add `SUPABASE_SERVICE_ROLE_KEY` to Vercel (it's server-only for migration scripts, never needed by the app).
 

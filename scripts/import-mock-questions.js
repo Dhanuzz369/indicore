@@ -5,8 +5,13 @@ const path = require('path')
 const https = require('https')
 
 // ── Config ──────────────────────────────────────────────────────────────────
-const SUPABASE_URL = 'https://wnbeuxmllrkczbbjcjyj.supabase.co'
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduYmV1eG1sbHJrY3piYmpjanlqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDUwNTIxNSwiZXhwIjoyMDkwMDgxMjE1fQ.yKJiOMW619jctk5TrMmBuvDfxhliHS7QEBJXMA19DMs'
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars')
+  process.exit(1)
+}
 
 const SUBJECT_IDS = {
   Polity:      '5f6c2cac-ddcf-42f6-8c5e-44ec37f7826d',

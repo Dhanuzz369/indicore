@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-const ADMIN_EMAIL = 'indicoredotai@gmail.com'
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'indicoredotai@gmail.com'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()

@@ -15,13 +15,13 @@ const securityHeaders = [
     value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
   },
   // Content Security Policy
-  // unsafe-inline needed for Tailwind CSS; unsafe-eval needed for Three.js
+  // unsafe-inline needed for Tailwind CSS
   // connect-src allows Supabase REST + Realtime WebSocket connections
   {
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com",
+      "script-src 'self' 'unsafe-inline' https://us-assets.i.posthog.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
