@@ -6,10 +6,13 @@ const https = require('https')
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+// Prefer a scoped Secret API Key (create one in Supabase Dashboard → Settings → API → Secret API Keys)
+// with INSERT/UPDATE access on the questions table only.
+// Fall back to service role key only if no scoped key is set.
+const SERVICE_ROLE_KEY = process.env.SUPABASE_IMPORT_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars')
+  console.error('Missing env vars. Set SUPABASE_IMPORT_KEY (preferred) or SUPABASE_SERVICE_ROLE_KEY')
   process.exit(1)
 }
 
