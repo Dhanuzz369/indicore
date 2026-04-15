@@ -1,60 +1,65 @@
 // app/api/payment/verify/route.ts
-// Verifies Razorpay payment signature and activates subscription in Supabase.
-// Uses HMAC-SHA256 on orderId + "|" + paymentId with RAZORPAY_KEY_SECRET.
-
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient()
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll() },
+          setAll() {},
+        },
+      }
+    )
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan } = await req.json()
-
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !plan) {
       return NextResponse.json({ error: 'Missing payment fields' }, { status: 400 })
     }
 
-    // ── Verify HMAC-SHA256 signature ─────────────────────────────────────────
-    const body    = `${razorpay_order_id}|${razorpay_payment_id}`
+    // ── Verify HMAC-SHA256 signature ──────────────────────────────
+    const body     = `${razorpay_order_id}|${razorpay_payment_id}`
     const expected = crypto
       .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
       .update(body)
       .digest('hex')
 
     if (expected !== razorpay_signature) {
-      console.error('[verify] Signature mismatch')
       return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 })
     }
 
-    // ── Calculate subscription expiry ────────────────────────────────────────
-    const now        = new Date()
-    const expiresAt  = plan === 'annual'
+    // ── Calculate expiry ───────────────────────────────────────────
+    const now       = new Date()
+    const expiresAt = plan === 'annual'
       ? new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toISOString()
       : new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()).toISOString()
 
-    // ── Upsert subscription record ──────────────────────────────────────────
-    const { error: upsertError } = await supabase
-      .from('subscriptions')
-      .upsert({
-        user_id:             user.id,
-        status:              'active',
-        plan,
-        started_at:          now.toISOString(),
-        expires_at:          expiresAt,
-        razorpay_order_id,
-        razorpay_payment_id,
-      }, { onConflict: 'user_id' })
+    // ── Use service role for upsert (bypasses RLS) ────────────────
+    const adminSupabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { cookies: { getAll: () => [], setAll: () => {} }, auth: { persistSession: false } }
+    )
 
-    if (upsertError) {
-      console.error('[verify] Supabase upsert error:', upsertError)
-      // Payment succeeded — don't fail the response; log and investigate manually
-    }
+    await adminSupabase.from('subscriptions').upsert({
+      user_id:             user.id,
+      status:              'active',
+      plan,
+      started_at:          now.toISOString(),
+      expires_at:          expiresAt,
+      razorpay_order_id,
+      razorpay_payment_id,
+    }, { onConflict: 'user_id' })
 
     return NextResponse.json({ success: true, plan, expiresAt })
   } catch (err) {

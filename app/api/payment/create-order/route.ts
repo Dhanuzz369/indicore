@@ -1,18 +1,17 @@
 // app/api/payment/create-order/route.ts
-// Creates a Razorpay order server-side — never exposes key_secret to client.
-
 import { NextRequest, NextResponse } from 'next/server'
 import Razorpay from 'razorpay'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 const PLANS: Record<string, { amount: number; currency: string; description: string }> = {
   monthly: {
-    amount: 49900,        // ₹499 in paise
+    amount: 19900,        // ₹199 in paise
     currency: 'INR',
     description: 'Indicore Plus — Monthly Plan',
   },
   annual: {
-    amount: 299900,       // ₹2,999 in paise
+    amount: 178800,       // ₹149 × 12 = ₹1,788 in paise
     currency: 'INR',
     description: 'Indicore Plus — Annual Plan',
   },
@@ -20,8 +19,17 @@ const PLANS: Record<string, { amount: number; currency: string; description: str
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth guard — only logged-in users can initiate payment
-    const supabase = createClient()
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll() },
+          setAll() {},
+        },
+      }
+    )
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
