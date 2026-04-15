@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCurrentUser, signOut } from '@/lib/supabase/auth'
+import { getCurrentUser, signOut, sendPasswordRecovery } from '@/lib/supabase/auth'
 import {
   getProfile, createProfile, updateProfile, listTestSessions,
   uploadAvatar, getAvatarUrl, deleteAvatarFile,
@@ -78,6 +78,16 @@ export default function ProfilePage() {
   // Avatar upload
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
+
+  // Avatar picker modal
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false)
+  const [avatarPickerTab, setAvatarPickerTab] = useState<'male' | 'female'>('male')
+  const [savingPresetAvatar, setSavingPresetAvatar] = useState(false)
+
+  // Account security modal
+  const [securityOpen, setSecurityOpen] = useState(false)
+  const [securitySending, setSecuritySending] = useState(false)
+  const [securitySent, setSecuritySent] = useState(false)
 
   // ─── Fetch data ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -225,6 +235,36 @@ export default function ProfilePage() {
     }
   }
 
+  // ─── Select preset avatar ────────────────────────────────────────────────────
+  const handleSelectPresetAvatar = async (url: string) => {
+    setSavingPresetAvatar(true)
+    try {
+      const updated = await updateProfile(userId, { avatar_url: url })
+      setProfile(updated as unknown as Profile)
+      setAvatarPickerOpen(false)
+      toast.success('Avatar updated!')
+    } catch {
+      toast.error('Failed to update avatar')
+    } finally {
+      setSavingPresetAvatar(false)
+    }
+  }
+
+  // ─── Send password reset ─────────────────────────────────────────────────────
+  const handleSendPasswordReset = async () => {
+    const user = await getCurrentUser()
+    if (!user?.email) { toast.error('No email found'); return }
+    setSecuritySending(true)
+    try {
+      await sendPasswordRecovery(user.email)
+      setSecuritySent(true)
+    } catch {
+      toast.error('Failed to send reset email. Try again.')
+    } finally {
+      setSecuritySending(false)
+    }
+  }
+
   // ─── Helpers ─────────────────────────────────────────────────────────────────
   const displayName = profile?.full_name || userName || 'Aspirant'
   const mastery = getMasteryLabel(stats.avgAccuracy)
@@ -302,7 +342,7 @@ export default function ProfilePage() {
               </div>
             </div>
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setAvatarPickerOpen(true)}
               disabled={avatarUploading}
               className="absolute bottom-1 right-1 md:bottom-2 md:right-2 h-9 w-9 md:h-11 md:w-11 bg-[#4A90E2] border-4 border-white rounded-full flex items-center justify-center text-white shadow-lg hover:bg-[#3a7fd4] transition-colors disabled:opacity-50"
             >
@@ -312,13 +352,7 @@ export default function ProfilePage() {
                 <Camera className="h-4 w-4 md:h-5 md:w-5" />
               )}
             </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </div>
 
           <h2 className="mt-6 text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
@@ -429,10 +463,10 @@ export default function ProfilePage() {
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Preferences & Account</p>
             </div>
             <div className="divide-y divide-gray-50">
-              <PreferenceItem icon={<ShieldCheck className="h-5 w-5 text-gray-400" />} label="Account Security" />
+              <PreferenceItem icon={<ShieldCheck className="h-5 w-5 text-gray-400" />} label="Account Security" onClick={() => { setSecuritySent(false); setSecurityOpen(true) }} />
               <PreferenceItem icon={<Bell className="h-5 w-5 text-gray-400" />} label="Notification Preferences" />
               <PreferenceItem icon={<Crown className="h-5 w-5 text-blue-700" />} label="Subscription" badge="Plus" href="/pricing" />
-              <PreferenceItem icon={<HelpCircle className="h-5 w-5 text-gray-400" />} label="Help & Support" />
+              <PreferenceItem icon={<HelpCircle className="h-5 w-5 text-gray-400" />} label="Help & Support" href="mailto:indicoredotai@gmail.com?subject=Indicore%20Support%20Request" />
             </div>
           </div>
 
@@ -450,6 +484,27 @@ export default function ProfilePage() {
           </p>
         </div>
       </div>
+
+      {/* AVATAR PICKER DIALOG */}
+      <AvatarPickerModal
+        open={avatarPickerOpen}
+        onClose={() => setAvatarPickerOpen(false)}
+        currentAvatar={avatarSrc}
+        tab={avatarPickerTab}
+        onTabChange={setAvatarPickerTab}
+        onSelect={handleSelectPresetAvatar}
+        onUpload={() => { setAvatarPickerOpen(false); fileInputRef.current?.click() }}
+        saving={savingPresetAvatar}
+      />
+
+      {/* ACCOUNT SECURITY DIALOG */}
+      <SecurityModal
+        open={securityOpen}
+        onClose={() => setSecurityOpen(false)}
+        onSendReset={handleSendPasswordReset}
+        sending={securitySending}
+        sent={securitySent}
+      />
 
       {/* EDIT PROFILE DIALOG */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -509,9 +564,9 @@ export default function ProfilePage() {
               </Select>
             </div>
 
-            {/* Avatar upload hint */}
+            {/* Avatar pick hint */}
             <p className="text-xs text-gray-400 bg-gray-50 rounded-xl px-4 py-3">
-              To change your avatar, tap the camera icon on your profile picture.
+              To change your avatar, tap the camera icon on your profile picture to browse avatars.
             </p>
 
             {/* Actions */}
@@ -580,4 +635,213 @@ function extractFileIdFromUrl(url: string): string | null {
   } catch {
     return null
   }
+}
+
+// ─── Avatar data ─────────────────────────────────────────────────────────────
+const BASE = 'https://api.dicebear.com/7.x'
+
+const MALE_AVATARS = [
+  { url: `${BASE}/micah/svg?seed=Arjun&baseColor=f9c9b6,ac6651`, label: 'Arjun' },
+  { url: `${BASE}/micah/svg?seed=Ravi&baseColor=f9c9b6,ac6651`, label: 'Ravi' },
+  { url: `${BASE}/micah/svg?seed=Suresh&baseColor=f9c9b6`, label: 'Suresh' },
+  { url: `${BASE}/micah/svg?seed=Kumar&baseColor=ac6651`, label: 'Kumar' },
+  { url: `${BASE}/micah/svg?seed=Vikram&baseColor=f9c9b6`, label: 'Vikram' },
+  { url: `${BASE}/micah/svg?seed=Karthik&baseColor=d08b5b`, label: 'Karthik' },
+  { url: `${BASE}/micah/svg?seed=Arun&baseColor=f9c9b6,ac6651`, label: 'Arun' },
+  { url: `${BASE}/micah/svg?seed=Sanjay&baseColor=ac6651,d08b5b`, label: 'Sanjay' },
+  { url: `${BASE}/micah/svg?seed=Ganesh&baseColor=f9c9b6`, label: 'Ganesh' },
+  { url: `${BASE}/micah/svg?seed=Mohan&baseColor=d08b5b`, label: 'Mohan' },
+  { url: `${BASE}/avataaars/svg?seed=Arjun`, label: 'Classic 1' },
+  { url: `${BASE}/avataaars/svg?seed=Ravi`, label: 'Classic 2' },
+  { url: `${BASE}/avataaars/svg?seed=Suresh`, label: 'Classic 3' },
+  { url: `${BASE}/avataaars/svg?seed=Kumar`, label: 'Classic 4' },
+  { url: `${BASE}/avataaars/svg?seed=Vikram`, label: 'Classic 5' },
+  { url: `${BASE}/adventurer/svg?seed=Arjun`, label: 'Adventurer 1' },
+  { url: `${BASE}/adventurer/svg?seed=Ravi`, label: 'Adventurer 2' },
+  { url: `${BASE}/adventurer/svg?seed=Karthik`, label: 'Adventurer 3' },
+  { url: `${BASE}/personas/svg?seed=Arjun`, label: 'Persona 1' },
+  { url: `${BASE}/personas/svg?seed=Vikram`, label: 'Persona 2' },
+]
+
+const FEMALE_AVATARS = [
+  { url: `${BASE}/lorelei/svg?seed=Priya`, label: 'Priya' },
+  { url: `${BASE}/lorelei/svg?seed=Ananya`, label: 'Ananya' },
+  { url: `${BASE}/lorelei/svg?seed=Kavitha`, label: 'Kavitha' },
+  { url: `${BASE}/lorelei/svg?seed=Divya`, label: 'Divya' },
+  { url: `${BASE}/lorelei/svg?seed=Meera`, label: 'Meera' },
+  { url: `${BASE}/lorelei/svg?seed=Pooja`, label: 'Pooja' },
+  { url: `${BASE}/lorelei/svg?seed=Nithya`, label: 'Nithya' },
+  { url: `${BASE}/lorelei/svg?seed=Shreya`, label: 'Shreya' },
+  { url: `${BASE}/lorelei/svg?seed=Lakshmi`, label: 'Lakshmi' },
+  { url: `${BASE}/lorelei/svg?seed=Deepa`, label: 'Deepa' },
+  { url: `${BASE}/avataaars/svg?seed=Priya`, label: 'Classic 1' },
+  { url: `${BASE}/avataaars/svg?seed=Ananya`, label: 'Classic 2' },
+  { url: `${BASE}/avataaars/svg?seed=Kavitha`, label: 'Classic 3' },
+  { url: `${BASE}/avataaars/svg?seed=Divya`, label: 'Classic 4' },
+  { url: `${BASE}/avataaars/svg?seed=Meera`, label: 'Classic 5' },
+  { url: `${BASE}/adventurer/svg?seed=Priya`, label: 'Adventurer 1' },
+  { url: `${BASE}/adventurer/svg?seed=Ananya`, label: 'Adventurer 2' },
+  { url: `${BASE}/adventurer/svg?seed=Kavitha`, label: 'Adventurer 3' },
+  { url: `${BASE}/personas/svg?seed=Priya`, label: 'Persona 1' },
+  { url: `${BASE}/personas/svg?seed=Meera`, label: 'Persona 2' },
+]
+
+// ─── AvatarPickerModal ────────────────────────────────────────────────────────
+function AvatarPickerModal({
+  open, onClose, currentAvatar, tab, onTabChange, onSelect, onUpload, saving,
+}: {
+  open: boolean
+  onClose: () => void
+  currentAvatar: string
+  tab: 'male' | 'female'
+  onTabChange: (t: 'male' | 'female') => void
+  onSelect: (url: string) => void
+  onUpload: () => void
+  saving: boolean
+}) {
+  const avatars = tab === 'male' ? MALE_AVATARS : FEMALE_AVATARS
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md rounded-3xl max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">
+          <DialogTitle className="text-base font-black uppercase tracking-tight">Choose Avatar</DialogTitle>
+        </DialogHeader>
+
+        {/* Tabs */}
+        <div className="flex px-6 pt-4 gap-2 shrink-0">
+          {(['male', 'female'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => onTabChange(t)}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                tab === t
+                  ? 'bg-[#4A90E2] text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              {t === 'male' ? '♂ Male' : '♀ Female'}
+            </button>
+          ))}
+        </div>
+
+        {/* Current avatar preview */}
+        <div className="flex items-center gap-4 mx-6 mt-4 p-3 bg-gray-50 rounded-2xl shrink-0">
+          <img src={currentAvatar} alt="Current" className="h-12 w-12 rounded-full border-2 border-[#4A90E2] bg-white" />
+          <div>
+            <p className="text-xs font-black text-gray-700">Current Avatar</p>
+            <button onClick={onUpload} className="text-[11px] font-bold text-[#4A90E2] mt-0.5">
+              Upload custom photo instead →
+            </button>
+          </div>
+        </div>
+
+        {/* Avatar grid */}
+        <div className="overflow-y-auto flex-1 px-6 py-4">
+          <div className="grid grid-cols-4 gap-3">
+            {avatars.map((av) => {
+              const isSelected = currentAvatar === av.url
+              return (
+                <button
+                  key={av.url}
+                  onClick={() => onSelect(av.url)}
+                  disabled={saving}
+                  className={`relative flex flex-col items-center gap-1.5 p-2 rounded-2xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50 ${
+                    isSelected ? 'bg-[#EBF2FC] ring-2 ring-[#4A90E2]' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <img
+                    src={av.url}
+                    alt={av.label}
+                    className="h-14 w-14 rounded-full bg-gray-100 border border-gray-100"
+                    loading="lazy"
+                  />
+                  {isSelected && (
+                    <div className="absolute top-1 right-1 h-4 w-4 bg-[#4A90E2] rounded-full flex items-center justify-center">
+                      <svg className="h-2.5 w-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                  <span className="text-[9px] font-bold text-gray-400 truncate w-full text-center">{av.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {saving && (
+          <div className="px-6 pb-4 shrink-0">
+            <div className="flex items-center justify-center gap-2 py-2">
+              <Loader2 className="h-4 w-4 animate-spin text-[#4A90E2]" />
+              <span className="text-sm text-gray-500 font-medium">Saving avatar…</span>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ─── SecurityModal ────────────────────────────────────────────────────────────
+function SecurityModal({
+  open, onClose, onSendReset, sending, sent,
+}: {
+  open: boolean
+  onClose: () => void
+  onSendReset: () => void
+  sending: boolean
+  sent: boolean
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-sm rounded-3xl">
+        <DialogHeader>
+          <DialogTitle className="text-base font-black uppercase tracking-tight flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-[#4A90E2]" />
+            Account Security
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 pt-1">
+          {sent ? (
+            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
+              <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+              <p className="text-sm font-black text-emerald-800">Reset email sent!</p>
+              <p className="text-xs text-emerald-600 mt-1 font-medium">Check your inbox and follow the link to set a new password.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                To change your password, we'll send a secure reset link to your registered email address.
+              </p>
+              <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">What happens next</p>
+                <ol className="space-y-1.5 text-xs text-gray-600 font-medium list-none">
+                  <li className="flex items-start gap-2"><span className="text-[#4A90E2] font-black shrink-0">1.</span>We send a reset link to your email</li>
+                  <li className="flex items-start gap-2"><span className="text-[#4A90E2] font-black shrink-0">2.</span>Click the link within 1 hour</li>
+                  <li className="flex items-start gap-2"><span className="text-[#4A90E2] font-black shrink-0">3.</span>Set your new password</li>
+                </ol>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>
+              {sent ? 'Done' : 'Cancel'}
+            </Button>
+            {!sent && (
+              <Button
+                className="flex-1 bg-[#4A90E2] hover:bg-[#3a7fd4] rounded-xl"
+                onClick={onSendReset}
+                disabled={sending}
+              >
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Reset Link'}
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 }
