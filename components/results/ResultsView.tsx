@@ -663,6 +663,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const [isExpandedSure, setIsExpandedSure] = useState(false)
   const [isExpanded5050, setIsExpanded5050] = useState(false)
   const [isExpandedGuesses, setIsExpandedGuesses] = useState(false)
+  const [isExpandedRevision, setIsExpandedRevision] = useState(false)
   const sureCardRef    = useRef<HTMLDivElement>(null)
   const revisionCardRef = useRef<HTMLDivElement>(null)
 
@@ -751,10 +752,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               <Brain className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-black text-gray-900 tracking-tight leading-none uppercase italic">
-                Analytical Engine <span className="text-[#4A90E2]">PRO</span>
+              <h1 className="text-base md:text-lg font-black text-gray-900 tracking-tight leading-none uppercase italic">
+                AE <span className="text-[#4A90E2]">PRO</span>
+                <span className="hidden sm:inline"> · Analytical Engine</span>
               </h1>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1 max-w-[140px] sm:max-w-none truncate">
                 {displayPaperLabel || 'Real-time Analysis'}
               </p>
             </div>
@@ -791,13 +793,13 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
         {/* ── Reattempt Wrong Questions CTA ── */}
         {!replayMode && (
-          <div className="flex justify-center">
+          <div className="flex justify-center px-1">
             <button
               onClick={handleReattempt}
               disabled={reattemptQuestions.length === 0}
-              className="px-8 py-3 bg-[#4A90E2] text-white rounded-full font-black text-sm uppercase tracking-wider hover:bg-[#3a7fd4] hover:shadow-lg hover:shadow-[#4A90E2]/30 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3.5 bg-[#4A90E2] text-white rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-[#3a7fd4] hover:shadow-lg hover:shadow-[#4A90E2]/30 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md shadow-blue-200"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4 shrink-0" />
               Reattempt Wrong Questions
             </button>
           </div>
@@ -862,7 +864,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             {/* Wrapper that holds both faces and sets card height */}
             <div
               className="relative w-full transition-transform duration-[550ms] ease-in-out [transform-style:preserve-3d]"
-              style={{ transform: potentialRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)', minHeight: '210px' }}
+              style={{ transform: potentialRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)', minHeight: '190px' }}
             >
               {/* ── FRONT — unrevealed ── */}
               <div
@@ -960,7 +962,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           </div>
 
           {/* ── Subject bar chart (takes remaining width) ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col">
+          <div className="col-span-2 md:col-span-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col">
             <div className="mb-3 md:mb-4">
               <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.15em] mb-3">
                 Subject Performance — Accuracy &amp; Marks Lost
@@ -1225,94 +1227,101 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               return (
                 <div
                   ref={revisionCardRef}
-                  className={`rounded-2xl bg-white border shadow-sm overflow-hidden transition-all duration-300 ${
+                  className={`rounded-[1.5rem] md:rounded-[2rem] bg-amber-50/60 border shadow-sm overflow-hidden transition-all duration-300 ${
                     lostMarksHighlighted
                       ? 'border-[#4A90E2] ring-2 ring-[#4A90E2] ring-offset-2 shadow-[0_0_0_6px_rgba(74,144,226,0.15)]'
-                      : 'border-gray-200'
+                      : 'border-amber-100'
                   }`}
                 >
-                  {/* Header */}
-                  <div className="flex items-center justify-between gap-3 px-5 md:px-6 py-4 border-b border-gray-100 bg-gray-50">
+                  {/* ── Clickable header ── */}
+                  <button
+                    onClick={() => setIsExpandedRevision(v => !v)}
+                    className="w-full flex items-center justify-between px-5 md:px-6 py-4 text-left"
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
                         <RefreshCw className="h-4 w-4 text-amber-600" />
                       </div>
                       <div>
                         <p className="text-sm font-black text-gray-900">Answer Revisions</p>
                         <p className="text-xs text-gray-400 font-medium">
-                          You changed{' '}
-                          <span className="font-black text-gray-700">{revisionSummary.total}</span>
-                          {' '}answer{revisionSummary.total !== 1 ? 's' : ''} during this test
+                          Changed <span className="font-black text-gray-700">{revisionSummary.total}</span> answer{revisionSummary.total !== 1 ? 's' : ''} during this test
                         </p>
                       </div>
                     </div>
-                    {isFullLength && nLost > 0 && (
-                      <div className="shrink-0 rounded-xl px-3 py-1.5 text-xs font-black border bg-red-50 border-red-200 text-red-700">
-                        −{marksLost} marks
-                      </div>
-                    )}
-                  </div>
+                    <div className="flex items-center gap-2">
+                      {isFullLength && nLost > 0 && (
+                        <span className="hidden sm:inline text-xs font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                          −{marksLost} marks
+                        </span>
+                      )}
+                      <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${isExpandedRevision ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
 
-                  <div className="px-5 md:px-6 py-4 space-y-3">
-                    {/* Correct → Wrong section */}
-                    {nLost > 0 && (
-                      <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
-                        <p className="text-sm font-bold text-red-800 leading-snug mb-1">
-                          Changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
-                        </p>
-                        <p className="text-xs text-red-600 font-semibold mb-3">
-                          {isFullLength
-                            ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × {MARKS_PER_QUESTION} — forfeited +2 &amp; incurred −0.67 penalty)</>
-                            : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
-                          }
-                        </p>
-                        <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.15em] mb-2">Click to review</p>
-                        <div className="flex flex-wrap gap-2">
-                          {ctw.map(r => (
-                            <button
-                              key={r.qNum}
-                              onClick={() => handleQuestionClick(r.qNum - 1)}
-                              className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-red-100 border-red-300 text-red-700 hover:bg-red-200"
-                              title={`Q${r.qNum} — revised correct → wrong`}
-                            >
-                              {r.qNum}
-                            </button>
-                          ))}
+                  {/* ── Expanded content ── */}
+                  {isExpandedRevision && (
+                    <div className="px-5 md:px-6 pb-5 md:pb-6 pt-2 border-t border-amber-100 animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
+                      {/* Correct → Wrong section */}
+                      {nLost > 0 && (
+                        <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
+                          <p className="text-sm font-bold text-red-800 leading-snug mb-1">
+                            Changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
+                          </p>
+                          <p className="text-xs text-red-600 font-semibold mb-3">
+                            {isFullLength
+                              ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × {MARKS_PER_QUESTION} — forfeited +2 &amp; incurred −0.67 penalty)</>
+                              : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
+                            }
+                          </p>
+                          <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.15em] mb-2">Click to review</p>
+                          <div className="flex flex-wrap gap-2">
+                            {ctw.map(r => (
+                              <button
+                                key={r.qNum}
+                                onClick={() => handleQuestionClick(r.qNum - 1)}
+                                className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-red-100 border-red-300 text-red-700 hover:bg-red-200"
+                                title={`Q${r.qNum} — revised correct → wrong`}
+                              >
+                                {r.qNum}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Wrong → Correct section (good news) */}
-                    {revisionSummary.wrongToCorrect.length > 0 && (
-                      <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
-                        <p className="text-sm font-bold text-emerald-800 leading-snug mb-1">
-                          Changed <span className="text-red-600">wrong</span> → <span className="text-emerald-700">correct</span>
-                        </p>
-                        <p className="text-xs text-emerald-600 font-semibold mb-2">
-                          {revisionSummary.wrongToCorrect.length} good revision{revisionSummary.wrongToCorrect.length !== 1 ? 's' : ''} — your instinct was right
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {revisionSummary.wrongToCorrect.map(r => (
-                            <button
-                              key={r.qNum}
-                              onClick={() => handleQuestionClick(r.qNum - 1)}
-                              className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200"
-                              title={`Q${r.qNum} — revised wrong → correct`}
-                            >
-                              {r.qNum}
-                            </button>
-                          ))}
+                      {/* Wrong → Correct section (good news) */}
+                      {revisionSummary.wrongToCorrect.length > 0 && (
+                        <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                          <p className="text-sm font-bold text-emerald-800 leading-snug mb-1">
+                            Changed <span className="text-red-600">wrong</span> → <span className="text-emerald-700">correct</span>
+                          </p>
+                          <p className="text-xs text-emerald-600 font-semibold mb-2">
+                            {revisionSummary.wrongToCorrect.length} good revision{revisionSummary.wrongToCorrect.length !== 1 ? 's' : ''} — your instinct was right
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {revisionSummary.wrongToCorrect.map(r => (
+                              <button
+                                key={r.qNum}
+                                onClick={() => handleQuestionClick(r.qNum - 1)}
+                                className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200"
+                                title={`Q${r.qNum} — revised wrong → correct`}
+                              >
+                                {r.qNum}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Neutral (wrong → wrong) */}
-                    {nLost === 0 && revisionSummary.wrongToCorrect.length === 0 && revisionSummary.neutral.length > 0 && (
-                      <p className="text-xs text-gray-500 font-medium">
-                        {revisionSummary.neutral.length} neutral revision{revisionSummary.neutral.length !== 1 ? 's' : ''} — changed between wrong options
-                      </p>
-                    )}
-                  </div>
+                      {/* Neutral (wrong → wrong) */}
+                      {nLost === 0 && revisionSummary.wrongToCorrect.length === 0 && revisionSummary.neutral.length > 0 && (
+                        <p className="text-xs text-gray-500 font-medium">
+                          {revisionSummary.neutral.length} neutral revision{revisionSummary.neutral.length !== 1 ? 's' : ''} — changed between wrong options
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })()}
