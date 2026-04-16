@@ -972,68 +972,95 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               className="flex-1 flex flex-col"
               onMouseLeave={() => setHoveredStat(null)}
             >
-              {/* Chart area */}
-              <div className="flex items-end gap-2 md:gap-3 h-44 relative">
-                {/* Subtle grid lines */}
-                {[100, 75, 50, 25].map(pct => (
-                  <div
-                    key={pct}
-                    className="absolute left-0 right-0 border-t border-dashed border-gray-100"
-                    style={{ bottom: `${pct}%` }}
-                  />
-                ))}
+              {/* Chart area with Y-axis */}
+              <div className="flex gap-2">
+                {/* Y-axis labels */}
+                <div className="flex flex-col justify-between items-end pr-1.5 py-0 select-none" style={{ height: 160 }}>
+                  {[100, 75, 50, 25, 0].map(pct => (
+                    <span key={pct} className="text-[9px] font-semibold text-gray-400 leading-none">{pct}%</span>
+                  ))}
+                </div>
+
+                {/* Bars area */}
+                <div className="flex-1 relative" style={{ height: 160 }}>
+                  {/* Grid lines */}
+                  {[100, 75, 50, 25, 0].map(pct => (
+                    <div
+                      key={pct}
+                      className="absolute left-0 right-0"
+                      style={{ bottom: `${pct}%`, borderTop: pct === 0 ? '2px solid #D1D5DB' : '1px dashed #E5E7EB' }}
+                    />
+                  ))}
+
+                  {/* Bars row */}
+                  <div className="absolute inset-0 flex items-end gap-1.5 md:gap-2 px-1">
+                    {[...analytics.subjectStats]
+                      .sort((a: any, b: any) => (b.accuracy || 0) - (a.accuracy || 0))
+                      .map((stat: any) => {
+                        const accuracy = stat.accuracy || 0
+                        const isHigh = accuracy >= 70
+                        const isMid  = accuracy >= 50 && accuracy < 70
+                        const barColor  = isHigh ? '#10B981' : isMid ? '#F59E0B' : '#EF4444'
+                        const barLight  = isHigh ? '#D1FAE5' : isMid ? '#FEF3C7' : '#FEE2E2'
+                        const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
+                        const isHovered = hoveredStat?.subject === subjectName
+                        const shortLabel = subjectName.length > 7 ? subjectName.slice(0, 7) : subjectName
+                        const barHeight = Math.max(4, accuracy)
+                        return (
+                          <div
+                            key={stat.subject}
+                            className="flex-1 flex flex-col items-center justify-end h-full cursor-pointer"
+                            onMouseEnter={() => setHoveredStat({ subject: subjectName, accuracy, correct: stat.correct, total: stat.total, marksLost: stat.marksLost ?? 0 })}
+                          >
+                            {/* Accuracy % label — always visible */}
+                            <span
+                              className="text-[10px] font-black mb-1 leading-none"
+                              style={{ color: barColor }}
+                            >
+                              {accuracy}%
+                            </span>
+                            {/* Bar body */}
+                            <div
+                              className="w-full rounded-t-md transition-all duration-500 ease-out relative overflow-hidden"
+                              style={{
+                                height: `${barHeight}%`,
+                                backgroundColor: isHovered ? barColor : barLight,
+                                boxShadow: isHovered ? `0 0 0 2px ${barColor}` : `0 0 0 1.5px ${barColor}`,
+                              }}
+                            >
+                              {/* Inner gradient bar fill */}
+                              <div
+                                className="absolute inset-0"
+                                style={{
+                                  background: isHovered
+                                    ? `linear-gradient(to top, ${barColor}, ${barColor}cc)`
+                                    : `linear-gradient(to top, ${barColor}55, ${barColor}22)`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                  </div>
+                </div>
+              </div>
+
+              {/* X-axis subject labels */}
+              <div className="flex gap-1.5 md:gap-2 pl-10 pr-1 mt-1.5">
                 {[...analytics.subjectStats]
                   .sort((a: any, b: any) => (b.accuracy || 0) - (a.accuracy || 0))
                   .map((stat: any) => {
-                    const accuracy = stat.accuracy || 0
-                    const isHigh = accuracy >= 70
-                    const isMid  = accuracy >= 50 && accuracy < 70
-                    const barColor = isHigh ? '#10B981' : isMid ? '#F59E0B' : '#EF4444'
-                    const barBg   = isHigh ? '#ECFDF5' : isMid ? '#FFFBEB' : '#FEF2F2'
                     const subjectName = (stat.subject ?? 'Unknown').replace(/_/g, ' ')
                     const isHovered = hoveredStat?.subject === subjectName
-                    const shortLabel = subjectName.length > 6 ? subjectName.slice(0, 6) : subjectName
+                    const shortLabel = subjectName.length > 7 ? subjectName.slice(0, 7) : subjectName
                     return (
-                      <div
-                        key={stat.subject}
-                        className="flex-1 flex flex-col items-center justify-end gap-0 cursor-pointer group relative"
-                        onMouseEnter={() => setHoveredStat({ subject: subjectName, accuracy, correct: stat.correct, total: stat.total, marksLost: stat.marksLost ?? 0 })}
-                      >
-                        {/* Accuracy label above bar */}
-                        <span
-                          className={`text-[9px] font-black mb-1 transition-all duration-150 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'}`}
-                          style={{ color: barColor }}
-                        >
-                          {accuracy}%
+                      <div key={stat.subject} className="flex-1 text-center" title={subjectName}>
+                        <span className={`text-[9px] font-bold uppercase tracking-tight block truncate leading-tight ${isHovered ? 'text-gray-800' : 'text-gray-500'}`}>
+                          {shortLabel}
                         </span>
-                        {/* Bar */}
-                        <div
-                          className="w-full rounded-t-lg transition-all duration-700 ease-out relative overflow-hidden"
-                          style={{
-                            height: `${Math.max(4, accuracy)}%`,
-                            backgroundColor: isHovered ? barColor : barBg,
-                            border: `2px solid ${barColor}`,
-                            borderBottom: 'none',
-                            opacity: isHovered ? 1 : 0.85,
-                          }}
-                        >
-                          {/* Shimmer shine on hover */}
-                          {isHovered && (
-                            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
-                          )}
-                        </div>
-                        {/* Subject name below */}
-                        <div
-                          className="w-full text-center mt-1.5 px-0.5"
-                          title={subjectName}
-                        >
-                          <span className={`text-[8px] font-bold uppercase tracking-tight block truncate transition-colors duration-150 ${isHovered ? 'text-gray-700' : 'text-gray-400'}`}>
-                            {shortLabel}
-                          </span>
-                          <span className={`text-[8px] font-medium block transition-colors duration-150 ${isHovered ? 'text-gray-500' : 'text-gray-300'}`}>
-                            {stat.correct}/{stat.total}
-                          </span>
-                        </div>
+                        <span className={`text-[8px] font-medium block leading-tight ${isHovered ? 'text-gray-600' : 'text-gray-400'}`}>
+                          {stat.correct}/{stat.total}
+                        </span>
                       </div>
                     )
                   })}
