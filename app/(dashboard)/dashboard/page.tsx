@@ -563,7 +563,9 @@ export default function DashboardPage() {
                 {/* CTA */}
                 <div className="flex flex-col gap-1">
                   <Link
-                    href="/subscription-plus"
+                    href="https://www.indicoreupsc.in/pricing"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 bg-[#3350E8] hover:bg-[#2a42d0] text-white font-black text-sm px-6 py-3 rounded-xl shadow-md transition-all hover:-translate-y-0.5 active:translate-y-0"
                   >
                     Get the Offer
