@@ -141,10 +141,10 @@ function SubjectPerformanceCard({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden sm:inline text-xs text-gray-600 font-medium">
+          <span className="hidden sm:inline text-xs text-gray-800 font-medium">
             {isExpanded ? 'Hide questions' : 'Show questions'}
           </span>
-          <div className={`w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:text-gray-900/60 transition-all ${isExpanded ? 'rotate-180' : ''}`}>
+          <div className={`w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-800 hover:text-gray-900/60 transition-all ${isExpanded ? 'rotate-180' : ''}`}>
             <ChevronDown className="h-4 w-4" />
           </div>
         </div>
@@ -168,7 +168,7 @@ function SubjectPerformanceCard({
       {isExpanded && (
         <div className="px-5 pb-5 md:px-6 md:pb-6 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="border-t border-gray-100 pt-5">
-            <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4">
+            <p className="text-[9px] font-black text-gray-800 uppercase tracking-[0.2em] mb-4">
               Question Numbers — click to review
             </p>
             <div className="flex flex-wrap gap-2">
@@ -202,7 +202,7 @@ function SubjectPerformanceCard({
                 )
               })}
             </div>
-            <div className="flex flex-wrap gap-4 mt-4 text-[9px] text-gray-600">
+            <div className="flex flex-wrap gap-4 mt-4 text-[9px] text-gray-800">
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500/10 border border-emerald-500/30" />Correct</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500/10 border border-red-500/30" />Wrong</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-100 border border-gray-200" />Skipped</span>
@@ -215,7 +215,7 @@ function SubjectPerformanceCard({
             {/* Areas to revisit */}
             {areasToRevisit.length > 0 && (
               <div className="mt-5 pt-4 border-t border-gray-100">
-                <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-3">
+                <p className="text-[9px] font-black text-gray-800 uppercase tracking-[0.2em] mb-3">
                   Areas to revisit
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -276,7 +276,7 @@ function TaggedQuestionsDropdown({
       </button>
       <div className={`transition-all duration-500 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
         <div className="p-4 border-t border-gray-100">
-          <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-3">Questions marked as {tag.replace('_', ':')}</p>
+          <p className="text-[9px] font-black text-gray-800 uppercase tracking-widest mb-3">Questions marked as {tag.replace('_', ':')}</p>
           <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
             {taggedItems.map(({ q, index, answer }) => {
               const isCorrect = answer?.isCorrect
@@ -719,7 +719,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
       <div className="flex items-center justify-center min-h-[80vh] p-6 bg-gray-50">
         <div className="text-center space-y-4 max-w-xs">
           <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto ring-1 ring-white/[0.06]">
-            <BookOpen className="h-10 w-10 text-gray-600" />
+            <BookOpen className="h-10 w-10 text-gray-800" />
           </div>
           <h2 className="text-xl font-bold text-gray-900">No Full Analysis Available</h2>
           <p className="text-gray-700 text-sm">
@@ -769,7 +769,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             {replayMode ? (
               <button
                 onClick={() => setPendingNavigation(() => () => router.push('/tests'))}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-700 hover:text-gray-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-700 hover:text-gray-800 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" /> My Tests
               </button>
@@ -777,13 +777,13 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               <>
                 <button
                   onClick={() => setPendingNavigation(() => () => router.push('/dashboard'))}
-                  className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-700 hover:text-gray-600 transition-colors"
+                  className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-700 hover:text-gray-800 transition-colors"
                 >
                   <Home className="h-4 w-4" /> Dashboard
                 </button>
                 <button
                   onClick={() => setPendingNavigation(() => () => { reset(); router.push('/quiz') })}
-                  className="bg-gray-100 border border-gray-200 px-5 py-2.5 rounded-xl text-sm font-black text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-all flex items-center gap-2"
+                  className="bg-gray-100 border border-gray-200 px-5 py-2.5 rounded-xl text-sm font-black text-gray-800 hover:bg-gray-200 hover:text-gray-900 transition-all flex items-center gap-2"
                 >
                   <RefreshCw className="h-4 w-4" /> Retake
                 </button>
@@ -828,7 +828,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   {typeof score.marksScored === 'number' ? score.marksScored.toFixed(2) : score.correct}
                 </span>
               </div>
-              <p className="text-[10px] text-gray-600 font-medium mt-0.5 mb-3">out of 200.00</p>
+              <p className="text-[10px] text-gray-800 font-medium mt-0.5 mb-3">out of 200.00</p>
               <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
@@ -836,7 +836,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 />
               </div>
               <div className="flex items-center justify-between mt-3">
-                <span className="text-[9px] text-gray-600 font-medium">{Math.floor(displayElapsed / 60)} min</span>
+                <span className="text-[9px] text-gray-800 font-medium">{Math.floor(displayElapsed / 60)} min</span>
                 <button
                   onClick={() => handleQuestionClick(0)}
                   className="text-[9px] font-black text-indigo-400 uppercase tracking-widest hover:text-indigo-300 flex items-center gap-1 transition-colors"
@@ -890,7 +890,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                     </div>
                     <div className="mt-2">
                       <div className="flex items-baseline gap-1.5 leading-none">
-                        <span className="text-[2rem] font-black text-gray-900 tracking-tight leading-none">{potentialScore.toFixed(2)}</span>
+                        <span className="text-[2rem] font-black text-white tracking-tight leading-none">{potentialScore.toFixed(2)}</span>
                         <span className="text-sm font-bold text-white/80">/ 200</span>
                       </div>
                     </div>
@@ -908,7 +908,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                         </button>
                       </div>
                     ) : (
-                      <p className="text-[10px] text-gray-500 font-medium mt-2">No recoverable marks</p>
+                      <p className="text-[10px] text-gray-800 font-medium mt-2">No recoverable marks</p>
                     )}
                   </div>
                 </div>
@@ -988,7 +988,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                       )}
                     </div>
                     <div className="w-10 shrink-0 text-right">
-                      <span className={`text-[9px] font-bold transition-colors duration-150 ${isHovered ? 'text-gray-900/60' : 'text-gray-600'}`}>{stat.correct}/{stat.total}</span>
+                      <span className={`text-[9px] font-bold transition-colors duration-150 ${isHovered ? 'text-gray-900/60' : 'text-gray-800'}`}>{stat.correct}/{stat.total}</span>
                     </div>
                   </div>
                 )
@@ -1000,7 +1000,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 <div className="rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap bg-gray-100 border border-gray-200">
                   <div>
                     <p className="text-[11px] font-black text-gray-900 uppercase tracking-wide">{hoveredStat.subject}</p>
-                    <p className="text-[10px] text-gray-500 font-medium mt-0.5">{hoveredStat.correct} of {hoveredStat.total} correct</p>
+                    <p className="text-[10px] text-gray-800 font-medium mt-0.5">{hoveredStat.correct} of {hoveredStat.total} correct</p>
                   </div>
                   <div className="flex items-center gap-5">
                     <div className="text-center">
@@ -1080,10 +1080,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           ) : (
             <div className="bg-white shadow-sm rounded-2xl border border-gray-200 p-5 flex flex-col items-center justify-center text-center min-h-[200px]">
               <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
-                <Zap className="h-5 w-5 text-gray-400" />
+                <Zap className="h-5 w-5 text-gray-800" />
               </div>
               <p className="text-sm font-bold text-gray-700">No strategy insights yet</p>
-              <p className="text-xs text-gray-400 mt-1">Complete more questions to unlock</p>
+              <p className="text-xs text-gray-800 mt-1">Complete more questions to unlock</p>
             </div>
           )}
 
@@ -1111,7 +1111,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                     { icon: <Brain className="h-3.5 w-3.5 text-blue-400/50" />, label: '50:50 Logic', val: `${logicCorrect}/${logicTotal}`, accent: '' },
                     { icon: <Zap className="h-3.5 w-3.5 text-violet-400/50" />, label: 'Guesses', val: `${guessCorrect}/${guessTotal}`, accent: '' },
                     { icon: <Target className="h-3.5 w-3.5 text-amber-400/50" />, label: 'Success Rate', val: `${successRate}%`, accent: 'text-amber-400' },
-                    { icon: <Clock className="h-3.5 w-3.5 text-gray-600" />, label: 'Attempted', val: `${score.correct + score.wrong}/${displayQuestions.length}`, accent: '' },
+                    { icon: <Clock className="h-3.5 w-3.5 text-gray-800" />, label: 'Attempted', val: `${score.correct + score.wrong}/${displayQuestions.length}`, accent: '' },
                   ].map(({ icon, label, val, accent }, i, arr) => (
                     <div key={label}>
                       <div className="flex items-center justify-between py-0.5">
@@ -1173,7 +1173,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                           −{(mistakes * 2.667).toFixed(1)} marks
                         </span>
                       )}
-                      <ChevronDown className={`h-4 w-4 text-gray-600 transition-transform duration-300 ${isExpandedSure ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-800 transition-transform duration-300 ${isExpandedSure ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                   {isExpandedSure && (
@@ -1182,10 +1182,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                         {insight ? (
                           <>
                             <p className="text-sm font-semibold text-gray-700 leading-relaxed">{insight.message}</p>
-                            <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
+                            <p className="text-xs text-gray-800 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
                           </>
                         ) : (
-                          <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                          <p className="text-sm text-gray-800 font-medium leading-relaxed">
                             {total > 0 ? 'Perfect accuracy on sure items — your confident answers are reliable.' : 'Tag questions as "Sure" during the test to track your confident answers.'}
                           </p>
                         )}
@@ -1228,7 +1228,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                           −{(wrong50 * MARKS_PER_QUESTION).toFixed(1)} marks
                         </span>
                       )}
-                      <ChevronDown className={`h-4 w-4 text-gray-600 transition-transform duration-300 ${isExpanded5050 ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-800 transition-transform duration-300 ${isExpanded5050 ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                   {isExpanded5050 && (
@@ -1237,10 +1237,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                         {insight ? (
                           <>
                             <p className="text-sm font-semibold text-gray-700 leading-relaxed">{insight.message}</p>
-                            <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
+                            <p className="text-xs text-gray-800 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
                           </>
                         ) : (
-                          <p className="text-sm text-gray-500 font-medium leading-relaxed">Tag questions where you narrowed to two options to track your elimination accuracy.</p>
+                          <p className="text-sm text-gray-800 font-medium leading-relaxed">Tag questions where you narrowed to two options to track your elimination accuracy.</p>
                         )}
                       </div>
                       <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
@@ -1279,7 +1279,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                           −{(wrongGuess * MARKS_PER_QUESTION).toFixed(1)} marks
                         </span>
                       )}
-                      <ChevronDown className={`h-4 w-4 text-gray-600 transition-transform duration-300 ${isExpandedGuesses ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-800 transition-transform duration-300 ${isExpandedGuesses ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                   {isExpandedGuesses && (
@@ -1326,7 +1326,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                           −{marksLost} marks
                         </span>
                       )}
-                      <ChevronDown className={`h-4 w-4 text-gray-600 transition-transform duration-300 ${isExpandedRevision ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-800 transition-transform duration-300 ${isExpandedRevision ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                   {isExpandedRevision && (
@@ -1342,7 +1342,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                               : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
                             }
                           </p>
-                          <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.15em] mb-2">Click to review</p>
+                          <p className="text-[9px] font-black text-gray-800 uppercase tracking-[0.15em] mb-2">Click to review</p>
                           <div className="flex flex-wrap gap-2">
                             {ctw.map(r => (
                               <button
