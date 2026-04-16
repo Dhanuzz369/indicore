@@ -465,7 +465,7 @@ export default function ProfilePage() {
             <div className="divide-y divide-gray-50">
               <PreferenceItem icon={<ShieldCheck className="h-5 w-5 text-gray-400" />} label="Account Security" onClick={() => { setSecuritySent(false); setSecurityOpen(true) }} />
               <PreferenceItem icon={<Bell className="h-5 w-5 text-gray-400" />} label="Notification Preferences" />
-              <PreferenceItem icon={<Crown className="h-5 w-5 text-blue-700" />} label="Subscription" badge="Plus" href="/subscription-plus" />
+              <PreferenceItem icon={<Crown className="h-5 w-5 text-blue-700" />} label="Subscription" badge="Plus" href="/pricing" />
               <PreferenceItem icon={<HelpCircle className="h-5 w-5 text-gray-400" />} label="Help & Support" href="mailto:indicoredotai@gmail.com?subject=Indicore%20Support%20Request" />
             </div>
           </div>
