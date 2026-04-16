@@ -803,12 +803,14 @@ function QuizSetupContent() {
                   <X className="h-4 w-4" /> Back to subjects
                 </button>
                 {(() => {
-                  const accent = getSubjectAccent(configSubject.Name)
+                  const { color, bg, Icon } = getSubjectAccent(configSubject.Name)
                   return (
-                    <div className={`${accent.bg} rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 mb-5 md:mb-8 flex items-center gap-4 md:gap-6 border-2`} style={{ borderColor: accent.color + '30' }}>
-                      <div className="text-3xl md:text-5xl">{accent.icon}</div>
+                    <div className="rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 mb-5 md:mb-8 flex items-center gap-4 md:gap-6 border-2" style={{ backgroundColor: bg, borderColor: color + '30' }}>
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: color + '20' }}>
+                        <Icon className="h-7 w-7" style={{ color }} />
+                      </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: accent.color }}>Subject Practice</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color }}>Subject Practice</p>
                         <h2 className="text-xl md:text-3xl font-black text-gray-900">{configSubject.Name}</h2>
                       </div>
                     </div>
