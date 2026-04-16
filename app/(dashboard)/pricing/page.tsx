@@ -1,170 +1,289 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+// ─────────────────────────────────────────────────────────────────────────────
+// Razorpay Standard Checkout Integration
+// Flow:
+//   1. User clicks "Get Access"
+//   2. Client calls POST /api/payment/create-order  →  gets orderId + amount
+//   3. Client opens Razorpay checkout modal (checkout.js)
+//   4. User pays via UPI / card / netbanking / wallet
+//   5. On success: handler() fires with { payment_id, order_id, signature }
+//   6. Client calls POST /api/payment/verify  →  server verifies HMAC signature
+//   7. Server activates subscription in DB  →  redirect to dashboard
+//   8. On failure: payment.failed event fires with error details
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import {
   ChevronLeft, Check, Crown, Zap, BookOpen,
-  BarChart3, Target, Brain, Flame, Sparkles, ShieldCheck
+  BarChart3, Target, Brain, Flame, Sparkles, ShieldCheck, AlertCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-// ── Razorpay types ──────────────────────────────────────────────────────────
+// ── Razorpay checkout.js global type ─────────────────────────────────────────
+// Loaded via <script src="https://checkout.razorpay.com/v1/checkout.js">
 declare global {
   interface Window {
-    Razorpay: new (options: RazorpayOptions) => { open: () => void }
+    Razorpay: new (options: RazorpayCheckoutOptions) => RazorpayInstance
   }
 }
-interface RazorpayOptions {
+
+interface RazorpayCheckoutOptions {
+  /** Your Razorpay Key ID (rzp_test_xxx or rzp_live_xxx) */
   key: string
+  /** Amount in paise — must match the server order amount */
   amount: number
+  /** ISO currency code — must be 'INR' */
   currency: string
+  /** Your company / product name shown in the checkout modal */
   name: string
+  /** Short description shown under the name */
   description: string
+  /** Razorpay order ID from Step 1 (order_Jxxxxxx) */
   order_id: string
-  handler: (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => void
-  prefill?: { name?: string; email?: string }
-  theme?: { color?: string }
-  modal?: { ondismiss?: () => void }
+  /**
+   * Called after a successful payment.
+   * NEVER trust this alone — always verify server-side using the signature.
+   */
+  handler: (response: {
+    razorpay_payment_id: string  // e.g. "pay_Jxxxxxx"
+    razorpay_order_id:   string  // echoes order_id
+    razorpay_signature:  string  // HMAC-SHA256 for verification
+  }) => void
+  prefill?: {
+    name?:    string
+    email?:   string
+    contact?: string
+  }
+  notes?: Record<string, string>
+  theme?: {
+    color?: string  // hex — tints the checkout modal
+  }
+  modal?: {
+    ondismiss?:      () => void   // user closed without paying
+    escape?:         boolean      // allow ESC to close (default true)
+    backdropclose?:  boolean      // allow backdrop click to close (default false)
+    confirm_close?:  boolean      // ask "Are you sure?" before closing
+  }
 }
 
-// ── Plan config ─────────────────────────────────────────────────────────────
+interface RazorpayInstance {
+  open: () => void
+  on: (event: 'payment.failed', handler: (response: { error: RazorpayError }) => void) => void
+}
+
+interface RazorpayError {
+  code:        string
+  description: string
+  source:      string
+  step:        string
+  reason:      string
+  metadata:    { order_id: string; payment_id?: string }
+}
+
+// ── Feature list ─────────────────────────────────────────────────────────────
 const FEATURES = [
-  { icon: BookOpen,  text: 'Practice 1000+ curated questions' },
-  { icon: BarChart3, text: 'Deep analytics after every test' },
-  { icon: Target,    text: 'Identify weak concepts instantly' },
-  { icon: Zap,       text: 'Clear action plan after every test' },
-  { icon: Brain,     text: 'AI-powered intelligence engine' },
-  { icon: Flame,     text: 'Streak tracking & consistency tools' },
-  { icon: Sparkles,  text: 'Flashcards for rapid revision' },
+  { icon: BookOpen,    text: 'Practice 1000+ curated PYQ questions' },
+  { icon: BarChart3,   text: 'Deep analytics after every test' },
+  { icon: Target,      text: 'Identify weak concepts instantly' },
+  { icon: Zap,         text: 'Clear action plan after every test' },
+  { icon: Brain,       text: 'AI-powered intelligence engine' },
+  { icon: Flame,       text: 'Streak tracking & consistency tools' },
+  { icon: Sparkles,    text: 'Flashcards for rapid revision' },
   { icon: ShieldCheck, text: 'Unlimited full-length mock tests' },
 ]
 
+// ── Plan config ───────────────────────────────────────────────────────────────
+// Amount here is for display only — server is the source of truth for paise value.
 const PLANS = {
   annual: {
-    id: 'annual',
-    label: 'Annual Plan',
-    name: 'Annual',
-    price: 1788,          // ₹149 × 12
-    perMonth: 149,
-    billing: 'Billed once a year',
-    savings: 'Save ₹600 vs monthly',
-    featured: false,
-    ctaLabel: 'Get Annual Access',
+    id:        'annual' as const,
+    label:     'Annual Plan',
+    price:     1788,    // ₹1,788/yr  (₹149 × 12)
+    perMonth:  149,
+    savings:   'Save ₹600 vs monthly',
+    featured:  false,
+    ctaLabel:  'Get Annual Access',
   },
   monthly: {
-    id: 'monthly',
-    label: 'Monthly Plan',
-    name: 'Monthly',
-    price: 199,
-    perMonth: 199,
-    billing: 'Billed every month',
-    savings: 'Full flexibility, cancel anytime',
-    featured: true,
-    ctaLabel: 'Get Monthly Access',
+    id:        'monthly' as const,
+    label:     'Monthly Plan',
+    price:     199,
+    perMonth:  199,
+    savings:   'Full flexibility, cancel anytime',
+    featured:  true,
+    ctaLabel:  'Get Monthly Access',
   },
 } as const
 
 type PlanId = keyof typeof PLANS
 
-// ── Component ───────────────────────────────────────────────────────────────
+// ── Page component ────────────────────────────────────────────────────────────
 export default function PricingPage() {
   const router = useRouter()
-  const [userInfo, setUserInfo] = useState<{ name: string; email: string } | null>(null)
-  const [loading, setLoading] = useState<PlanId | null>(null)
-  const [scriptLoaded, setScriptLoaded] = useState(false)
+  const [user, setUser]           = useState<{ name: string; email: string } | null>(null)
+  const [loading, setLoading]     = useState<PlanId | null>(null)
+  const [scriptReady, setScriptReady] = useState(false)
 
-  // Load Razorpay checkout script
+  // ── Load Razorpay checkout.js once ─────────────────────────────────────────
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (document.getElementById('razorpay-script')) { setScriptLoaded(true); return }
-    const script = document.createElement('script')
-    script.id   = 'razorpay-script'
-    script.src  = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.async = true
-    script.onload = () => setScriptLoaded(true)
+    if ((window as Window & typeof globalThis & { Razorpay?: unknown }).Razorpay) {
+      setScriptReady(true)
+      return
+    }
+    const existing = document.getElementById('rzp-checkout-js')
+    if (existing) {
+      existing.addEventListener('load', () => setScriptReady(true))
+      return
+    }
+    const script       = document.createElement('script')
+    script.id          = 'rzp-checkout-js'
+    script.src         = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async       = true
+    script.onload      = () => setScriptReady(true)
+    script.onerror     = () => console.error('[Razorpay] checkout.js failed to load')
     document.body.appendChild(script)
   }, [])
 
-  // Fetch user info for Razorpay prefill
+  // ── Fetch user info for checkout prefill ───────────────────────────────────
   useEffect(() => {
-    getCurrentUser().then(u => {
-      if (u) setUserInfo({ name: u.name ?? '', email: u.email ?? '' })
-    }).catch(() => {})
+    getCurrentUser()
+      .then(u => { if (u) setUser({ name: u.name ?? '', email: u.email ?? '' }) })
+      .catch(() => {})
   }, [])
 
-  const handlePurchase = async (planId: PlanId) => {
-    if (!scriptLoaded) {
-      toast.error('Payment gateway loading, please try again in a moment.')
+  // ── Main purchase handler ─────────────────────────────────────────────────
+  const handlePurchase = useCallback(async (planId: PlanId) => {
+    if (!scriptReady) {
+      toast.error('Payment gateway is still loading — please try again in a moment.')
       return
     }
+    if (!window.Razorpay) {
+      toast.error('Razorpay checkout could not be loaded. Check your internet connection.')
+      return
+    }
+
     setLoading(planId)
+
     try {
-      // 1. Create order server-side
-      const res = await fetch('/api/payment/create-order', {
+      // ── Step 1: Create order server-side ──────────────────────────────────
+      const orderRes = await fetch('/api/payment/create-order', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ plan: planId }),
       })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || 'Failed to initiate payment')
-      }
-      const order = await res.json()
 
-      // 2. Open Razorpay checkout
-      const rzp = new window.Razorpay({
-        key:         order.keyId,
-        amount:      order.amount,
-        currency:    order.currency,
+      if (!orderRes.ok) {
+        const err = await orderRes.json().catch(() => ({}))
+        throw new Error(err.error || `Server error ${orderRes.status}`)
+      }
+
+      const order: {
+        orderId:  string
+        amount:   number
+        currency: string
+        keyId:    string
+        plan:     string
+        planName: string
+      } = await orderRes.json()
+
+      // ── Step 2: Open Razorpay checkout modal ──────────────────────────────
+      const options: RazorpayCheckoutOptions = {
+        key:         order.keyId,        // rzp_test_xxx or rzp_live_xxx
+        amount:      order.amount,       // paise from server — don't use client value
+        currency:    order.currency,     // 'INR'
         name:        'Indicore',
-        description: PLANS[planId].label,
-        order_id:    order.orderId,
+        description: order.planName,
+        order_id:    order.orderId,      // "order_Jxxxxxx"
         prefill: {
-          name:  userInfo?.name,
-          email: userInfo?.email,
+          name:  user?.name  ?? '',
+          email: user?.email ?? '',
         },
-        theme: { color: '#4A90E2' },
+        notes: {
+          plan: planId,
+        },
+        theme: {
+          color: '#4A90E2',
+        },
+        modal: {
+          backdropclose:  false,    // prevent accidental close by clicking backdrop
+          escape:         true,
+          confirm_close:  true,     // ask "Are you sure?" before closing mid-payment
+          ondismiss: () => {
+            setLoading(null)
+          },
+        },
+
+        // ── Step 3: Handle successful payment ──────────────────────────────
+        // These three fields must be sent to your server for signature verification.
         handler: async (response) => {
-          // 3. Verify payment server-side
           try {
-            const vRes = await fetch('/api/payment/verify', {
+            const verifyRes = await fetch('/api/payment/verify', {
               method:  'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 razorpay_order_id:   response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature:  response.razorpay_signature,
-                plan: planId,
+                plan:                planId,
               }),
             })
-            if (!vRes.ok) throw new Error('Verification failed')
-            toast.success('🎉 Welcome to Indicore Plus! Your subscription is active.')
+
+            if (!verifyRes.ok) {
+              const err = await verifyRes.json().catch(() => ({}))
+              throw new Error(err.error || 'Verification failed')
+            }
+
+            toast.success('Welcome to Indicore Plus! Your subscription is now active.')
             router.push('/dashboard')
-          } catch {
-            toast.error('Payment received but verification failed. Contact support.')
+          } catch (verifyErr: unknown) {
+            const msg = verifyErr instanceof Error ? verifyErr.message : 'Verification error'
+            // Payment was received by Razorpay but our verification failed.
+            // The user should contact support with their payment ID.
+            toast.error(
+              `Payment received (ID: ${response.razorpay_payment_id}) but verification failed. ` +
+              `Please contact support at indicoredotai@gmail.com`,
+              { duration: 10000 }
+            )
+            console.error('[verify]', msg, response)
           } finally {
             setLoading(null)
           }
         },
-        modal: {
-          ondismiss: () => setLoading(null),
-        },
+      }
+
+      const rzp = new window.Razorpay(options)
+
+      // ── Handle payment failure (card declined, UPI timeout etc.) ──────────
+      rzp.on('payment.failed', (response) => {
+        const { code, description, reason } = response.error
+        console.error('[payment.failed]', response.error)
+        toast.error(
+          `Payment failed: ${description || reason || 'Unknown error'} (${code})`,
+          { duration: 6000 }
+        )
+        setLoading(null)
       })
+
       rzp.open()
+
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
       toast.error(msg)
       setLoading(null)
     }
-  }
+  }, [scriptReady, user, router])
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#FDFDFD] pb-32">
       <div className="max-w-2xl mx-auto">
 
-        {/* ── Header ────────────────────────────────────────────── */}
+        {/* Header */}
         <div className="flex items-center justify-between px-6 pt-8 pb-4">
           <button
             onClick={() => router.back()}
@@ -178,15 +297,15 @@ export default function PricingPage() {
 
         <div className="px-5 space-y-5">
 
-          {/* ── Promo banner ──────────────────────────────────────── */}
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3.5 flex items-center gap-3">
-            <span className="text-xl shrink-0">🎁</span>
+          {/* Promo banner */}
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3.5 flex items-start gap-3">
+            <span className="text-xl shrink-0 mt-0.5">🎁</span>
             <p className="text-xs font-semibold text-amber-800 leading-snug">
-              We are <span className="font-black">free till 25th May 2026.</span> Get premium access at a discount — buy before 24th May 2026.
+              We are <span className="font-black">free till 25th May 2026.</span> Buy before 24th May 2026 to lock in the discounted rate.
             </p>
           </div>
 
-          {/* ── Hero copy ─────────────────────────────────────────── */}
+          {/* Hero */}
           <div className="text-center py-4">
             <div className="inline-flex items-center gap-2 bg-[#EBF2FC] text-[#4A90E2] px-4 py-2 rounded-full mb-4">
               <Crown className="h-4 w-4" />
@@ -201,20 +320,21 @@ export default function PricingPage() {
             </p>
           </div>
 
-          {/* ── Plan cards ────────────────────────────────────────── */}
+          {/* Plan cards */}
           <div className="space-y-4">
             {(Object.values(PLANS) as typeof PLANS[PlanId][]).map((plan) => (
               <PlanCard
                 key={plan.id}
                 plan={plan}
                 loading={loading === plan.id}
-                onSelect={() => handlePurchase(plan.id as PlanId)}
+                disabled={loading !== null && loading !== plan.id}
+                onSelect={() => handlePurchase(plan.id)}
               />
             ))}
           </div>
 
-          {/* ── What's included ───────────────────────────────────── */}
-          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 mt-2">
+          {/* Features */}
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
               Everything Included
             </p>
@@ -230,9 +350,22 @@ export default function PricingPage() {
             </div>
           </div>
 
-          {/* ── Trust footer ──────────────────────────────────────── */}
+          {/* Test mode notice (visible in dev / when using test keys) */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="flex items-start gap-2.5 bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3">
+              <AlertCircle className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-black text-yellow-800">Test Mode</p>
+                <p className="text-[11px] text-yellow-700 font-medium mt-0.5">
+                  Use test card: 4111 1111 1111 1111 · Any future expiry · Any CVV
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Trust footer */}
           <div className="text-center space-y-2 pt-2 pb-4">
-            <div className="flex items-center justify-center gap-6">
+            <div className="flex items-center justify-center gap-5 flex-wrap">
               {['Secure Payment', '100% Safe', 'Cancel Anytime'].map(t => (
                 <div key={t} className="flex items-center gap-1.5">
                   <Check className="h-3 w-3 text-emerald-500" />
@@ -241,7 +374,7 @@ export default function PricingPage() {
               ))}
             </div>
             <p className="text-[10px] text-gray-300 font-medium">
-              Powered by Razorpay · All major UPI, cards & wallets accepted
+              Powered by Razorpay · UPI, Debit/Credit Cards, Net Banking & Wallets accepted
             </p>
           </div>
 
@@ -251,17 +384,16 @@ export default function PricingPage() {
   )
 }
 
-// ── PlanCard sub-component ──────────────────────────────────────────────────
+// ── PlanCard ──────────────────────────────────────────────────────────────────
 function PlanCard({
-  plan,
-  loading,
-  onSelect,
+  plan, loading, disabled, onSelect,
 }: {
   plan: typeof PLANS[PlanId]
-  loading: boolean
+  loading:  boolean
+  disabled: boolean
   onSelect: () => void
 }) {
-  const { featured, label, name, price, perMonth, billing, savings, ctaLabel } = plan
+  const { featured, label, price, perMonth, savings, ctaLabel, id } = plan
 
   return (
     <div
@@ -271,19 +403,18 @@ function PlanCard({
           : 'bg-white border-gray-100 shadow-sm'
       }`}
     >
-      {/* Popular badge */}
       {featured && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="bg-gradient-to-r from-amber-400 to-amber-500 text-gray-900 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+          <span className="bg-gradient-to-r from-amber-400 to-amber-500 text-gray-900 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg whitespace-nowrap">
             Most Popular
           </span>
         </div>
       )}
 
       <div className="p-6 pt-8">
-        {/* Label */}
-        <div className="flex items-center justify-between mb-4">
-          <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${featured ? 'text-gray-400' : 'text-gray-400'}`}>
+        {/* Label row */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
             {label}
           </span>
           {!featured && (
@@ -294,37 +425,31 @@ function PlanCard({
         </div>
 
         {/* Price */}
-        <div className="mb-1">
-          <div className="flex items-end gap-1">
-            <span className={`text-[28px] font-black leading-none ${featured ? 'text-amber-400' : 'text-[#4A90E2]'}`}>
-              ₹
-            </span>
-            <span className={`text-5xl font-black leading-none ${featured ? 'text-white' : 'text-gray-900'}`}>
-              {price.toLocaleString('en-IN')}
-            </span>
-            <span className={`text-sm font-bold mb-1 ${featured ? 'text-gray-400' : 'text-gray-400'}`}>
-              /{plan.id === 'annual' ? 'year' : 'mo'}
-            </span>
-          </div>
-          {plan.id === 'annual' && (
-            <p className={`text-xs font-semibold mt-1 ${featured ? 'text-gray-400' : 'text-gray-400'}`}>
-              ₹{perMonth}/month · billed annually
-            </p>
-          )}
+        <div className="mb-1 flex items-end gap-1">
+          <span className={`text-2xl font-black leading-none ${featured ? 'text-amber-400' : 'text-[#4A90E2]'}`}>₹</span>
+          <span className={`text-5xl font-black leading-none ${featured ? 'text-white' : 'text-gray-900'}`}>
+            {perMonth}
+          </span>
+          <span className={`text-sm font-bold mb-1 ${featured ? 'text-gray-400' : 'text-gray-400'}`}>/mo</span>
         </div>
 
-        {/* Billing & savings */}
-        <p className={`text-[11px] font-bold mt-3 mb-5 ${featured ? 'text-amber-400/80' : 'text-emerald-600'}`}>
+        {id === 'annual' && (
+          <p className="text-xs font-semibold text-gray-400 mt-1">
+            ₹{price.toLocaleString('en-IN')} billed annually
+          </p>
+        )}
+
+        <p className={`text-[11px] font-bold mt-2 mb-5 ${featured ? 'text-amber-400/80' : 'text-emerald-600'}`}>
           {savings}
         </p>
 
-        {/* CTA button */}
+        {/* CTA */}
         <button
           onClick={onSelect}
-          disabled={loading}
-          className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed ${
+          disabled={loading || disabled}
+          className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${
             featured
-              ? 'bg-gradient-to-r from-[#4A90E2] to-[#3a7fd4] text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50'
+              ? 'bg-gradient-to-r from-[#4A90E2] to-[#3a7fd4] text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40'
               : 'bg-gray-900 text-white hover:bg-gray-800'
           }`}
         >
