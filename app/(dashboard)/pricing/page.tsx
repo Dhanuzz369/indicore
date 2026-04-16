@@ -121,31 +121,38 @@ const PLANS = {
 
 type PlanId = keyof typeof PLANS
 
+// ── Waits up to 5s for checkout.js to attach window.Razorpay ────────────────
+function waitForRazorpay(timeoutMs = 5000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window !== 'undefined' && window.Razorpay) { resolve(); return }
+    const start = Date.now()
+    const interval = setInterval(() => {
+      if (window.Razorpay) { clearInterval(interval); resolve() }
+      else if (Date.now() - start > timeoutMs) {
+        clearInterval(interval)
+        reject(new Error('Razorpay checkout.js did not load. Please check your internet connection.'))
+      }
+    }, 100)
+  })
+}
+
 // ── Page component ────────────────────────────────────────────────────────────
 export default function PricingPage() {
   const router = useRouter()
   const [user, setUser]           = useState<{ name: string; email: string } | null>(null)
-  const [loading, setLoading]     = useState<PlanId | null>(null)
-  const [scriptReady, setScriptReady] = useState(false)
+  const [loading, setLoading] = useState<PlanId | null>(null)
 
-  // ── Load Razorpay checkout.js once ─────────────────────────────────────────
+  // ── Load Razorpay checkout.js eagerly on mount ────────────────────────────
+  // We inject the script immediately so it's ready by the time the user clicks.
+  // We do NOT block the button on this — the server call is the real gate.
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if ((window as Window & typeof globalThis & { Razorpay?: unknown }).Razorpay) {
-      setScriptReady(true)
-      return
-    }
-    const existing = document.getElementById('rzp-checkout-js')
-    if (existing) {
-      existing.addEventListener('load', () => setScriptReady(true))
-      return
-    }
-    const script       = document.createElement('script')
-    script.id          = 'rzp-checkout-js'
-    script.src         = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.async       = true
-    script.onload      = () => setScriptReady(true)
-    script.onerror     = () => console.error('[Razorpay] checkout.js failed to load')
+    if (document.getElementById('rzp-checkout-js')) return
+    const script    = document.createElement('script')
+    script.id       = 'rzp-checkout-js'
+    script.src      = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async    = true
+    script.onerror  = () => console.error('[Razorpay] checkout.js failed to load')
     document.body.appendChild(script)
   }, [])
 
@@ -158,15 +165,6 @@ export default function PricingPage() {
 
   // ── Main purchase handler ─────────────────────────────────────────────────
   const handlePurchase = useCallback(async (planId: PlanId) => {
-    if (!scriptReady) {
-      toast.error('Payment gateway is still loading — please try again in a moment.')
-      return
-    }
-    if (!window.Razorpay) {
-      toast.error('Razorpay checkout could not be loaded. Check your internet connection.')
-      return
-    }
-
     setLoading(planId)
 
     try {
@@ -191,7 +189,10 @@ export default function PricingPage() {
         planName: string
       } = await orderRes.json()
 
-      // ── Step 2: Open Razorpay checkout modal ──────────────────────────────
+      // ── Step 2: Wait for checkout.js if still loading, then open modal ──
+      // The script is injected on mount but may not have finished loading yet.
+      await waitForRazorpay()
+
       const options: RazorpayCheckoutOptions = {
         key:         order.keyId,        // rzp_test_xxx or rzp_live_xxx
         amount:      order.amount,       // paise from server — don't use client value
@@ -276,7 +277,7 @@ export default function PricingPage() {
       toast.error(msg)
       setLoading(null)
     }
-  }, [scriptReady, user, router])
+  }, [user, router])
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (

@@ -65,8 +65,10 @@ export async function POST(req: NextRequest) {
   // Razorpay requires RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in env.
   // Get them from: https://dashboard.razorpay.com → Settings → API Keys
   if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-    console.error('[create-order] Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET env vars')
-    return NextResponse.json({ error: 'Payment gateway not configured' }, { status: 503 })
+    console.error('[create-order] Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET — add them in Vercel → Settings → Environment Variables')
+    return NextResponse.json({
+      error: 'Payments are not yet configured. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your Vercel environment variables.',
+    }, { status: 503 })
   }
 
   const razorpay = new Razorpay({
