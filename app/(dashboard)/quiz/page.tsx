@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import {
   Loader2, ArrowRight, LayoutGrid, FileText, Sparkles, X,
   Clock, Zap, Target, ChevronRight, Search, RotateCcw, Eye,
+  TrendingUp, Leaf, Globe, Landmark, Scale, Microscope,
+  Palette, ShieldCheck, BookOpen, FlaskConical, type LucideIcon,
 } from 'lucide-react'
 import type { Question, Subject, Mock, TestSession } from '@/types'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -41,15 +43,18 @@ const SECONDS_PER_QUESTION = 72
 
 type Difficulty = typeof DIFFICULTY_OPTIONS[number]
 
-function getSubjectAccent(name: string) {
+function getSubjectAccent(name: string): { color: string; bg: string; Icon: LucideIcon } {
   const l = name.toLowerCase()
-  if (l.includes('polity')) return { color: '#4A90E2', bg: 'bg-blue-50', text: 'text-blue-600', icon: '⚖️' }
-  if (l.includes('hist')) return { color: '#8B4513', bg: 'bg-amber-50', text: 'text-amber-700', icon: '🏛️' }
-  if (l.includes('geo')) return { color: '#007AFF', bg: 'bg-blue-50', text: 'text-blue-600', icon: '🌍' }
-  if (l.includes('econ')) return { color: '#FF3B30', bg: 'bg-red-50', text: 'text-red-600', icon: '📈' }
-  if (l.includes('environ')) return { color: '#34C759', bg: 'bg-green-50', text: 'text-green-600', icon: '🌿' }
-  if (l.includes('science') || l.includes('tech')) return { color: '#5856D6', bg: 'bg-indigo-50', text: 'text-indigo-600', icon: '🔬' }
-  return { color: '#4A90E2', bg: 'bg-blue-50', text: 'text-blue-600', icon: '📚' }
+  if (l.includes('polity') || l.includes('govern')) return { color: '#3B6FE8', bg: '#EEF3FF', Icon: Scale }
+  if (l.includes('hist') || l.includes('ancient') || l.includes('modern')) return { color: '#B45309', bg: '#FFF7ED', Icon: Landmark }
+  if (l.includes('geo')) return { color: '#0284C7', bg: '#E0F2FE', Icon: Globe }
+  if (l.includes('econ')) return { color: '#DC2626', bg: '#FEF2F2', Icon: TrendingUp }
+  if (l.includes('environ')) return { color: '#16A34A', bg: '#F0FDF4', Icon: Leaf }
+  if (l.includes('science') || l.includes('tech')) return { color: '#7C3AED', bg: '#F5F3FF', Icon: FlaskConical }
+  if (l.includes('art') || l.includes('cult')) return { color: '#D97706', bg: '#FFFBEB', Icon: Palette }
+  if (l.includes('intern') || l.includes('relat')) return { color: '#0891B2', bg: '#ECFEFF', Icon: Globe }
+  if (l.includes('ethics') || l.includes('integ')) return { color: '#059669', bg: '#ECFDF5', Icon: ShieldCheck }
+  return { color: '#4A90E2', bg: '#EFF6FF', Icon: BookOpen }
 }
 
 function getSubjectDesc(name?: string): string {
@@ -720,41 +725,42 @@ function QuizSetupContent() {
                 </div>
 
                 {/* Subject Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {loadingSubjects
-                    ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-52 rounded-2xl" />)
+                    ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-[2.5rem]" />)
                     : subjects.map(subj => {
-                        const accent = getSubjectAccent(subj.Name)
+                        const { color, bg, Icon } = getSubjectAccent(subj.Name)
                         const desc = getSubjectDesc(subj.Name)
                         return (
                           <div
                             key={subj.$id}
-                            className="group bg-white rounded-2xl border border-gray-200/70 shadow-sm hover:shadow-lg hover:border-blue-100 transition-all duration-200 p-5 flex flex-col cursor-pointer"
+                            className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-50 transition-all flex flex-col cursor-pointer"
                             onClick={() => openConfig(subj)}
                           >
-                            {/* Colored icon */}
+                            {/* Subtle top accent bar */}
+                            <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: color }} />
+
+                            {/* Lucide icon badge */}
                             <div
-                              className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4 shrink-0"
-                              style={{ backgroundColor: accent.color + '18', border: `1.5px solid ${accent.color}28` }}
+                              className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 shrink-0 group-hover:scale-105 transition-transform"
+                              style={{ backgroundColor: bg, border: `1.5px solid ${color}28` }}
                             >
-                              {accent.icon}
+                              <Icon className="h-5 w-5" style={{ color }} />
                             </div>
 
-                            {/* Name + description */}
-                            <h3 className="text-[15px] font-black text-gray-900 mb-1 leading-snug">{subj.Name}</h3>
-                            <p className="text-[12px] text-gray-400 font-medium leading-relaxed mb-5 flex-1 line-clamp-2">{desc}</p>
+                            {/* Subject name */}
+                            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color }}>
+                              SUBJECT PRACTICE
+                            </p>
+                            <h3 className="text-lg md:text-2xl font-black text-gray-900 mb-2 leading-snug">{subj.Name}</h3>
+                            <p className="text-xs text-gray-400 font-semibold leading-relaxed mb-6 flex-1 line-clamp-2">{desc}</p>
 
-                            {/* Configure & Start pill */}
+                            {/* Configure & Start — full width like mock/PYQ button */}
                             <button
-                              className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider px-4 py-2 rounded-xl w-fit transition-all group-hover:translate-x-0.5"
-                              style={{
-                                color: accent.color,
-                                backgroundColor: accent.color + '12',
-                                border: `1.5px solid ${accent.color}28`,
-                              }}
+                              className="h-12 md:h-14 w-full rounded-xl md:rounded-2xl flex items-center justify-center gap-2 font-black text-[11px] uppercase tracking-widest transition-all hover:opacity-90 shadow-sm"
+                              style={{ backgroundColor: color, color: '#fff' }}
                             >
-                              Configure & Start
-                              <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                              Configure & Start <ArrowRight className="h-4 w-4" />
                             </button>
                           </div>
                         )
