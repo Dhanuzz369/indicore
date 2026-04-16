@@ -819,22 +819,37 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
             {/* Current Score — includes accuracy */}
             <div className="col-span-2 lg:col-span-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -translate-y-12 translate-x-12 pointer-events-none" />
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5">
-                <TrendingDown className="h-2.5 w-2.5" /> Current Score
+              {/* Decorative blob */}
+              <div className="absolute top-0 right-0 w-36 h-36 bg-blue-50/60 rounded-full -translate-y-14 translate-x-14 pointer-events-none" />
+
+              {/* Header */}
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 flex items-center gap-1.5 relative">
+                <Target className="h-2.5 w-2.5" /> Current Score
               </p>
-              {/* Score number + accuracy ring side by side */}
-              <div className="flex items-center justify-between gap-3">
+
+              {/* Score + ring */}
+              <div className="flex items-center justify-between gap-3 relative">
                 <div>
                   <div className="flex items-baseline gap-1 leading-none">
-                    <span className={`text-[2.6rem] font-black tracking-tight leading-none ${(score.marksScored ?? 0) < 0 ? 'text-red-500' : 'text-gray-900'}`}>
+                    <span className={`text-[2.8rem] font-black tracking-tight leading-none ${(score.marksScored ?? 0) < 0 ? 'text-red-500' : 'text-gray-900'}`}>
                       {typeof score.marksScored === 'number' ? score.marksScored.toFixed(2) : score.correct}
                     </span>
                   </div>
                   <p className="text-[10px] text-gray-400 font-medium mt-0.5">out of 200.00</p>
+                  {/* Score label badge */}
+                  <span
+                    className="inline-block mt-2 text-[9px] font-black px-2 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: score.percentage >= 70 ? '#D1FAE5' : score.percentage >= 50 ? '#FEF3C7' : '#FEE2E2',
+                      color: score.percentage >= 70 ? '#059669' : score.percentage >= 50 ? '#D97706' : '#DC2626',
+                    }}
+                  >
+                    {getScoreThreshold(score.percentage).label}
+                  </span>
                 </div>
+
                 {/* Circular accuracy ring */}
-                <div className="relative shrink-0 w-[62px] h-[62px]">
+                <div className="relative shrink-0 w-[68px] h-[68px]">
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                     <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" strokeWidth="3.2" />
                     <circle
@@ -847,34 +862,60 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-[11px] font-black text-gray-900 leading-none">{score.percentage}%</span>
-                    <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wide leading-none mt-0.5">Acc</span>
+                    <span className="text-[12px] font-black text-gray-900 leading-none">{score.percentage}%</span>
+                    <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wide leading-none mt-0.5">Accuracy</span>
                   </div>
                 </div>
               </div>
+
               {/* Progress bar */}
-              <div className="h-1 bg-gray-100 rounded-full overflow-hidden mt-3 mb-2">
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-4 mb-4">
                 <div
-                  className="h-full bg-[#4A90E2] rounded-full transition-all duration-1000"
-                  style={{ width: `${Math.max(1, Math.min(100, ((score.marksScored ?? 0) / 200) * 100))}%` }}
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{
+                    width: `${Math.max(1, Math.min(100, ((score.marksScored ?? 0) / 200) * 100))}%`,
+                    backgroundColor: score.percentage >= 70 ? '#10B981' : score.percentage >= 50 ? '#F59E0B' : '#4A90E2',
+                  }}
                 />
               </div>
-              {/* Stats row */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 text-[10px] font-bold">
-                  <span className="text-emerald-600">{score.correct}C</span>
-                  <span className="text-red-500">{score.wrong}W</span>
-                  <span className="text-gray-400">{displayQuestions.length - score.correct - score.wrong}S</span>
-                  <span className="text-gray-300">·</span>
-                  <span className="text-gray-400">{Math.floor(displayElapsed / 60)}m</span>
+
+              {/* Stats grid: Correct / Wrong / Skipped / Time */}
+              <div className="grid grid-cols-4 gap-1.5 mb-3">
+                {/* Correct */}
+                <div className="bg-emerald-50 rounded-xl p-2 text-center">
+                  <p className="text-[13px] font-black text-emerald-600 leading-none">{score.correct}</p>
+                  <p className="text-[8px] font-bold text-emerald-500 mt-0.5 uppercase tracking-wide">Correct</p>
                 </div>
-                <button
-                  onClick={() => handleQuestionClick(0)}
-                  className="text-[9px] font-black text-[#4A90E2] uppercase tracking-widest hover:underline flex items-center gap-1 transition-colors"
-                >
-                  <Clock className="h-2.5 w-2.5" /> Review
-                </button>
+                {/* Wrong */}
+                <div className="bg-red-50 rounded-xl p-2 text-center">
+                  <p className="text-[13px] font-black text-red-500 leading-none">{score.wrong}</p>
+                  <p className="text-[8px] font-bold text-red-400 mt-0.5 uppercase tracking-wide">Wrong</p>
+                </div>
+                {/* Skipped */}
+                <div className="bg-gray-50 rounded-xl p-2 text-center">
+                  <p className="text-[13px] font-black text-gray-500 leading-none">
+                    {displayQuestions.length - score.correct - score.wrong}
+                  </p>
+                  <p className="text-[8px] font-bold text-gray-400 mt-0.5 uppercase tracking-wide">Skipped</p>
+                </div>
+                {/* Time */}
+                <div className="bg-blue-50 rounded-xl p-2 text-center">
+                  <p className="text-[11px] font-black text-blue-600 leading-none tabular-nums">
+                    {displayElapsed >= 3600
+                      ? `${Math.floor(displayElapsed / 3600)}h${Math.floor((displayElapsed % 3600) / 60)}m`
+                      : `${Math.floor(displayElapsed / 60)}m${displayElapsed % 60}s`}
+                  </p>
+                  <p className="text-[8px] font-bold text-blue-400 mt-0.5 uppercase tracking-wide">Time</p>
+                </div>
               </div>
+
+              {/* Review button */}
+              <button
+                onClick={() => handleQuestionClick(0)}
+                className="w-full py-2 rounded-xl text-[10px] font-black text-[#4A90E2] uppercase tracking-widest border border-blue-100 hover:bg-blue-50 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              >
+                <Clock className="h-3 w-3" /> Review Answers
+              </button>
             </div>
 
             {/* Potential Score — flip card */}
