@@ -126,7 +126,7 @@ function SubjectPerformanceCard({
   }, [subjectQuestions, answers])
 
   return (
-    <div className="bg-[#111827] rounded-2xl border border-white/[0.06] transition-all hover:border-white/[0.10]">
+    <div className="bg-white shadow-sm rounded-2xl border border-gray-200 transition-all hover:border-white/[0.10]">
       <div
         className="flex items-center justify-between p-5 md:p-6 cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -136,15 +136,15 @@ function SubjectPerformanceCard({
             {accuracy}%
           </div>
           <div>
-            <h3 className="text-sm font-black text-white uppercase tracking-tight">{(label ?? subject ?? 'Unknown').replace(/_/g, ' ')}</h3>
-            <p className="text-xs text-white/30 font-bold uppercase">{correct} / {total} Correct</p>
+            <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight">{(label ?? subject ?? 'Unknown').replace(/_/g, ' ')}</h3>
+            <p className="text-xs text-gray-500 font-bold uppercase">{correct} / {total} Correct</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden sm:inline text-xs text-white/20 font-medium">
+          <span className="hidden sm:inline text-xs text-gray-400 font-medium">
             {isExpanded ? 'Hide questions' : 'Show questions'}
           </span>
-          <div className={`w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center text-white/20 hover:text-white/60 transition-all ${isExpanded ? 'rotate-180' : ''}`}>
+          <div className={`w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-900/60 transition-all ${isExpanded ? 'rotate-180' : ''}`}>
             <ChevronDown className="h-4 w-4" />
           </div>
         </div>
@@ -160,15 +160,15 @@ function SubjectPerformanceCard({
             <>
               <div className="bg-emerald-500/60 transition-all duration-1000" style={{ width: `${(correct / total) * 100}%` }} />
               <div className="bg-red-500/60 transition-all duration-1000" style={{ width: `${(wrong / total) * 100}%` }} />
-              <div className="bg-white/[0.04] transition-all duration-1000" style={{ width: `${(skipped / total) * 100}%` }} />
+              <div className="bg-gray-100 transition-all duration-1000" style={{ width: `${(skipped / total) * 100}%` }} />
             </>
           )
         })()}
       </div>
       {isExpanded && (
         <div className="px-5 pb-5 md:px-6 md:pb-6 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="border-t border-white/[0.04] pt-5">
-            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] mb-4">
+          <div className="border-t border-gray-100 pt-5">
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
               Question Numbers — click to review
             </p>
             <div className="flex flex-wrap gap-2">
@@ -177,7 +177,7 @@ function SubjectPerformanceCard({
                 const isCorrect = answer?.isCorrect
                 const isSkipped = !answer
                 const globalIndex = questions.findIndex(allQ => allQ.$id === q.$id)
-                let statusColor = 'bg-white/[0.04] text-white/30 border-white/[0.08] hover:border-white/20'
+                let statusColor = 'bg-gray-100 text-gray-500 border-gray-200 hover:border-white/20'
                 if (isCorrect) statusColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:border-emerald-500/40'
                 else if (!isSkipped) statusColor = 'bg-red-500/10 text-red-400 border-red-500/20 hover:border-red-500/40'
                 const confTag = answer?.confidenceTag
@@ -202,10 +202,10 @@ function SubjectPerformanceCard({
                 )
               })}
             </div>
-            <div className="flex flex-wrap gap-4 mt-4 text-[9px] text-white/20">
+            <div className="flex flex-wrap gap-4 mt-4 text-[9px] text-gray-400">
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500/10 border border-emerald-500/30" />Correct</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500/10 border border-red-500/30" />Wrong</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-white/[0.04] border border-white/[0.08]" />Skipped</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-100 border border-gray-200" />Skipped</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border border-emerald-400/60" />Sure</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border border-purple-400/60" />50:50</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border border-yellow-400/60" />Guess</span>
@@ -214,8 +214,8 @@ function SubjectPerformanceCard({
 
             {/* Areas to revisit */}
             {areasToRevisit.length > 0 && (
-              <div className="mt-5 pt-4 border-t border-white/[0.04]">
-                <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] mb-3">
+              <div className="mt-5 pt-4 border-t border-gray-100">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">
                   Areas to revisit
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -270,17 +270,17 @@ function TaggedQuestionsDropdown({
         <div className="flex items-center gap-2">
           <BookOpen className="h-3.5 w-3.5 opacity-70" />
           <span className="uppercase tracking-widest">{title}</span>
-          <span className="px-1.5 py-0.5 rounded-md bg-white/10 text-[10px] ml-1">{taggedItems.length}</span>
+          <span className="px-1.5 py-0.5 rounded-md bg-gray-200 text-[10px] ml-1">{taggedItems.length}</span>
         </div>
         <ChevronDown className={`h-4 w-4 transition-transform duration-500 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div className={`transition-all duration-500 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-        <div className="p-4 border-t border-white/[0.04]">
-          <p className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-3">Questions marked as {tag.replace('_', ':')}</p>
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Questions marked as {tag.replace('_', ':')}</p>
           <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
             {taggedItems.map(({ q, index, answer }) => {
               const isCorrect = answer?.isCorrect
-              let statusStyle = 'bg-white/[0.04] text-white/30 border-white/[0.08] hover:bg-white/[0.08]'
+              let statusStyle = 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-white/[0.08]'
               if (isCorrect === true) statusStyle = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
               else if (isCorrect === false) statusStyle = 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
               return (
@@ -705,9 +705,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   // ─── Loading ─────────────────────────────────────────────────
   if (isRehydrating) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] p-6 bg-[#080C17]">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-6 bg-gray-50">
         <Loader2 className="h-10 w-10 text-indigo-400 animate-spin mb-4" />
-        <p className="text-white/30 font-black text-sm uppercase tracking-widest">Reconstructing Analysis...</p>
+        <p className="text-gray-500 font-black text-sm uppercase tracking-widest">Reconstructing Analysis...</p>
       </div>
     )
   }
@@ -716,18 +716,18 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const hasData = displayQuestions.length > 0
   if (!hasData) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh] p-6 bg-[#080C17]">
+      <div className="flex items-center justify-center min-h-[80vh] p-6 bg-gray-50">
         <div className="text-center space-y-4 max-w-xs">
-          <div className="w-20 h-20 rounded-full bg-white/[0.04] flex items-center justify-center mx-auto ring-1 ring-white/[0.06]">
-            <BookOpen className="h-10 w-10 text-white/20" />
+          <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto ring-1 ring-white/[0.06]">
+            <BookOpen className="h-10 w-10 text-gray-400" />
           </div>
-          <h2 className="text-xl font-bold text-white">No Full Analysis Available</h2>
-          <p className="text-white/40 text-sm">
+          <h2 className="text-xl font-bold text-gray-900">No Full Analysis Available</h2>
+          <p className="text-gray-500 text-sm">
             {replayMode ? 'This is a legacy session. Question-level replay data was not saved for this test.' : 'Complete a practice session to unlock the Analytical Engine.'}
           </p>
           <button
             onClick={() => router.push(replayMode ? '/tests' : '/quiz')}
-            className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-900/50"
+            className="bg-indigo-600 text-gray-900 px-8 py-3 rounded-xl font-bold text-sm hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-900/50"
           >
             {replayMode ? 'Back to My Tests' : 'Start Practice'}
           </button>
@@ -746,21 +746,21 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
   // ─── Main render ─────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#080C17] pb-28">
+    <div className="min-h-screen bg-gray-50 pb-28">
 
       {/* ── Header ── */}
-      <div className="sticky top-0 z-30 bg-[#080C17]/90 backdrop-blur-xl border-b border-white/[0.05]">
+      <div className="sticky top-0 z-30 bg-gray-50/90 backdrop-blur-xl border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-900/50">
-              <Brain className="h-5 w-5 text-white" />
+              <Brain className="h-5 w-5 text-gray-900" />
             </div>
             <div>
-              <h1 className="text-base md:text-lg font-black text-white tracking-tight leading-none uppercase italic">
+              <h1 className="text-base md:text-lg font-black text-gray-900 tracking-tight leading-none uppercase italic">
                 AE <span className="text-indigo-400">PRO</span>
-                <span className="hidden sm:inline text-white/30"> · Analytical Engine</span>
+                <span className="hidden sm:inline text-gray-500"> · Analytical Engine</span>
               </h1>
-              <p className="text-[10px] text-white/25 font-bold uppercase tracking-[0.2em] mt-0.5 max-w-[140px] sm:max-w-none truncate">
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-0.5 max-w-[140px] sm:max-w-none truncate">
                 {displayPaperLabel || 'Real-time Analysis'}
               </p>
             </div>
@@ -769,7 +769,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             {replayMode ? (
               <button
                 onClick={() => setPendingNavigation(() => () => router.push('/tests'))}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white/30 hover:text-white/70 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" /> My Tests
               </button>
@@ -777,13 +777,13 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               <>
                 <button
                   onClick={() => setPendingNavigation(() => () => router.push('/dashboard'))}
-                  className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-bold text-white/30 hover:text-white/70 transition-colors"
+                  className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-600 transition-colors"
                 >
                   <Home className="h-4 w-4" /> Dashboard
                 </button>
                 <button
                   onClick={() => setPendingNavigation(() => () => { reset(); router.push('/quiz') })}
-                  className="bg-white/[0.06] border border-white/[0.08] px-5 py-2.5 rounded-xl text-sm font-black text-white/70 hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
+                  className="bg-gray-100 border border-gray-200 px-5 py-2.5 rounded-xl text-sm font-black text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-all flex items-center gap-2"
                 >
                   <RefreshCw className="h-4 w-4" /> Retake
                 </button>
@@ -801,7 +801,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             <button
               onClick={handleReattempt}
               disabled={reattemptQuestions.length === 0}
-              className="w-full sm:w-auto px-7 py-3 bg-indigo-600 text-white rounded-xl font-black text-sm uppercase tracking-wider hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-900/50 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-7 py-3 bg-indigo-600 text-gray-900 rounded-xl font-black text-sm uppercase tracking-wider hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-900/50 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <RefreshCw className="h-4 w-4 shrink-0" />
               Reattempt Wrong Questions ({reattemptQuestions.length})
@@ -818,17 +818,17 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           <div className="col-span-2 lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-4">
 
             {/* Current Score */}
-            <div className="bg-[#111827] rounded-2xl border border-white/[0.06] p-4 md:p-5 overflow-hidden relative">
+            <div className="bg-white shadow-sm rounded-2xl border border-gray-200 p-4 md:p-5 overflow-hidden relative">
               <div className="absolute top-0 right-0 w-28 h-28 bg-indigo-500/[0.04] rounded-full -translate-y-10 translate-x-10 pointer-events-none" />
-              <p className="text-[9px] font-black text-white/25 uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5">
+              <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5">
                 <TrendingDown className="h-2.5 w-2.5" /> Current Score
               </p>
               <div className="flex items-baseline gap-1 leading-none">
-                <span className={`text-[2.4rem] font-black tracking-tight leading-none ${(score.marksScored ?? 0) < 0 ? 'text-red-400' : 'text-white'}`}>
+                <span className={`text-[2.4rem] font-black tracking-tight leading-none ${(score.marksScored ?? 0) < 0 ? 'text-red-400' : 'text-gray-900'}`}>
                   {typeof score.marksScored === 'number' ? score.marksScored.toFixed(2) : score.correct}
                 </span>
               </div>
-              <p className="text-[10px] text-white/20 font-medium mt-0.5 mb-3">out of 200.00</p>
+              <p className="text-[10px] text-gray-400 font-medium mt-0.5 mb-3">out of 200.00</p>
               <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
@@ -836,7 +836,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 />
               </div>
               <div className="flex items-center justify-between mt-3">
-                <span className="text-[9px] text-white/20 font-medium">{Math.floor(displayElapsed / 60)} min</span>
+                <span className="text-[9px] text-gray-400 font-medium">{Math.floor(displayElapsed / 60)} min</span>
                 <button
                   onClick={() => handleQuestionClick(0)}
                   className="text-[9px] font-black text-indigo-400 uppercase tracking-widest hover:text-indigo-300 flex items-center gap-1 transition-colors"
@@ -864,14 +864,14 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,255,255,0.10) 0%, transparent 70%)' }} />
                   <div className="relative flex flex-col h-full">
                     <div className="flex items-center gap-1.5">
-                      <Sparkles className="h-3 w-3 text-white/50" />
-                      <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em]">Potential</span>
+                      <Sparkles className="h-3 w-3 text-gray-500" />
+                      <span className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Potential</span>
                     </div>
                     <div className="flex-1 flex flex-col items-center justify-center py-2">
-                      <p className="text-[2.2rem] font-black text-white/15 select-none tracking-tight leading-none" style={{ filter: 'blur(8px)' }}>00.00</p>
-                      <p className="text-[9px] text-white/35 font-medium mt-2 uppercase tracking-widest">tap to reveal</p>
+                      <p className="text-[2.2rem] font-black text-gray-900/15 select-none tracking-tight leading-none" style={{ filter: 'blur(8px)' }}>00.00</p>
+                      <p className="text-[9px] text-gray-900/35 font-medium mt-2 uppercase tracking-widest">tap to reveal</p>
                     </div>
-                    <div className="h-0.5 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-0.5 bg-gray-200 rounded-full overflow-hidden">
                       <div className="h-full w-1/2 bg-white/25 rounded-full animate-pulse" />
                     </div>
                   </div>
@@ -885,30 +885,30 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,255,255,0.10) 0%, transparent 70%)' }} />
                   <div className="relative flex flex-col h-full">
                     <div className="flex items-center gap-1.5">
-                      <Sparkles className="h-3 w-3 text-white/50" />
-                      <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em]">Potential</span>
+                      <Sparkles className="h-3 w-3 text-gray-500" />
+                      <span className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Potential</span>
                     </div>
                     <div className="mt-2">
                       <div className="flex items-baseline gap-1.5 leading-none">
-                        <span className="text-[2rem] font-black text-white tracking-tight leading-none">{potentialScore.toFixed(2)}</span>
-                        <span className="text-sm font-bold text-white/25">/ 200</span>
+                        <span className="text-[2rem] font-black text-gray-900 tracking-tight leading-none">{potentialScore.toFixed(2)}</span>
+                        <span className="text-sm font-bold text-gray-500">/ 200</span>
                       </div>
                     </div>
                     {hasRecoverableMarks ? (
                       <div className="mt-auto">
-                        <p className="text-[10px] text-white/50 font-medium leading-snug mt-1.5">
-                          +<span className="font-black text-white">{Math.max(0, potentialScore - (score.marksScored ?? 0)).toFixed(2)}</span> recoverable marks
+                        <p className="text-[10px] text-gray-500 font-medium leading-snug mt-1.5">
+                          +<span className="font-black text-gray-900">{Math.max(0, potentialScore - (score.marksScored ?? 0)).toFixed(2)}</span> recoverable marks
                         </p>
                         <button
                           onClick={lostMarksHighlighted ? undefined : handleShowLostMarks}
                           disabled={lostMarksHighlighted}
-                          className={`mt-2.5 w-full py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${lostMarksHighlighted ? 'bg-white/10 text-white/25 cursor-default' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                          className={`mt-2.5 w-full py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${lostMarksHighlighted ? 'bg-gray-200 text-gray-500 cursor-default' : 'bg-gray-300 text-gray-900 hover:bg-white/30'}`}
                         >
                           {lostMarksHighlighted ? 'Showing ✓' : 'See lost marks →'}
                         </button>
                       </div>
                     ) : (
-                      <p className="text-[10px] text-white/35 font-medium mt-2">No recoverable marks</p>
+                      <p className="text-[10px] text-gray-900/35 font-medium mt-2">No recoverable marks</p>
                     )}
                   </div>
                 </div>
@@ -916,15 +916,15 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </div>
 
             {/* Accuracy */}
-            <div className="col-span-2 lg:col-span-1 bg-[#111827] rounded-2xl border border-white/[0.06] p-4 md:p-5 flex items-center justify-between gap-4">
+            <div className="col-span-2 lg:col-span-1 bg-white shadow-sm rounded-2xl border border-gray-200 p-4 md:p-5 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[9px] font-black text-white/25 uppercase tracking-[0.2em] mb-1">Accuracy</p>
-                <p className="text-[2rem] font-black text-white leading-none">{score.percentage}<span className="text-base text-white/25">%</span></p>
-                <p className="text-[10px] text-white/25 font-medium mt-1">{score.correct}C · {score.wrong}W · {displayQuestions.length - score.correct - score.wrong}S</p>
+                <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Accuracy</p>
+                <p className="text-[2rem] font-black text-gray-900 leading-none">{score.percentage}<span className="text-base text-gray-500">%</span></p>
+                <p className="text-[10px] text-gray-500 font-medium mt-1">{score.correct}C · {score.wrong}W · {displayQuestions.length - score.correct - score.wrong}S</p>
               </div>
               <div className="relative shrink-0 w-[60px] h-[60px]">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="3.2" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="3.2" />
                   <circle
                     cx="18" cy="18" r="15.9" fill="none"
                     stroke={score.percentage >= 70 ? '#22C55E' : score.percentage >= 50 ? '#F59E0B' : '#EF4444'}
@@ -934,18 +934,18 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-black text-white">{score.percentage}%</span>
+                  <span className="text-[10px] font-black text-gray-900">{score.percentage}%</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Right: Analytical Trajectory — subject bar chart */}
-          <div className="col-span-2 lg:col-span-1 bg-[#111827] rounded-2xl border border-white/[0.06] p-5 md:p-6 flex flex-col">
+          <div className="col-span-2 lg:col-span-1 bg-white shadow-sm rounded-2xl border border-gray-200 p-5 md:p-6 flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-base font-black text-white tracking-tight">Analytical Trajectory</h3>
-                <p className="text-[10px] text-white/25 font-medium mt-0.5">Real-time score progression across last 50 mock sessions</p>
+                <h3 className="text-base font-black text-gray-900 tracking-tight">Analytical Trajectory</h3>
+                <p className="text-[10px] text-gray-500 font-medium mt-0.5">Real-time score progression across last 50 mock sessions</p>
               </div>
               <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-[10px] font-black text-indigo-400 uppercase tracking-wider border border-indigo-500/20 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse inline-block" />
@@ -954,9 +954,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </div>
 
             <div className="flex items-center gap-4 mb-4 flex-wrap">
-              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500/60" /><span className="text-[9px] font-bold text-white/25 uppercase tracking-wider">Below 50%</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500/60" /><span className="text-[9px] font-bold text-white/25 uppercase tracking-wider">50–70%</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500/60" /><span className="text-[9px] font-bold text-white/25 uppercase tracking-wider">Above 70%</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500/60" /><span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Below 50%</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500/60" /><span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">50–70%</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500/60" /><span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Above 70%</span></div>
             </div>
 
             <div className="space-y-3 flex-1" onMouseLeave={() => setHoveredStat(null)}>
@@ -972,23 +972,23 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                     onMouseEnter={() => setHoveredStat({ subject: subjectName, accuracy, correct: stat.correct, total: stat.total, marksLost: stat.marksLost ?? 0 })}
                   >
                     <div className="w-20 shrink-0 text-right">
-                      <span className={`text-[10px] font-bold uppercase tracking-tight truncate block transition-colors duration-150 ${isHovered ? 'text-white' : 'text-white/25'}`} title={subjectName}>
+                      <span className={`text-[10px] font-bold uppercase tracking-tight truncate block transition-colors duration-150 ${isHovered ? 'text-gray-900' : 'text-gray-500'}`} title={subjectName}>
                         {subjectName.length > 9 ? subjectName.slice(0, 9) : subjectName}
                       </span>
                     </div>
-                    <div className={`flex-1 h-7 rounded-lg overflow-hidden relative transition-all ${isHovered ? 'ring-1 ring-white/15' : ''}`} style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>
+                    <div className={`flex-1 h-7 rounded-lg overflow-hidden relative transition-all ${isHovered ? 'ring-1 ring-white/15' : ''}`} style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}>
                       <div
                         className="absolute left-0 top-0 h-full rounded-lg transition-all duration-700 ease-out flex items-center px-2.5"
                         style={{ width: `${Math.max(6, accuracy)}%`, backgroundColor: color, opacity: isHovered ? 0.9 : 0.55 }}
                       >
-                        {accuracy >= 20 && <span className="text-[10px] font-black text-white whitespace-nowrap">{accuracy}%</span>}
+                        {accuracy >= 20 && <span className="text-[10px] font-black text-gray-900 whitespace-nowrap">{accuracy}%</span>}
                       </div>
                       {accuracy < 20 && (
                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black whitespace-nowrap" style={{ color }}>{accuracy}%</span>
                       )}
                     </div>
                     <div className="w-10 shrink-0 text-right">
-                      <span className={`text-[9px] font-bold transition-colors duration-150 ${isHovered ? 'text-white/60' : 'text-white/20'}`}>{stat.correct}/{stat.total}</span>
+                      <span className={`text-[9px] font-bold transition-colors duration-150 ${isHovered ? 'text-gray-900/60' : 'text-gray-400'}`}>{stat.correct}/{stat.total}</span>
                     </div>
                   </div>
                 )
@@ -997,20 +997,20 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
             <div className={`mt-3 transition-all duration-200 overflow-hidden ${hoveredStat ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
               {hoveredStat && (
-                <div className="rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap bg-white/[0.04] border border-white/[0.06]">
+                <div className="rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap bg-gray-100 border border-gray-200">
                   <div>
-                    <p className="text-[11px] font-black text-white uppercase tracking-wide">{hoveredStat.subject}</p>
-                    <p className="text-[10px] text-white/35 font-medium mt-0.5">{hoveredStat.correct} of {hoveredStat.total} correct</p>
+                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-wide">{hoveredStat.subject}</p>
+                    <p className="text-[10px] text-gray-900/35 font-medium mt-0.5">{hoveredStat.correct} of {hoveredStat.total} correct</p>
                   </div>
                   <div className="flex items-center gap-5">
                     <div className="text-center">
                       <p className="text-base font-black" style={{ color: hoveredStat.accuracy >= 70 ? '#22C55E' : hoveredStat.accuracy >= 50 ? '#F59E0B' : '#EF4444' }}>{hoveredStat.accuracy}%</p>
-                      <p className="text-[9px] text-white/25 font-semibold uppercase">Accuracy</p>
+                      <p className="text-[9px] text-gray-500 font-semibold uppercase">Accuracy</p>
                     </div>
                     {hoveredStat.marksLost > 0 && (
                       <div className="text-center">
                         <p className="text-base font-black text-red-400">−{hoveredStat.marksLost.toFixed(1)}</p>
-                        <p className="text-[9px] text-white/25 font-semibold uppercase">Lost</p>
+                        <p className="text-[9px] text-gray-500 font-semibold uppercase">Lost</p>
                       </div>
                     )}
                   </div>
@@ -1026,12 +1026,12 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
           {/* Subject Performance */}
-          <div className="bg-[#111827] rounded-2xl border border-white/[0.06] p-5">
+          <div className="bg-white shadow-sm rounded-2xl border border-gray-200 p-5">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center">
                 <Target className="h-3.5 w-3.5 text-indigo-400" />
               </div>
-              <h3 className="text-sm font-black text-white">Subject Performance</h3>
+              <h3 className="text-sm font-black text-gray-900">Subject Performance</h3>
             </div>
             <div className="space-y-3.5">
               {[...analytics.subjectStats].sort((a: any, b: any) => (b.accuracy || 0) - (a.accuracy || 0)).map((stat: any) => {
@@ -1042,10 +1042,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 return (
                   <div key={stat.subject}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[11px] font-bold text-white/50 uppercase truncate max-w-[130px]">{subjectName}</span>
+                      <span className="text-[11px] font-bold text-gray-500 uppercase truncate max-w-[130px]">{subjectName}</span>
                       <span className={`text-[11px] font-black ${colorText}`}>{accuracy}%</span>
                     </div>
-                    <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-700" style={{ width: `${accuracy}%`, backgroundColor: barColor, opacity: 0.65 }} />
                     </div>
                   </div>
@@ -1056,12 +1056,12 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
           {/* Strategy Protocols */}
           {analytics.suggestions.length > 0 ? (
-            <div className="bg-[#111827] rounded-2xl border border-white/[0.06] p-5">
+            <div className="bg-white shadow-sm rounded-2xl border border-gray-200 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
                   <Zap className="h-3.5 w-3.5 text-amber-400" />
                 </div>
-                <h3 className="text-sm font-black text-white">Strategy Protocols</h3>
+                <h3 className="text-sm font-black text-gray-900">Strategy Protocols</h3>
               </div>
               <div className="space-y-4">
                 {analytics.suggestions.slice(0, 4).map((s: string, idx: number) => (
@@ -1071,19 +1071,19 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                     </div>
                     <div>
                       <p className="text-[9px] font-black text-amber-400/70 uppercase tracking-wider mb-0.5">Priority {idx + 1}</p>
-                      <p className="text-xs text-white/45 font-medium leading-relaxed">{s}</p>
+                      <p className="text-xs text-gray-900/45 font-medium leading-relaxed">{s}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="bg-[#111827] rounded-2xl border border-white/[0.06] p-5 flex flex-col items-center justify-center text-center min-h-[200px]">
-              <div className="w-10 h-10 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-3">
-                <Zap className="h-5 w-5 text-white/15" />
+            <div className="bg-white shadow-sm rounded-2xl border border-gray-200 p-5 flex flex-col items-center justify-center text-center min-h-[200px]">
+              <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+                <Zap className="h-5 w-5 text-gray-900/15" />
               </div>
-              <p className="text-sm font-bold text-white/25">No strategy insights yet</p>
-              <p className="text-xs text-white/15 mt-1">Complete more questions to unlock</p>
+              <p className="text-sm font-bold text-gray-500">No strategy insights yet</p>
+              <p className="text-xs text-gray-900/15 mt-1">Complete more questions to unlock</p>
             </div>
           )}
 
@@ -1098,12 +1098,12 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             const guessCorrect = bu.correctGuess ?? 0
             const successRate = displayQuestions.length > 0 ? Math.round((score.correct / displayQuestions.length) * 100) : 0
             return (
-              <div className="bg-[#111827] rounded-2xl border border-white/[0.06] p-5">
+              <div className="bg-white shadow-sm rounded-2xl border border-gray-200 p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                     <Brain className="h-3.5 w-3.5 text-emerald-400" />
                   </div>
-                  <h3 className="text-sm font-black text-white">Item Analysis</h3>
+                  <h3 className="text-sm font-black text-gray-900">Item Analysis</h3>
                 </div>
                 <div className="space-y-3">
                   {[
@@ -1111,17 +1111,17 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                     { icon: <Brain className="h-3.5 w-3.5 text-blue-400/50" />, label: '50:50 Logic', val: `${logicCorrect}/${logicTotal}`, accent: '' },
                     { icon: <Zap className="h-3.5 w-3.5 text-violet-400/50" />, label: 'Guesses', val: `${guessCorrect}/${guessTotal}`, accent: '' },
                     { icon: <Target className="h-3.5 w-3.5 text-amber-400/50" />, label: 'Success Rate', val: `${successRate}%`, accent: 'text-amber-400' },
-                    { icon: <Clock className="h-3.5 w-3.5 text-white/20" />, label: 'Attempted', val: `${score.correct + score.wrong}/${displayQuestions.length}`, accent: '' },
+                    { icon: <Clock className="h-3.5 w-3.5 text-gray-400" />, label: 'Attempted', val: `${score.correct + score.wrong}/${displayQuestions.length}`, accent: '' },
                   ].map(({ icon, label, val, accent }, i, arr) => (
                     <div key={label}>
                       <div className="flex items-center justify-between py-0.5">
                         <div className="flex items-center gap-2">
                           {icon}
-                          <span className="text-[11px] font-bold text-white/45">{label}</span>
+                          <span className="text-[11px] font-bold text-gray-900/45">{label}</span>
                         </div>
-                        <span className={`text-sm font-black ${accent || 'text-white'}`}>{val}</span>
+                        <span className={`text-sm font-black ${accent || 'text-gray-900'}`}>{val}</span>
                       </div>
-                      {i < arr.length - 1 && <div className="h-px bg-white/[0.04] mt-2" />}
+                      {i < arr.length - 1 && <div className="h-px bg-gray-100 mt-2" />}
                     </div>
                   ))}
                 </div>
@@ -1148,8 +1148,8 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               return (
                 <div
                   ref={sureCardRef}
-                  className={`bg-[#111827] rounded-2xl border overflow-hidden transition-all duration-300 ${
-                    lostMarksHighlighted ? 'border-indigo-500/40 ring-1 ring-indigo-500/20' : 'border-white/[0.06]'
+                  className={`bg-white shadow-sm rounded-2xl border overflow-hidden transition-all duration-300 ${
+                    lostMarksHighlighted ? 'border-indigo-500/40 ring-1 ring-indigo-500/20' : 'border-gray-200'
                   }`}
                 >
                   <button
@@ -1161,8 +1161,8 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                         <CheckCircle className="h-4 w-4 text-emerald-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-white">Sure Items</p>
-                        <p className="text-xs text-white/25 font-medium">
+                        <p className="text-sm font-black text-gray-900">Sure Items</p>
+                        <p className="text-xs text-gray-500 font-medium">
                           {total > 0 ? `${correct} / ${total} correct · ${mistakes} mistake${mistakes !== 1 ? 's' : ''}` : 'No sure answers tagged'}
                         </p>
                       </div>
@@ -1173,19 +1173,19 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                           −{(mistakes * 2.667).toFixed(1)} marks
                         </span>
                       )}
-                      <ChevronDown className={`h-4 w-4 text-white/20 transition-transform duration-300 ${isExpandedSure ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${isExpandedSure ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                   {isExpandedSure && (
-                    <div className="px-5 pb-5 pt-2 border-t border-white/[0.04] animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
+                    <div className="px-5 pb-5 pt-2 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
                       <div className="bg-white/[0.03] rounded-xl p-4">
                         {insight ? (
                           <>
-                            <p className="text-sm font-semibold text-white/75 leading-relaxed">{insight.message}</p>
-                            <p className="text-xs text-white/35 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
+                            <p className="text-sm font-semibold text-gray-700 leading-relaxed">{insight.message}</p>
+                            <p className="text-xs text-gray-900/35 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
                           </>
                         ) : (
-                          <p className="text-sm text-white/35 font-medium leading-relaxed">
+                          <p className="text-sm text-gray-900/35 font-medium leading-relaxed">
                             {total > 0 ? 'Perfect accuracy on sure items — your confident answers are reliable.' : 'Tag questions as "Sure" during the test to track your confident answers.'}
                           </p>
                         )}
@@ -1206,7 +1206,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               const insight = hitRate !== null ? getHitRateInsight(hitRate) : null
               const wrong50 = total - correct
               return (
-                <div className="bg-[#111827] rounded-2xl border border-white/[0.06] overflow-hidden transition-all duration-300">
+                <div className="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300">
                   <button
                     onClick={() => setIsExpanded5050(v => !v)}
                     className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.015] transition-colors"
@@ -1216,8 +1216,8 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                         <Brain className="h-4 w-4 text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-white">50:50 Logic</p>
-                        <p className="text-xs text-white/25 font-medium">
+                        <p className="text-sm font-black text-gray-900">50:50 Logic</p>
+                        <p className="text-xs text-gray-500 font-medium">
                           {total > 0 ? `${correct} / ${total} correct · ${hitRate}% hit rate` : 'No 50:50 answers tagged'}
                         </p>
                       </div>
@@ -1228,19 +1228,19 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                           −{(wrong50 * MARKS_PER_QUESTION).toFixed(1)} marks
                         </span>
                       )}
-                      <ChevronDown className={`h-4 w-4 text-white/20 transition-transform duration-300 ${isExpanded5050 ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${isExpanded5050 ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                   {isExpanded5050 && (
-                    <div className="px-5 pb-5 pt-2 border-t border-white/[0.04] animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
+                    <div className="px-5 pb-5 pt-2 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
                       <div className="bg-white/[0.03] rounded-xl p-4">
                         {insight ? (
                           <>
-                            <p className="text-sm font-semibold text-white/75 leading-relaxed">{insight.message}</p>
-                            <p className="text-xs text-white/35 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
+                            <p className="text-sm font-semibold text-gray-700 leading-relaxed">{insight.message}</p>
+                            <p className="text-xs text-gray-900/35 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
                           </>
                         ) : (
-                          <p className="text-sm text-white/35 font-medium leading-relaxed">Tag questions where you narrowed to two options to track your elimination accuracy.</p>
+                          <p className="text-sm text-gray-900/35 font-medium leading-relaxed">Tag questions where you narrowed to two options to track your elimination accuracy.</p>
                         )}
                       </div>
                       <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
@@ -1257,7 +1257,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               const correct = bu.correctGuess ?? 0
               const wrongGuess = total - correct
               return (
-                <div className="bg-[#111827] rounded-2xl border border-white/[0.06] overflow-hidden transition-all duration-300">
+                <div className="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300">
                   <button
                     onClick={() => setIsExpandedGuesses(v => !v)}
                     className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.015] transition-colors"
@@ -1267,8 +1267,8 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                         <Zap className="h-4 w-4 text-violet-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-white">Guesses</p>
-                        <p className="text-xs text-white/25 font-medium">
+                        <p className="text-sm font-black text-gray-900">Guesses</p>
+                        <p className="text-xs text-gray-500 font-medium">
                           {total > 0 ? `${correct} / ${total} correct · in this zone` : 'No guess answers tagged'}
                         </p>
                       </div>
@@ -1279,11 +1279,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                           −{(wrongGuess * MARKS_PER_QUESTION).toFixed(1)} marks
                         </span>
                       )}
-                      <ChevronDown className={`h-4 w-4 text-white/20 transition-transform duration-300 ${isExpandedGuesses ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${isExpandedGuesses ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                   {isExpandedGuesses && (
-                    <div className="px-5 pb-5 pt-2 border-t border-white/[0.04] animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
+                    <div className="px-5 pb-5 pt-2 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
                       <TaggedQuestionsDropdown tag="guess" title="Review Guess Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
                     </div>
                   )}
@@ -1301,8 +1301,8 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               return (
                 <div
                   ref={revisionCardRef}
-                  className={`bg-[#111827] rounded-2xl border overflow-hidden transition-all duration-300 ${
-                    lostMarksHighlighted ? 'border-indigo-500/40 ring-1 ring-indigo-500/20' : 'border-white/[0.06]'
+                  className={`bg-white shadow-sm rounded-2xl border overflow-hidden transition-all duration-300 ${
+                    lostMarksHighlighted ? 'border-indigo-500/40 ring-1 ring-indigo-500/20' : 'border-gray-200'
                   }`}
                 >
                   <button
@@ -1314,9 +1314,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                         <RefreshCw className="h-4 w-4 text-amber-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-white">Answer Revisions</p>
-                        <p className="text-xs text-white/25 font-medium">
-                          Changed <span className="font-black text-white/50">{revisionSummary.total}</span> answer{revisionSummary.total !== 1 ? 's' : ''} during this test
+                        <p className="text-sm font-black text-gray-900">Answer Revisions</p>
+                        <p className="text-xs text-gray-500 font-medium">
+                          Changed <span className="font-black text-gray-500">{revisionSummary.total}</span> answer{revisionSummary.total !== 1 ? 's' : ''} during this test
                         </p>
                       </div>
                     </div>
@@ -1326,11 +1326,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                           −{marksLost} marks
                         </span>
                       )}
-                      <ChevronDown className={`h-4 w-4 text-white/20 transition-transform duration-300 ${isExpandedRevision ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${isExpandedRevision ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                   {isExpandedRevision && (
-                    <div className="px-5 pb-5 pt-2 border-t border-white/[0.04] animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
+                    <div className="px-5 pb-5 pt-2 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
                       {nLost > 0 && (
                         <div className="rounded-xl bg-red-500/[0.07] border border-red-500/20 px-4 py-3">
                           <p className="text-sm font-bold text-red-400 leading-snug mb-1">
@@ -1342,7 +1342,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                               : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
                             }
                           </p>
-                          <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.15em] mb-2">Click to review</p>
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] mb-2">Click to review</p>
                           <div className="flex flex-wrap gap-2">
                             {ctw.map(r => (
                               <button
@@ -1380,7 +1380,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                         </div>
                       )}
                       {nLost === 0 && revisionSummary.wrongToCorrect.length === 0 && revisionSummary.neutral.length > 0 && (
-                        <p className="text-xs text-white/25 font-medium">
+                        <p className="text-xs text-gray-500 font-medium">
                           {revisionSummary.neutral.length} neutral revision{revisionSummary.neutral.length !== 1 ? 's' : ''} — changed between wrong options
                         </p>
                       )}
@@ -1395,11 +1395,11 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
         {/* ═══════════════════════════════════ */}
         {/* SECTION 4 — Subject Drill-Down     */}
         {/* ═══════════════════════════════════ */}
-        <div className="pt-6 border-t border-white/[0.04]">
+        <div className="pt-6 border-t border-gray-100">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-xl font-black text-white uppercase tracking-tight italic">Subject wise performance</h2>
-              <p className="text-xs text-white/25 font-medium">Click a question number to jump into review mode</p>
+              <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight italic">Subject wise performance</h2>
+              <p className="text-xs text-gray-500 font-medium">Click a question number to jump into review mode</p>
             </div>
           </div>
           <div className="space-y-3">
