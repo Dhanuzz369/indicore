@@ -694,6 +694,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const [highlightAreasSubject, setHighlightAreasSubject] = useState<string | null>(null)
   const [highlightChangedAnswers, setHighlightChangedAnswers] = useState(false)
 
+  // ── Total marks (dynamic — 2 marks per question) ────────────
+  const totalMarks = displayQuestions.length * 2
+
   // ── Potential score calculation ──────────────────────────────
   const MARKS_PER_QUESTION = 2.667
   const bu = analytics.buttonUsageStats || {}
@@ -702,7 +705,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const marksLostSure     = sureWrong * MARKS_PER_QUESTION
   const marksLostRevision = revisionWrong * MARKS_PER_QUESTION
   const rawPotential      = (score.marksScored ?? 0) + marksLostSure + marksLostRevision
-  const potentialScore    = Math.min(rawPotential, 200)
+  const potentialScore    = Math.min(rawPotential, totalMarks)
   const hasRecoverableMarks = sureWrong > 0 || revisionWrong > 0
 
   const handleReattempt = () => {
@@ -907,8 +910,9 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
 
         {/* ═══════════════════════════════════════════════════════════ */}
         {/* SECTION 1 — Score card (left) + Analytical Trajectory (right) */}
+        {/* Trajectory only shown for multi-subject tests                  */}
         {/* ═══════════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4 items-start">
+        <div className={`grid grid-cols-1 gap-4 items-start ${(analytics.subjectStats?.length ?? 0) > 1 ? 'lg:grid-cols-[260px_1fr]' : 'lg:grid-cols-[320px]'}`}>
 
           {/* Left: Score + Potential stacked */}
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
@@ -931,7 +935,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                       {typeof score.marksScored === 'number' ? score.marksScored.toFixed(2) : score.correct}
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-400 font-medium mt-0.5">out of 200.00</p>
+                  <p className="text-[10px] text-gray-400 font-medium mt-0.5">out of {totalMarks}.00</p>
                   {/* Score label badge */}
                   <span
                     className="inline-block mt-2 text-[9px] font-black px-2 py-0.5 rounded-full"
@@ -969,7 +973,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                 <div
                   className="h-full rounded-full transition-all duration-1000"
                   style={{
-                    width: `${Math.max(1, Math.min(100, ((score.marksScored ?? 0) / 200) * 100))}%`,
+                    width: `${Math.max(1, Math.min(100, ((score.marksScored ?? 0) / totalMarks) * 100))}%`,
                     backgroundColor: score.percentage >= 70 ? '#10B981' : score.percentage >= 50 ? '#F59E0B' : '#4A90E2',
                   }}
                 />
@@ -1059,7 +1063,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                     <div className="mt-1.5">
                       <div className="flex items-baseline gap-1 leading-none">
                         <span className="text-[2.2rem] font-black text-white tracking-tight leading-none">{potentialScore.toFixed(2)}</span>
-                        <span className="text-sm font-bold text-white/30">/ 200</span>
+                        <span className="text-sm font-bold text-white/30">/ {totalMarks}</span>
                       </div>
                     </div>
                     {hasRecoverableMarks ? (
@@ -1084,7 +1088,8 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             </div>
           </div>
 
-          {/* Right: Analytical Trajectory — vertical bar chart */}
+          {/* Right: Analytical Trajectory — only for multi-subject tests */}
+          {(analytics.subjectStats?.length ?? 0) > 1 && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6 flex flex-col">
             <div className="flex items-center justify-between mb-1">
               <div>
@@ -1234,6 +1239,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* ═══════════════════════════════════ */}
