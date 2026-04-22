@@ -10,7 +10,7 @@ import { useAnalytics } from '@/hooks/useAnalytics'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Flame, ChevronRight, AlertCircle, Grid3x3, ArrowRight,
-  LayoutGrid, ChevronDown, ClipboardList, BookCheck, Zap
+  LayoutGrid, ClipboardList, BookCheck
 } from 'lucide-react'
 import type { Profile, UserStats, Subject } from '@/types'
 import Link from 'next/link'
@@ -362,24 +362,43 @@ function OfferingsCarousel({ stats }: { stats: UserStats | null }) {
 }
 
 // ─── Weak Area Subject Card ────────────────────────────────────────
-function WeakSubjectCard({ subject, accuracy }: { subject: Subject; accuracy: number }) {
+function WeakSubjectCard({
+  subject,
+  accuracy,
+  onAttempt,
+}: {
+  subject: Subject
+  accuracy: number
+  onAttempt: (e: React.MouseEvent) => void
+}) {
   const perf = getPerformanceLabel(accuracy)
+  const barColor = accuracy >= 70 ? '#16a34a' : accuracy >= 55 ? '#d97706' : accuracy >= 35 ? '#f97316' : '#ef4444'
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3">
-      <h3 className="font-bold text-gray-900 text-sm leading-tight">{subject.Name}</h3>
-      <div className="flex items-center gap-1.5 mt-0.5 mb-2">
-        <span className="text-xs text-gray-500">Performance:</span>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5 hover:shadow-md hover:border-gray-200 transition-all">
+      {/* Top row: name + Attempt Now button */}
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <h3 className="font-bold text-gray-900 text-sm leading-snug">{subject.Name}</h3>
+        <button
+          onClick={onAttempt}
+          className="shrink-0 px-3 py-1 rounded-full border border-gray-200 text-[11px] font-semibold text-gray-600 bg-white hover:border-gray-400 hover:text-gray-900 active:scale-95 transition-all whitespace-nowrap"
+        >
+          Attempt now
+        </button>
+      </div>
+
+      {/* Performance label */}
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <span className="text-xs text-gray-400">Performance:</span>
         <span className={`text-xs font-bold ${perf.color}`}>{accuracy}%</span>
         <span className={`text-[10px] font-semibold ${perf.color}`}>({perf.label})</span>
       </div>
+
+      {/* Progress bar */}
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700"
-          style={{
-            width: `${accuracy}%`,
-            backgroundColor: accuracy >= 70 ? '#16a34a' : accuracy >= 55 ? '#d97706' : '#ef4444',
-          }}
+          style={{ width: `${accuracy}%`, backgroundColor: barColor }}
         />
       </div>
     </div>
@@ -504,76 +523,18 @@ export default function DashboardPage() {
       <div ref={streakRef} className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6 md:pt-10 pb-5 md:pb-8">
           <p className="text-[10px] font-black tracking-[0.25em] text-gray-400 uppercase mb-1.5">Overview</p>
-
-          {/* Two-column: greeting left, promo card right */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-
-            {/* Left – Greeting */}
-            <div>
-              <div className="flex items-end gap-2 md:gap-3 flex-wrap">
-                <h1 className="text-2xl md:text-5xl font-black text-gray-900 leading-tight tracking-tight">
-                  {getGreeting()}<br />
-                  <span className="text-[#4A90E2]">{firstName}!</span>
-                </h1>
-                {/* Streak badge inline */}
-                <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full mb-0.5">
-                  <Flame className="h-3 w-3 md:h-3.5 md:w-3.5 text-blue-500" />
-                  <span className="text-[11px] md:text-xs font-black">
-                    {streakDays > 0 ? `${streakDays} day streak` : 'Start your streak'}
-                  </span>
-                </div>
-              </div>
+          <div className="flex items-end gap-2 md:gap-3 flex-wrap">
+            <h1 className="text-2xl md:text-5xl font-black text-gray-900 leading-tight tracking-tight">
+              {getGreeting()}<br />
+              <span className="text-[#4A90E2]">{firstName}!</span>
+            </h1>
+            {/* Streak badge inline */}
+            <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full mb-0.5">
+              <Flame className="h-3 w-3 md:h-3.5 md:w-3.5 text-blue-500" />
+              <span className="text-[11px] md:text-xs font-black">
+                {streakDays > 0 ? `${streakDays} day streak` : 'Start your streak'}
+              </span>
             </div>
-
-            {/* Right – Promo Banner */}
-            <div
-              className="w-full lg:max-w-sm xl:max-w-md rounded-2xl p-5 relative overflow-hidden shrink-0"
-              style={{ background: 'linear-gradient(135deg, #eef0ff 0%, #e8ecff 100%)', border: '1.5px solid #d4daff' }}
-            >
-              {/* Decorative circle */}
-              <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-blue-100/60 pointer-events-none" />
-
-              {/* Badge */}
-              <div className="inline-flex items-center gap-1.5 bg-[#FFD600] text-[#1a1a4e] text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-full mb-3 shadow-sm">
-                <Zap className="h-3 w-3 fill-current" />
-                Limited Time Exclusive
-              </div>
-
-              {/* Headline */}
-              <h2 className="text-gray-900 font-black text-2xl leading-snug mb-1">
-                We are free till{' '}
-                <span className="text-[#3350E8] italic">25th</span>
-                <br />
-                <span className="text-[#3350E8] italic">May</span>
-              </h2>
-
-              {/* Subtitle */}
-              <p className="text-gray-500 text-xs font-medium mb-4 leading-relaxed">
-                Secure your spot and pay before 24th May to unlock your full experience.
-              </p>
-
-              {/* Offer row */}
-              <div className="flex items-center gap-3 flex-wrap">
-                {/* 20% off chip */}
-                <div className="rounded-xl px-5 py-3 text-center" style={{ background: 'rgba(77,121,255,0.15)', border: '1.5px solid rgba(77,121,255,0.3)' }}>
-                  <p className="text-[#3350E8] font-black text-lg leading-tight">20% off</p>
-                  <p className="text-[#3350E8]/60 text-[9px] font-bold tracking-widest uppercase">Early Bird Special</p>
-                </div>
-
-                {/* CTA */}
-                <div className="flex flex-col gap-1">
-                  <Link
-                    href="https://www.indicoreupsc.in/pricing"
-                    className="inline-flex items-center gap-2 bg-[#3350E8] hover:bg-[#2a42d0] text-white font-black text-sm px-6 py-3 rounded-xl shadow-md transition-all hover:-translate-y-0.5 active:translate-y-0"
-                  >
-                    Get the Offer
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <p className="text-gray-400 text-[10px] font-medium pl-1">Promotion ends May 24th, 11:59 PM</p>
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
       </div>
@@ -653,12 +614,16 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {weakSubjects.map(({ subject, accuracy: acc }) => (
-                <div key={subject.$id} className="cursor-pointer" onClick={() => {
-  track('weak_area_clicked', { subject_name: subject.Name, accuracy: acc })
-  setWeakPracticeSubject({ subject, accuracy: acc })
-}}>
-                  <WeakSubjectCard subject={subject} accuracy={acc} />
-                </div>
+                <WeakSubjectCard
+                  key={subject.$id}
+                  subject={subject}
+                  accuracy={acc}
+                  onAttempt={(e) => {
+                    e.stopPropagation()
+                    track('weak_area_clicked', { subject_name: subject.Name, accuracy: acc })
+                    setWeakPracticeSubject({ subject, accuracy: acc })
+                  }}
+                />
               ))}
             </div>
           )}
