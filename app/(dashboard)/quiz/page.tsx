@@ -10,7 +10,8 @@ import { toast } from 'sonner'
 import {
   Loader2, ArrowRight, LayoutGrid, FileText, Sparkles, X,
   Clock, Zap, Target, ChevronRight, Search, RotateCcw, Eye,
-  BookOpen, Trophy, FlameIcon, CheckCircle2, TimerIcon,
+  TrendingUp, Leaf, Globe, Landmark, Scale, Microscope,
+  Palette, ShieldCheck, BookOpen, FlaskConical, type LucideIcon,
 } from 'lucide-react'
 import type { Question, Subject, Mock, TestSession } from '@/types'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -42,15 +43,33 @@ const SECONDS_PER_QUESTION = 72
 
 type Difficulty = typeof DIFFICULTY_OPTIONS[number]
 
-function getSubjectAccent(name: string) {
+function getSubjectAccent(name: string): { color: string; bg: string; Icon: LucideIcon } {
   const l = name.toLowerCase()
-  if (l.includes('polity')) return { color: '#4A90E2', bg: 'bg-blue-50', text: 'text-blue-600', icon: '⚖️' }
-  if (l.includes('hist')) return { color: '#8B4513', bg: 'bg-amber-50', text: 'text-amber-700', icon: '🏛️' }
-  if (l.includes('geo')) return { color: '#007AFF', bg: 'bg-blue-50', text: 'text-blue-600', icon: '🌍' }
-  if (l.includes('econ')) return { color: '#FF3B30', bg: 'bg-red-50', text: 'text-red-600', icon: '📈' }
-  if (l.includes('environ')) return { color: '#34C759', bg: 'bg-green-50', text: 'text-green-600', icon: '🌿' }
-  if (l.includes('science') || l.includes('tech')) return { color: '#5856D6', bg: 'bg-indigo-50', text: 'text-indigo-600', icon: '🔬' }
-  return { color: '#4A90E2', bg: 'bg-blue-50', text: 'text-blue-600', icon: '📚' }
+  if (l.includes('polity') || l.includes('govern')) return { color: '#3B6FE8', bg: '#EEF3FF', Icon: Scale }
+  if (l.includes('hist') || l.includes('ancient') || l.includes('modern')) return { color: '#B45309', bg: '#FFF7ED', Icon: Landmark }
+  if (l.includes('geo')) return { color: '#0284C7', bg: '#E0F2FE', Icon: Globe }
+  if (l.includes('econ')) return { color: '#DC2626', bg: '#FEF2F2', Icon: TrendingUp }
+  if (l.includes('environ')) return { color: '#16A34A', bg: '#F0FDF4', Icon: Leaf }
+  if (l.includes('science') || l.includes('tech')) return { color: '#7C3AED', bg: '#F5F3FF', Icon: FlaskConical }
+  if (l.includes('art') || l.includes('cult')) return { color: '#D97706', bg: '#FFFBEB', Icon: Palette }
+  if (l.includes('intern') || l.includes('relat')) return { color: '#0891B2', bg: '#ECFEFF', Icon: Globe }
+  if (l.includes('ethics') || l.includes('integ')) return { color: '#059669', bg: '#ECFDF5', Icon: ShieldCheck }
+  return { color: '#4A90E2', bg: '#EFF6FF', Icon: BookOpen }
+}
+
+function getSubjectDesc(name?: string): string {
+  if (!name) return 'Comprehensive practice questions for this subject.'
+  const l = name.toLowerCase()
+  if (l.includes('polity')) return 'Constitutional frameworks, governance, and legislative structures.'
+  if (l.includes('hist')) return 'Ancient civilizations to modern revolutions and geopolitical shifts.'
+  if (l.includes('geo')) return 'Physical landscapes, human demography, and spatial relationships.'
+  if (l.includes('econ')) return 'Macroeconomic trends, fiscal policies, and global trade dynamics.'
+  if (l.includes('environ')) return 'Biodiversity, climate change protocols, and sustainable development.'
+  if (l.includes('science') || l.includes('tech')) return 'Advanced physics, biotechnology, and emergent technologies.'
+  if (l.includes('art') || l.includes('cult')) return 'Indian art traditions, cultural heritage, and classical forms.'
+  if (l.includes('intern') || l.includes('relat')) return 'Global diplomacy, treaties, and international organizations.'
+  if (l.includes('ethics')) return 'Moral reasoning, integrity in governance, and case studies.'
+  return 'Practice questions curated to strengthen your command of this subject.'
 }
 
 function formatTimerPreview(totalSeconds: number): string {
@@ -451,407 +470,374 @@ function QuizSetupContent() {
   const totalTimerSeconds = questionCount * SECONDS_PER_QUESTION
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC] pb-32">
+    <div className="min-h-screen bg-[#FDFDFD] pb-32">
 
-      {/* ── PAGE HEADER ── */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8">
-          <p className="text-xs font-semibold text-[#4A90E2] uppercase tracking-widest mb-1">
-            {activeTab === 'full' ? 'Previous Year Questions' : activeTab === 'mock' ? 'Indicore Mock Series' : 'Subject Practice'}
-          </p>
-          <h1 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight">
+      {/* HEADER */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-5 md:pt-10 pb-4 md:pb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="h-9 md:h-12 w-9 md:w-12 bg-blue-500 rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
+            <LayoutGrid className="h-5 md:h-6 w-5 md:w-6" />
+          </div>
+          <h1 className="text-xl md:text-3xl font-black text-gray-900 tracking-tight">
             {activeTab === 'full' ? 'PYQ Tests' : activeTab === 'mock' ? 'Mock Tests' : 'Practice Lab'}
           </h1>
-          <p className="text-sm text-gray-400 font-medium mt-1">
-            {activeTab === 'full'
-              ? 'Attempt original UPSC Prelims papers under timed conditions'
-              : activeTab === 'mock'
-              ? 'Full-length simulated exams designed to replicate UPSC Prelims'
-              : 'Targeted subject-wise practice to sharpen your weak areas'}
-          </p>
         </div>
-
-        {/* ── TABS ── */}
-        <div className="max-w-6xl mx-auto px-4 md:px-8 flex gap-0 border-t border-gray-100">
-          {([
-            { id: 'mock',    label: 'Mock Tests',        icon: Trophy },
-            { id: 'full',    label: 'PYQ',               icon: FileText },
-            { id: 'subject', label: 'Subject Practice',  icon: BookOpen },
-          ] as const).map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                track('tab_switched', { from_tab: activeTab, to_tab: tab.id })
-                if (tab.id === 'mock') { setActiveTab('mock'); setMockConfigSubject(null); setMockSelectedDifficulty('All'); setMockQuestionCount(20) }
-                else if (tab.id === 'full') { setActiveTab('full'); setConfigSubject(null) }
-                else { setActiveTab('subject'); setConfigSubject(null) }
-              }}
-              className={`flex items-center gap-2 px-4 py-4 text-sm font-bold border-b-2 transition-all -mb-px ${
-                activeTab === tab.id
-                  ? 'border-[#4A90E2] text-[#4A90E2]'
-                  : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-200'
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
-            </button>
-          ))}
+        <div className="flex items-center gap-2 md:gap-3">
+          <button className="h-9 md:h-12 w-9 md:w-12 flex items-center justify-center rounded-xl md:rounded-2xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-[#4A90E2] transition-colors">
+            <Search className="h-4 md:h-5 w-4 md:w-5" />
+          </button>
+          <div className="h-9 md:h-12 w-9 md:w-12 rounded-full bg-gray-900 border-2 border-white shadow-md overflow-hidden ring-2 md:ring-4 ring-gray-50">
+            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="User" />
+          </div>
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 md:px-8 pt-8 md:pt-10">
+      {/* TABS */}
+      <div className="max-w-3xl mx-auto px-3 md:px-6 mt-3 md:mt-4">
+        <div className="bg-gray-100 p-1 md:p-1.5 rounded-[1.5rem] md:rounded-[2rem] flex h-11 md:h-16">
+          <button
+            onClick={() => { track('tab_switched', { from_tab: activeTab, to_tab: 'mock' }); setActiveTab('mock'); setMockConfigSubject(null); setMockSelectedDifficulty('All'); setMockQuestionCount(20) }}
+            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'mock' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Mock Test
+          </button>
+          <button
+            onClick={() => { track('tab_switched', { from_tab: activeTab, to_tab: 'full' }); setActiveTab('full'); setConfigSubject(null) }}
+            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'full' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            PYQ
+          </button>
+          <button
+            onClick={() => { track('tab_switched', { from_tab: activeTab, to_tab: 'subject' }); setActiveTab('subject'); setConfigSubject(null) }}
+            className={`flex-1 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest transition-all ${activeTab === 'subject' ? 'bg-[#4A90E2] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Subject Practice
+          </button>
+        </div>
+      </div>
 
-        {/* ────────────────── MOCK TEST TAB ────────────────── */}
+      <main className="max-w-7xl mx-auto px-3 md:px-6 mt-8 md:mt-16">
+
+        {/* ── MOCK TEST TAB ── */}
         {activeTab === 'mock' && (
-          <div className="space-y-10">
+          <div className="space-y-12">
 
-            {/* Full-Length Mocks */}
-            <section>
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="text-lg font-black text-gray-900">Full-Length Mock Tests</h2>
-                  <p className="text-xs text-gray-400 font-medium mt-0.5">100 questions · 2 hours · −⅓ negative marking</p>
+            {/* Full Length Mocks */}
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                <h2 className="text-3xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase">INDICORE MOCK.</h2>
+                <div className="flex bg-gray-100 p-1.5 rounded-full h-10 px-3 w-fit">
+                  <span className="text-[10px] font-black text-white bg-black rounded-full px-5 uppercase tracking-tighter flex items-center">Full Length</span>
                 </div>
-                <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#4A90E2] text-[11px] font-black rounded-full uppercase tracking-wider">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> UPSC Pattern
-                </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loadingMocks
-                  ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-2xl" />)
+                  ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-[2.5rem]" />)
                   : mocks.filter(m => m.subject_weights.length > 1).length === 0
                     ? (
-                      <div className="col-span-3 bg-white rounded-2xl border border-gray-100 p-10 text-center">
-                        <Trophy className="h-8 w-8 text-gray-200 mx-auto mb-3" />
+                      <div className="col-span-3 bg-white rounded-[2.5rem] border border-gray-100 p-10 text-center">
                         <p className="text-sm font-bold text-gray-500">Full-length mocks coming soon</p>
                         <p className="text-xs text-gray-400 mt-1">Multi-subject mock tests will appear here once configured</p>
                       </div>
                     )
                     : mocks.filter(m => m.subject_weights.length > 1).map((mock, idx) => {
+                        const theme = idx === 0 ? 'blue' : idx === 1 ? 'black' : 'gray'
                         const isMock1 = idx === 0
-                        const gradients = [
-                          'from-[#4A90E2] to-[#6366f1]',
-                          'from-gray-800 to-gray-900',
-                          'from-slate-700 to-slate-800',
-                        ]
-                        const gradient = gradients[idx % gradients.length]
                         return (
-                          <div
-                            key={mock.$id}
-                            className={`relative rounded-2xl overflow-hidden flex flex-col group transition-all hover:-translate-y-0.5 hover:shadow-xl ${highlighted && isMock1 ? 'ring-2 ring-[#4A90E2] ring-offset-2' : ''}`}
-                            onMouseEnter={() => track('mock_card_viewed', { mock_name: mock.name, total_questions: mock.subject_weights?.reduce((sum: number, w: any) => sum + w.count, 0) ?? 0 })}
-                          >
-                            {/* gradient header */}
-                            <div className={`bg-gradient-to-br ${gradient} p-5 md:p-6 relative overflow-hidden`}>
-                              <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-white/10" />
-                              <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-white/10" />
-                              {highlighted && isMock1 && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-black text-white/80 uppercase tracking-wider mb-2">
-                                  ✨ Recommended
-                                </span>
-                              )}
-                              <p className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-1 relative">INDICORE MOCK</p>
-                              <h3 className="text-base md:text-xl font-black text-white relative leading-snug">{mock.name}</h3>
-                            </div>
-                            {/* card body */}
-                            <div className="bg-white flex-1 flex flex-col p-5 border border-gray-100 rounded-b-2xl border-t-0">
-                              <div className="grid grid-cols-3 gap-3 mb-5">
-                                <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-                                  <p className="text-sm font-black text-gray-900">100</p>
-                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">Qs</p>
-                                </div>
-                                <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-                                  <p className="text-sm font-black text-gray-900">2 Hr</p>
-                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">Time</p>
-                                </div>
-                                <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-                                  <p className="text-sm font-black text-gray-900">200</p>
-                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">Marks</p>
-                                </div>
+                          <div key={mock.$id} className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col" onMouseEnter={() => track('mock_card_viewed', { mock_name: mock.name, total_questions: mock.subject_weights?.reduce((sum: number, w: any) => sum + w.count, 0) ?? 0 })}>
+                            {highlighted && isMock1 && (
+                              <p className="text-[10px] font-black uppercase tracking-wider text-[#4A90E2] mb-1">
+                                ✨ Recommended for you
+                              </p>
+                            )}
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">INDICORE MOCK</p>
+                            <h3 className="text-lg md:text-2xl font-black text-gray-900 mb-4 md:mb-6">{mock.name}</h3>
+                            <div className="grid grid-cols-3 gap-2 md:gap-4 mb-5 md:mb-8 mt-auto">
+                              <div>
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Questions</p>
+                                <p className="text-sm font-black text-gray-900">100</p>
                               </div>
-                              <button
-                                onClick={() => handleStartMock(mock)}
-                                disabled={loadingMockId === mock.$id}
-                                className="mt-auto h-11 w-full rounded-xl bg-[#4A90E2] text-white flex items-center justify-center gap-2 font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-colors shadow-md shadow-blue-100 disabled:opacity-60"
-                              >
-                                {loadingMockId === mock.$id
-                                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                                  : <>Attempt <ArrowRight className="h-4 w-4" /></>
-                                }
-                              </button>
+                              <div>
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Duration</p>
+                                <p className="text-sm font-black text-gray-900">2 Hr</p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Marks</p>
+                                <p className="text-sm font-black text-gray-900">200</p>
+                              </div>
                             </div>
+                            <button
+                              onClick={() => handleStartMock(mock)}
+                              disabled={loadingMockId === mock.$id}
+                              className={`h-12 md:h-16 w-full rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
+                                theme === 'black'
+                                  ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
+                                  : theme === 'gray'
+                                    ? 'bg-gray-800 text-white hover:bg-gray-700 shadow-lg shadow-gray-200'
+                                    : 'bg-[#4A90E2] text-white hover:bg-blue-600 shadow-lg shadow-blue-100'
+                              }`}
+                            >
+                              {loadingMockId === mock.$id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Attempt Test <ArrowRight className="h-4 w-4" /></>}
+                            </button>
+                            {highlighted && isMock1 && (
+                              <span className="absolute inset-0 rounded-[inherit] ring-2 ring-[#4A90E2] ring-offset-2 animate-pulse pointer-events-none" />
+                            )}
                           </div>
                         )
                       })}
               </div>
-            </section>
+            </div>
 
             {/* Previous Sessions */}
-            <section>
-              <div className="flex items-center gap-4 mb-5">
-                <h2 className="text-lg font-black text-gray-900 whitespace-nowrap">Previous Sessions</h2>
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Previous Sessions</h3>
                 <div className="h-px flex-1 bg-gray-100" />
-                {mockSessions.length > 0 && (
-                  <button onClick={() => router.push('/tests')} className="text-[11px] font-black text-[#4A90E2] uppercase tracking-wider whitespace-nowrap hover:underline">
-                    View all
-                  </button>
-                )}
               </div>
 
               {loadingSessions ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-44 rounded-2xl" />)}
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-48 w-64 flex-none rounded-[2rem]" />)}
                 </div>
               ) : mockSessions.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center">
-                  <TimerIcon className="h-8 w-8 text-gray-200 mx-auto mb-3" />
-                  <p className="text-sm font-bold text-gray-500">No sessions yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Complete your first mock to see your history here</p>
+                <div className="bg-white rounded-[2rem] border border-gray-100 p-10 text-center">
+                  <p className="text-sm font-bold text-gray-500">Complete your first mock to see your history here.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {mockSessions.map(session => {
-                    const marksScored = Math.max(0, parseFloat(((session.correct ?? 0) * 2 - (session.incorrect ?? 0) * (2 / 3)).toFixed(1)))
-                    const totalMarks  = (session.total_questions ?? 0) * 2
-                    const pct = totalMarks > 0 ? Math.round((marksScored / totalMarks) * 100) : 0
-                    return (
-                      <div key={session.$id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black text-[#4A90E2] uppercase tracking-widest">{formatDate(session.submitted_at)}</span>
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide ${pct >= 60 ? 'bg-green-50 text-green-600' : pct >= 40 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500'}`}>
-                            {pct}%
-                          </span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-800 leading-snug line-clamp-2">{session.paper_label}</p>
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="text-2xl font-black text-gray-900">{marksScored}</span>
-                          <span className="text-xs font-bold text-gray-400">/ {totalMarks} marks</span>
-                        </div>
-                        <div className="flex gap-2 mt-auto pt-1">
-                          <button
-                            onClick={() => router.push('/results?session=' + session.$id)}
-                            className="flex-1 h-9 rounded-xl border border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:border-blue-200 hover:text-blue-600 transition-colors flex items-center justify-center gap-1.5"
-                          >
-                            <Eye className="h-3.5 w-3.5" /> Review
-                          </button>
-                          <button
-                            onClick={() => handleRetake(session)}
-                            disabled={loadingCardId === session.$id}
-                            className="flex-1 h-9 rounded-xl bg-[#4A90E2] text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60"
-                          >
-                            {loadingCardId === session.$id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><RotateCcw className="h-3.5 w-3.5" /> Retake</>}
-                          </button>
-                        </div>
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {mockSessions.map(session => (
+                    <div key={session.$id} className="flex-none w-64 bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 flex flex-col gap-3">
+                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{formatDate(session.submitted_at)}</p>
+                      <p className="text-sm font-black text-gray-900 leading-snug line-clamp-2">{session.paper_label}</p>
+                      {(() => {
+                        const marksScored = Math.max(0, parseFloat(((session.correct ?? 0) * 2 - (session.incorrect ?? 0) * (2 / 3)).toFixed(1)))
+                        const totalMarks  = (session.total_questions ?? 0) * 2
+                        return (
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-3xl font-black text-gray-900">{marksScored}</span>
+                            <span className="text-xs font-bold text-gray-400">/ {totalMarks} marks</span>
+                          </div>
+                        )
+                      })()}
+                      <div className="flex gap-2 mt-auto">
+                        <button
+                          onClick={() => router.push('/results?session=' + session.$id)}
+                          className="flex-1 h-10 rounded-xl border border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:border-blue-200 hover:text-blue-600 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> Review
+                        </button>
+                        <button
+                          onClick={() => handleRetake(session)}
+                          disabled={loadingCardId === session.$id}
+                          className="flex-1 h-10 rounded-xl bg-[#4A90E2] text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60"
+                        >
+                          {loadingCardId === session.$id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><RotateCcw className="h-3.5 w-3.5" /> Retake</>}
+                        </button>
                       </div>
-                    )
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
-            </section>
+            </div>
 
           </div>
         )}
 
-        {/* ────────────────── PYQ TAB ────────────────── */}
+        {/* ── PYQ TAB ── */}
         {activeTab === 'full' && (
-          <div className="space-y-10">
-
-            {/* Year filter row */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Filter:</span>
-              <div className="flex bg-white border border-gray-100 rounded-xl p-1 shadow-sm">
-                <button className="text-[11px] font-black text-white bg-gray-900 rounded-lg px-4 py-1.5 uppercase tracking-widest">Prelims</button>
-                <button className="text-[11px] font-black text-gray-400 px-4 py-1.5 uppercase tracking-widest">Mains</button>
+          <div className="space-y-12">
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <h2 className="text-3xl md:text-7xl font-black text-gray-900 tracking-tighter uppercase">UPSC CSE.</h2>
+              <div className="flex bg-gray-100 p-1.5 rounded-full h-10 px-3 w-fit">
+                <button className="text-[10px] font-black text-white bg-black rounded-full px-5 uppercase tracking-tighter">Prelims</button>
+                <button className="text-[10px] font-black text-gray-400 px-5 uppercase tracking-tighter">Mains</button>
               </div>
             </div>
 
-            {/* PYQ cards */}
-            <section>
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="text-lg font-black text-gray-900">UPSC Civil Services</h2>
-                  <p className="text-xs text-gray-400 font-medium mt-0.5">Prelims · General Studies Paper I</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-                {PAPER_OPTIONS.map(paper => (
-                  <div
-                    key={paper.id}
-                    className="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-5 md:p-6 group hover:shadow-lg hover:border-blue-100 transition-all flex flex-col"
-                  >
-                    {/* watermark year */}
-                    <div className="absolute top-3 right-4 text-[56px] md:text-[72px] font-black text-gray-50 select-none tracking-tighter group-hover:scale-105 transition-transform leading-none">
-                      {paper.year}
-                    </div>
-                    <p className="text-[10px] font-black text-[#4A90E2] uppercase tracking-widest mb-1">UPSC PRELIMS</p>
-                    <div className="flex items-baseline gap-2 mb-0.5">
-                      <h3 className="text-lg font-black text-gray-900">{paper.label}</h3>
-                      <span className="text-sm font-black text-gray-400">{paper.year}</span>
-                    </div>
-                    <p className="text-xs text-gray-400 font-semibold mb-6">General Studies · Paper I</p>
-                    <div className="grid grid-cols-3 gap-3 mb-5 mt-auto">
-                      <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-                        <p className="text-sm font-black text-gray-900">{paper.questions}</p>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">Qs</p>
-                      </div>
-                      <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-                        <p className="text-sm font-black text-gray-900">{paper.time}</p>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">Time</p>
-                      </div>
-                      <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-                        <p className="text-sm font-black text-gray-900">{paper.marks}</p>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">Marks</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleStartTest(paper)}
-                      disabled={loadingCardId === paper.id}
-                      className={`h-11 w-full rounded-xl flex items-center justify-center gap-2 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
-                        paper.theme === 'black' ? 'bg-gray-900 text-white hover:bg-gray-700 shadow-md shadow-gray-200'
-                        : paper.theme === 'gray' ? 'bg-slate-700 text-white hover:bg-slate-600 shadow-md shadow-gray-200'
-                        : 'bg-[#4A90E2] text-white hover:bg-blue-600 shadow-md shadow-blue-100'
-                      }`}
-                    >
-                      {loadingCardId === paper.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Start Test <ArrowRight className="h-4 w-4" /></>}
-                    </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {PAPER_OPTIONS.map(paper => (
+                <div key={paper.id} className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col">
+                  <div className="absolute top-4 md:top-6 right-5 md:right-8 text-[48px] md:text-[72px] font-black text-gray-50 select-none -z-10 tracking-tighter group-hover:scale-110 transition-transform">{paper.year}</div>
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">UPSC PRELIMS</p>
+                  <div className="flex items-baseline gap-2 md:gap-3 mb-1 md:mb-2">
+                    <h3 className="text-lg md:text-2xl font-black text-gray-900">{paper.label}</h3>
+                    <span className="text-sm font-black text-gray-400">{paper.year}</span>
                   </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Promo banners */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-900 rounded-2xl overflow-hidden p-6 md:p-8 text-white relative flex flex-col">
-                <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-white/5" />
-                <span className="inline-block px-3 py-1 bg-[#4A90E2] text-[10px] font-black uppercase tracking-widest rounded-full mb-4 w-fit">Adaptive</span>
-                <h3 className="text-xl md:text-2xl font-black leading-snug mb-2">Focus on your<br />weak subjects</h3>
-                <p className="text-xs text-gray-400 font-medium leading-relaxed mb-6">Practise subject-wise to target weak areas and boost your score faster.</p>
-                <button
-                  onClick={() => setActiveTab('subject')}
-                  className="mt-auto bg-white text-gray-900 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors w-fit"
-                >
-                  Go to Subjects
-                </button>
-              </div>
-              <div className="bg-[#FFF8EF] rounded-2xl p-6 md:p-8 flex flex-col">
-                <div className="h-12 w-12 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4">
-                  <Sparkles className="h-6 w-6 text-[#4A90E2]" />
+                  <p className="text-xs text-gray-400 font-semibold mb-4 md:mb-8">Prelims · General Studies · Paper I</p>
+                  <div className="grid grid-cols-3 gap-2 md:gap-4 mb-5 md:mb-10 mt-auto">
+                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Questions</p><p className="text-sm font-black text-gray-900">{paper.questions}</p></div>
+                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Duration</p><p className="text-sm font-black text-gray-900">{paper.time}</p></div>
+                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-wider mb-1">Marks</p><p className="text-sm font-black text-gray-900">{paper.marks}</p></div>
+                  </div>
+                  <button
+                    onClick={() => handleStartTest(paper)}
+                    disabled={loadingCardId === paper.id}
+                    className={`h-12 md:h-16 w-full rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
+                      paper.theme === 'black' ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
+                      : paper.theme === 'gray' ? 'bg-gray-800 text-white hover:bg-gray-700 shadow-lg shadow-gray-200'
+                      : 'bg-[#4A90E2] text-white hover:bg-blue-600 shadow-lg shadow-blue-100'
+                    }`}
+                  >
+                    {loadingCardId === paper.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Start Test <ArrowRight className="h-4 w-4" /></>}
+                  </button>
                 </div>
-                <h4 className="text-xl font-black text-gray-900 mb-2">Previous Analysis</h4>
-                <p className="text-xs text-gray-500 font-medium leading-relaxed mb-6">Review your mistakes to improve your current score.</p>
-                <button onClick={() => router.push('/tests')} className="mt-auto text-[11px] font-black text-[#4A90E2] uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all w-fit">
-                  View My Tests <ArrowRight className="h-4 w-4" />
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 bg-[#111111] rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden p-6 md:p-10 text-white relative">
+                <span className="inline-block px-3 py-1 bg-[#4A90E2] text-[10px] font-black uppercase tracking-widest rounded-full mb-4 md:mb-6">Adaptive Learning</span>
+                <h3 className="text-2xl md:text-4xl font-black tracking-tight leading-tight mb-3 md:mb-6">Focus on Weak<br />Subjects</h3>
+                <p className="text-xs md:text-sm text-gray-400 font-medium leading-relaxed mb-6 md:mb-10 max-w-md">Practice subject-wise to target your weak areas and boost your score.</p>
+                <button onClick={() => setActiveTab('subject')} className="bg-white text-black px-6 md:px-10 py-3 md:py-4 rounded-xl md:rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors shadow-xl">Go to Subjects</button>
+              </div>
+              <div className="bg-[#FFF8EF] rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 flex flex-col">
+                <div className="h-10 md:h-14 w-10 md:w-14 bg-white rounded-xl md:rounded-2xl shadow-sm flex items-center justify-center mb-5 md:mb-8">
+                  <Sparkles className="h-5 md:h-7 w-5 md:w-7 text-blue-600" />
+                </div>
+                <h4 className="text-xl md:text-2xl font-black text-gray-900 mb-2 md:mb-4">Previous Analysis</h4>
+                <p className="text-xs md:text-sm text-gray-500 font-medium leading-relaxed mb-6 md:mb-10">Review your mistakes to improve your current score.</p>
+                <button onClick={() => router.push('/tests')} className="mt-auto text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2 hover:translate-x-2 transition-transform">
+                  View My Tests <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ────────────────── SUBJECT PRACTICE TAB ────────────────── */}
+        {/* ── SUBJECT PRACTICE TAB ── */}
         {activeTab === 'subject' && (
-          <div className="space-y-10">
+          <div className="space-y-8">
             {!configSubject ? (
               <>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-black text-gray-900">Choose a Subject</h2>
-                    <p className="text-xs text-gray-400 font-medium mt-0.5">Pick a subject, choose difficulty & count, then start a timed session</p>
+                {/* Header */}
+                <div>
+                  <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 text-[10px] font-black tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-4">
+                    Practice Arena
                   </div>
-                  <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600 text-[11px] font-black rounded-full uppercase tracking-wider">
-                    <Zap className="h-3.5 w-3.5" /> Timed
-                  </span>
+                  <h2 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-3">
+                    Subject-wise Practice
+                  </h2>
+                  <p className="text-sm text-gray-400 font-medium max-w-2xl leading-relaxed">
+                    Curated question sets meticulously mapped to the latest curriculum. Master individual modules through deliberate practice and focused configuration.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                {/* Subject Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {loadingSubjects
-                    ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)
+                    ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-[2.5rem]" />)
                     : subjects.map(subj => {
-                        const accent = getSubjectAccent(subj.Name)
+                        const { color, bg, Icon } = getSubjectAccent(subj.Name)
+                        const desc = getSubjectDesc(subj.Name)
                         return (
-                          <button
+                          <div
                             key={subj.$id}
+                            className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-50 transition-all flex flex-col cursor-pointer"
                             onClick={() => openConfig(subj)}
-                            className="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-5 hover:shadow-lg hover:border-blue-100 transition-all group flex flex-col text-left"
                           >
-                            {/* top accent line */}
-                            <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ backgroundColor: accent.color }} />
-                            <div className="flex items-start justify-between mb-4">
-                              <div className={`h-11 w-11 ${accent.bg} rounded-2xl flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform`}>
-                                {accent.icon}
-                              </div>
-                              <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${accent.bg} ${accent.text}`}>
-                                {subj.slug?.split('-')[0] ?? subj.Name.slice(0, 4)}
-                              </span>
+                            {/* Subtle top accent bar */}
+                            <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: color }} />
+
+                            {/* Lucide icon badge */}
+                            <div
+                              className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 shrink-0 group-hover:scale-105 transition-transform"
+                              style={{ backgroundColor: bg, border: `1.5px solid ${color}28` }}
+                            >
+                              <Icon className="h-5 w-5" style={{ color }} />
                             </div>
-                            <h3 className="text-sm font-black text-gray-900 mb-1 leading-snug">{subj.Name}</h3>
-                            <p className="text-[11px] text-gray-400 font-medium">{subj.count ?? 0} questions</p>
-                            <div className="mt-4 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest" style={{ color: accent.color }}>
-                              Start Practice <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                          </button>
+
+                            {/* Subject name */}
+                            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color }}>
+                              SUBJECT PRACTICE
+                            </p>
+                            <h3 className="text-lg md:text-2xl font-black text-gray-900 mb-2 leading-snug">{subj.Name}</h3>
+                            <p className="text-xs text-gray-400 font-semibold leading-relaxed mb-6 flex-1 line-clamp-2">{desc}</p>
+
+                            {/* Configure & Start — full width like mock/PYQ button */}
+                            <button
+                              className="h-12 md:h-14 w-full rounded-xl md:rounded-2xl flex items-center justify-center gap-2 font-black text-[11px] uppercase tracking-widest transition-all hover:opacity-90 shadow-sm"
+                              style={{ backgroundColor: color, color: '#fff' }}
+                            >
+                              Configure & Start <ArrowRight className="h-4 w-4" />
+                            </button>
+                          </div>
                         )
                       })}
                 </div>
+
+                {/* Bottom stats row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Weekly Streak */}
+                  <div className="relative bg-white rounded-2xl border border-gray-200/70 shadow-sm p-6 overflow-hidden">
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 opacity-[0.07]">
+                      <Zap className="h-28 w-28" />
+                    </div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Weekly Streak</p>
+                    <p className="text-4xl font-black text-gray-900 leading-none mb-2">
+                      — <span className="text-2xl font-black text-gray-400">Days</span>
+                    </p>
+                    <p className="text-xs font-semibold text-emerald-500">📈 Keep practising to maintain your streak</p>
+                  </div>
+
+                  {/* Next Milestone */}
+                  <div className="relative bg-gray-900 rounded-2xl p-6 overflow-hidden">
+                    <div className="absolute right-4 bottom-0 opacity-[0.06]">
+                      <Target className="h-28 w-28 text-white" />
+                    </div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Next Milestone</p>
+                    <p className="text-xl font-black text-white leading-snug mb-4">
+                      Complete a <span className="text-blue-400">Subject</span> Module
+                    </p>
+                    <div className="w-full bg-gray-700 rounded-full h-1.5 mb-1.5">
+                      <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: '35%' }} />
+                    </div>
+                    <p className="text-[11px] font-bold text-gray-500">35% Progress</p>
+                  </div>
+                </div>
               </>
             ) : (
-              /* ── Config panel ── */
-              <div className="max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <button
-                  onClick={() => setConfigSubject(null)}
-                  className="flex items-center gap-1.5 text-sm font-bold text-gray-400 hover:text-gray-900 mb-6 transition-colors"
-                >
+              <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <button onClick={() => setConfigSubject(null)} className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-gray-900 mb-8 transition-colors">
                   <X className="h-4 w-4" /> Back to subjects
                 </button>
-
-                {/* subject hero */}
                 {(() => {
-                  const accent = getSubjectAccent(configSubject.Name)
+                  const { color, bg, Icon } = getSubjectAccent(configSubject.Name)
                   return (
-                    <div className="rounded-2xl p-5 mb-5 flex items-center gap-4 border-2" style={{ backgroundColor: accent.color + '10', borderColor: accent.color + '25' }}>
-                      <div className={`h-12 w-12 ${accent.bg} rounded-2xl flex items-center justify-center text-2xl shadow-sm flex-shrink-0`}>{accent.icon}</div>
+                    <div className="rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 mb-5 md:mb-8 flex items-center gap-4 md:gap-6 border-2" style={{ backgroundColor: bg, borderColor: color + '30' }}>
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: color + '20' }}>
+                        <Icon className="h-7 w-7" style={{ color }} />
+                      </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest mb-0.5" style={{ color: accent.color }}>Subject Practice</p>
-                        <h2 className="text-xl font-black text-gray-900">{configSubject.Name}</h2>
-                        <p className="text-xs text-gray-400 font-medium mt-0.5">{configSubject.count ?? 0} questions available</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color }}>Subject Practice</p>
+                        <h2 className="text-xl md:text-3xl font-black text-gray-900">{configSubject.Name}</h2>
                       </div>
                     </div>
                   )
                 })()}
-
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6 space-y-6">
-
-                  {/* Question count */}
+                <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm p-5 md:p-8 space-y-7 md:space-y-10">
                   {selectedDifficulty === 'All' && (
                     <div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="h-9 w-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0"><Target className="h-4.5 w-4.5 text-blue-600 h-[18px] w-[18px]" /></div>
-                        <div>
-                          <p className="text-sm font-black text-gray-900">Number of Questions</p>
-                          <p className="text-xs text-gray-400">How many to practice in this session</p>
-                        </div>
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="h-10 w-10 bg-blue-50 rounded-2xl flex items-center justify-center"><Target className="h-5 w-5 text-blue-600" /></div>
+                        <div><p className="text-sm font-black text-gray-900">Questions</p><p className="text-xs text-gray-400">How many questions to practice</p></div>
                       </div>
-                      <div className="flex gap-2.5 flex-wrap">
+                      <div className="flex gap-3 flex-wrap">
                         {QUESTION_COUNT_OPTIONS.map(n => (
                           <button key={n} onClick={() => setQuestionCount(n)}
-                            className={`px-4 py-2.5 rounded-xl font-black text-sm transition-all border-2 ${questionCount === n ? 'bg-[#4A90E2] border-[#4A90E2] text-white shadow-md shadow-blue-100 scale-105' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:text-gray-700'}`}
+                            className={`px-5 py-3 rounded-2xl font-black text-sm transition-all border-2 ${questionCount === n ? 'bg-[#4A90E2] border-[#4A90E2] text-white shadow-lg shadow-blue-100 scale-105' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:text-gray-700'}`}
                           >{n}</button>
                         ))}
                       </div>
                     </div>
                   )}
-
-                  {/* Difficulty */}
                   <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="h-9 w-9 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0"><Zap className="h-[18px] w-[18px] text-purple-600" /></div>
-                      <div>
-                        <p className="text-sm font-black text-gray-900">Difficulty Level</p>
-                        <p className="text-xs text-gray-400">Filter questions by difficulty</p>
-                      </div>
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="h-10 w-10 bg-purple-50 rounded-2xl flex items-center justify-center"><Zap className="h-5 w-5 text-purple-600" /></div>
+                      <div><p className="text-sm font-black text-gray-900">Difficulty</p><p className="text-xs text-gray-400">Filter questions by difficulty level</p></div>
                     </div>
-                    <div className="flex gap-2.5 flex-wrap">
+                    <div className="flex gap-3 flex-wrap">
                       {DIFFICULTY_OPTIONS.map(d => (
                         <button key={d} onClick={() => setSelectedDifficulty(d)} className={getDifficultyStyle(d, selectedDifficulty === d)}>
                           {d === 'Basic' ? '🟢' : d === 'Intermediate' ? '🟡' : d === 'Advanced' ? '🔴' : '⚡'} {d}
@@ -859,31 +845,24 @@ function QuizSetupContent() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Session summary */}
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-blue-50 rounded-xl p-3.5 text-center">
-                      <p className="text-xl font-black text-[#4A90E2]">{selectedDifficulty === 'All' ? questionCount : '—'}</p>
-                      <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mt-0.5">Questions</p>
+                    <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                      <p className="text-xl font-black text-gray-900">{selectedDifficulty === 'All' ? questionCount : 'All'}</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Questions</p>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-3.5 text-center">
+                    <div className="bg-gray-50 rounded-2xl p-4 text-center">
                       <p className="text-xl font-black text-gray-900">{formatTimerPreview(totalTimerSeconds)}</p>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Timer</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Timer</p>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-3.5 text-center">
-                      <p className={`text-xl font-black ${selectedDifficulty === 'Basic' ? 'text-green-600' : selectedDifficulty === 'Intermediate' ? 'text-amber-500' : selectedDifficulty === 'Advanced' ? 'text-red-500' : 'text-gray-700'}`}>
-                        {selectedDifficulty === 'All' ? 'All' : selectedDifficulty.slice(0, 4)}
-                      </p>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Level</p>
+                    <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                      <p className={`text-xl font-black ${selectedDifficulty === 'Basic' ? 'text-green-600' : selectedDifficulty === 'Intermediate' ? 'text-amber-500' : selectedDifficulty === 'Advanced' ? 'text-red-500' : 'text-gray-900'}`}>{selectedDifficulty}</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Difficulty</p>
                     </div>
                   </div>
-
-                  <button
-                    onClick={handleStartPractice}
-                    disabled={startLoading}
-                    className="w-full h-13 py-3.5 bg-[#4A90E2] text-white rounded-xl flex items-center justify-center gap-3 font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-600 hover:shadow-blue-200 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                  <button onClick={handleStartPractice} disabled={startLoading}
+                    className="w-full h-14 md:h-20 bg-gradient-to-r from-[#4A90E2] to-[#3a7fd4] rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center gap-3 md:gap-4 text-white font-black tracking-widest uppercase shadow-xl shadow-blue-100 hover:scale-[1.01] hover:shadow-blue-200 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {startLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Begin Practice <ArrowRight className="h-5 w-5" /></>}
+                    {startLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Begin Practice <ArrowRight className="h-5 w-5 md:h-6 md:w-6" /></>}
                   </button>
                 </div>
               </div>
