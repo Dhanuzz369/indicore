@@ -99,7 +99,8 @@ function formatQuestionList(nums: number[]): string {
 // ─── Sub-components ───────────────────────────────────────────
 
 function SubjectPerformanceCard({
-  subject, label, correct, total, accuracy, questions, answers, onQuestionClick
+  subject, label, correct, total, accuracy, questions, answers, onQuestionClick,
+  forceExpand = false, highlightAreas = false,
 }: {
   subject: string   // UUID — used for filtering questions
   label: string     // resolved name — used for display
@@ -109,8 +110,22 @@ function SubjectPerformanceCard({
   questions: Question[]
   answers: Record<string, any>
   onQuestionClick: (questionIndex: number) => void
+  forceExpand?: boolean
+  highlightAreas?: boolean
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const areasRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (forceExpand) {
+      setIsExpanded(true)
+      if (highlightAreas) {
+        setTimeout(() => {
+          areasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 400)
+      }
+    }
+  }, [forceExpand, highlightAreas])
   const subjectQuestions = questions.filter(q => q.subject_id === subject)
 
   // Collect unique subtopics from wrong answers for "Areas to revisit"
@@ -214,7 +229,10 @@ function SubjectPerformanceCard({
 
             {/* Areas to revisit */}
             {areasToRevisit.length > 0 && (
-              <div className="mt-5 pt-4 border-t border-gray-100">
+              <div
+                ref={areasRef}
+                className={`mt-5 pt-4 border-t border-gray-100 rounded-xl transition-all duration-500 ${highlightAreas ? 'bg-amber-50 px-3 py-3 ring-2 ring-amber-400 ring-offset-1' : ''}`}
+              >
                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">
                   Areas to revisit
                 </p>
@@ -667,8 +685,14 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const [isExpanded5050, setIsExpanded5050] = useState(false)
   const [isExpandedGuesses, setIsExpandedGuesses] = useState(false)
   const [isExpandedRevision, setIsExpandedRevision] = useState(false)
-  const sureCardRef    = useRef<HTMLDivElement>(null)
+  const sureCardRef     = useRef<HTMLDivElement>(null)
   const revisionCardRef = useRef<HTMLDivElement>(null)
+  const subjectSectionRef = useRef<HTMLDivElement>(null)
+
+  // Strategy Protocol interaction state
+  const [openSubjectLabel, setOpenSubjectLabel]       = useState<string | null>(null)
+  const [highlightAreasSubject, setHighlightAreasSubject] = useState<string | null>(null)
+  const [highlightChangedAnswers, setHighlightChangedAnswers] = useState(false)
 
   // ── Potential score calculation ──────────────────────────────
   const MARKS_PER_QUESTION = 2.667
@@ -684,6 +708,86 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const handleReattempt = () => {
     setPendingReattempt(reattemptQuestions, sessionId)
     router.push('/quiz/session?mode=reattempt')
+  }
+
+  // ─── Merged answers with confidence (hoisted for useMemo deps) ──
+  const mergedAnswers = useMemo(() =>
+    Object.fromEntries(
+      Object.entries(displayAnswers).map(([qId, ans]: [string, any]) => [
+        qId,
+        { ...ans, confidenceTag: displayConfMap[qId] || ans.confidenceTag || null }
+      ])
+    ),
+    [displayAnswers, displayConfMap]
+  )
+
+  // ── Strategy Protocol data ────────────────────────────────
+  const strategyProtocols = useMemo(() => {
+    const stats: any[] = analytics.subjectStats ?? []
+    if (stats.length === 0) return null
+
+    // P1: weakest subject by accuracy
+    const sorted = [...stats].sort((a, b) => (a.accuracy || 0) - (b.accuracy || 0))
+    const weakest = sorted[0]
+
+    // P2: subject with most correct→wrong revisions (overthinking)
+    const ctwBySubject: Record<string, number> = {}
+    for (const r of revisionSummary?.correctToWrong ?? []) {
+      const q = displayQuestions[r.qNum - 1]
+      if (q) {
+        const sName = subjectMap[q.subject_id] ?? q.subject_id ?? 'Unknown'
+        ctwBySubject[sName] = (ctwBySubject[sName] || 0) + 1
+      }
+    }
+    const maxCtwEntry = Object.entries(ctwBySubject).sort((a, b) => b[1] - a[1])[0]
+
+    // P3: subject with most skipped questions
+    const withSkips = stats.map((s: any) => {
+      const subjectId = Object.keys(subjectMap).find(id => subjectMap[id] === s.subject) ?? s.subject
+      const subjQs = displayQuestions.filter(q => q.subject_id === subjectId)
+      const c = subjQs.filter(q => mergedAnswers[q.$id]?.isCorrect === true).length
+      const w = subjQs.filter(q => mergedAnswers[q.$id]?.isCorrect === false).length
+      const skipped = subjQs.length - c - w
+      return { ...s, skipped }
+    })
+    const mostSkipped = [...withSkips].sort((a, b) => b.skipped - a.skipped)[0]
+
+    return {
+      weakest: weakest ? { label: weakest.subject as string, accuracy: weakest.accuracy as number } : null,
+      overthinking: maxCtwEntry ? { label: maxCtwEntry[0], count: maxCtwEntry[1] } : null,
+      mostSkipped: mostSkipped?.skipped > 0 ? { label: mostSkipped.subject as string, count: mostSkipped.skipped as number } : null,
+    }
+  }, [analytics, displayQuestions, mergedAnswers, subjectMap, revisionSummary])
+
+  const handleShowWeakAreas = () => {
+    const label = strategyProtocols?.weakest?.label
+    if (!label) return
+    setOpenSubjectLabel(label)
+    setHighlightAreasSubject(label)
+    setTimeout(() => {
+      subjectSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+    // Auto-clear highlight after 3s
+    setTimeout(() => setHighlightAreasSubject(null), 3500)
+  }
+
+  const handleSeeChangedAnswers = () => {
+    setIsExpandedRevision(true)
+    setHighlightChangedAnswers(true)
+    setTimeout(() => {
+      revisionCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+    setTimeout(() => setHighlightChangedAnswers(false), 3500)
+  }
+
+  const handleAnalyseSkipped = () => {
+    const label = strategyProtocols?.mostSkipped?.label
+    if (!label) return
+    setOpenSubjectLabel(label)
+    setHighlightAreasSubject(null)
+    setTimeout(() => {
+      subjectSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
   }
 
   const handleShowLostMarks = () => {
@@ -735,14 +839,6 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
       </div>
     )
   }
-
-  // ─── Merged answers with confidence ──────────────────────────
-  const mergedAnswers = Object.fromEntries(
-    Object.entries(displayAnswers).map(([qId, ans]: [string, any]) => [
-      qId,
-      { ...ans, confidenceTag: displayConfMap[qId] || ans.confidenceTag || null }
-    ])
-  )
 
   // ─── Main render ─────────────────────────────────────────────
   return (
@@ -1143,29 +1239,100 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
         {/* ═══════════════════════════════════ */}
         {/* SECTION 2 — Strategy Protocols     */}
         {/* ═══════════════════════════════════ */}
-        {analytics.suggestions.length > 0 && (
-          <div className="bg-gray-900 rounded-[2rem] p-6 md:p-8 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-5"><Zap className="h-40 w-40" /></div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-2.5 mb-5">
-                <div className="w-8 h-8 rounded-xl bg-amber-400/10 flex items-center justify-center shrink-0">
-                  <Zap className="h-4 w-4 text-amber-400" />
-                </div>
-                <h3 className="text-base font-black uppercase tracking-widest text-white">Strategy Protocols</h3>
+        {strategyProtocols && (
+          <div
+            className="rounded-[2rem] p-6 md:p-8 text-white relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #141518 0%, #1e1f24 100%)' }}
+          >
+            {/* Decorative chevron */}
+            <div className="absolute bottom-0 right-0 opacity-[0.04] pointer-events-none select-none" style={{ fontSize: 200, lineHeight: 1, fontWeight: 900, color: '#F59E0B', transform: 'translate(20%, 20%)' }}>›</div>
+
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-6 md:mb-8">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#F59E0B' }}>
+                <Zap className="h-4.5 w-4.5 text-black" style={{ width: 18, height: 18 }} />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
-                {analytics.suggestions.map((s: string, idx: number) => (
-                  <div key={idx} className="flex gap-3.5">
-                    <div className="shrink-0 w-6 h-6 rounded-lg bg-amber-400/10 flex items-center justify-center mt-0.5">
-                      <span className="text-[9px] font-black text-amber-400">{idx + 1}</span>
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Strategy Protocols</h3>
+            </div>
+
+            {/* 3-column priorities */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-5">
+
+              {/* Priority 1 — Weakest subject */}
+              {strategyProtocols.weakest && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0" style={{ borderColor: '#F59E0B' }}>
+                      <span className="text-[11px] font-black" style={{ color: '#F59E0B' }}>1</span>
                     </div>
-                    <div>
-                      <p className="text-[9px] font-black text-amber-400/70 uppercase tracking-wider mb-0.5">Priority {idx + 1}</p>
-                      <p className="text-sm font-medium text-gray-300 leading-relaxed">{s}</p>
-                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: '#F59E0B' }}>Priority 1</span>
                   </div>
-                ))}
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">
+                    <span className="font-black text-white">{strategyProtocols.weakest.label}</span> is pulling your score down the most
+                    {' '}({strategyProtocols.weakest.accuracy}% accuracy)
+                  </p>
+                  <button
+                    onClick={handleShowWeakAreas}
+                    className="mt-auto w-fit px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-80 active:scale-95"
+                    style={{ border: '1.5px solid #F59E0B', color: '#F59E0B', background: 'transparent' }}
+                  >
+                    Show me my weak areas
+                  </button>
+                </div>
+              )}
+
+              {/* Priority 2 — Overthinking (changed answers) */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0" style={{ borderColor: '#F59E0B' }}>
+                    <span className="text-[11px] font-black" style={{ color: '#F59E0B' }}>2</span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: '#F59E0B' }}>Priority 2</span>
+                </div>
+                {strategyProtocols.overthinking ? (
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">
+                    You lost marks due to overthinking and second guessing in{' '}
+                    <span className="font-black text-white">{strategyProtocols.overthinking.label}</span>
+                    {' '}({strategyProtocols.overthinking.count} changed answer{strategyProtocols.overthinking.count !== 1 ? 's' : ''})
+                  </p>
+                ) : (
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">No second-guessing detected — your first instincts were solid this test.</p>
+                )}
+                <button
+                  onClick={handleSeeChangedAnswers}
+                  className="mt-auto w-fit px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-80 active:scale-95"
+                  style={{ border: '1.5px solid #F59E0B', color: '#F59E0B', background: 'transparent' }}
+                >
+                  See changed answers
+                </button>
               </div>
+
+              {/* Priority 3 — Skipped questions */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0" style={{ borderColor: '#F59E0B' }}>
+                    <span className="text-[11px] font-black" style={{ color: '#F59E0B' }}>3</span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: '#F59E0B' }}>Priority 3</span>
+                </div>
+                {strategyProtocols.mostSkipped ? (
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">
+                    You left marks on the table in{' '}
+                    <span className="font-black text-white">{strategyProtocols.mostSkipped.label}</span>
+                    {' '}— {strategyProtocols.mostSkipped.count} skipped question{strategyProtocols.mostSkipped.count !== 1 ? 's' : ''}
+                  </p>
+                ) : (
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">No questions left unanswered — full coverage this test.</p>
+                )}
+                <button
+                  onClick={handleAnalyseSkipped}
+                  className="mt-auto w-fit px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-80 active:scale-95"
+                  style={{ border: '1.5px solid #F59E0B', color: '#F59E0B', background: 'transparent' }}
+                >
+                  Analyse skipped questions
+                </button>
+              </div>
+
             </div>
           </div>
         )}
@@ -1372,7 +1539,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   {isExpandedRevision && (
                     <div className="px-5 pb-5 pt-2 border-t border-amber-100 animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
                       {nLost > 0 && (
-                        <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
+                        <div className={`rounded-xl px-4 py-3 transition-all duration-500 ${highlightChangedAnswers ? 'bg-amber-50 border border-amber-300 ring-2 ring-amber-400 ring-offset-1' : 'bg-red-50 border border-red-100'}`}>
                           <p className="text-sm font-bold text-red-800 leading-snug mb-1">
                             Changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
                           </p>
@@ -1435,7 +1602,7 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
         {/* ═══════════════════════════════════ */}
         {/* SECTION 4 — Subject Drill-Down     */}
         {/* ═══════════════════════════════════ */}
-        <div className="pt-6 border-t border-gray-100">
+        <div ref={subjectSectionRef} className="pt-6 border-t border-gray-100">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight italic">Subject wise performance</h2>
@@ -1456,6 +1623,8 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
                   questions={displayQuestions}
                   answers={mergedAnswers}
                   onQuestionClick={handleQuestionClick}
+                  forceExpand={openSubjectLabel === stat.subject}
+                  highlightAreas={highlightAreasSubject === stat.subject}
                 />
               )
             })}
