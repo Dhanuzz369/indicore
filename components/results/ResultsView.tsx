@@ -6,14 +6,16 @@ import { useQuizStore } from '@/store/quiz-store'
 import { getTestSession, listAttemptsBySession, getQuestionsByIds, getSubjects } from '@/lib/supabase/queries'
 import {
   CheckCircle, ChevronDown, BookOpen, Clock, RefreshCw, Home,
-  Brain, Target, Zap, Loader2, ArrowLeft, TrendingDown, Sparkles
+  Brain, Target, Zap, Loader2, ArrowLeft, TrendingDown, Sparkles, Lock
 } from 'lucide-react'
+import Link from 'next/link'
 import type { Question, SelectionEvent } from '@/types'
 import { generateTestAnalytics } from '@/lib/analytics/engine'
 import { toast } from 'sonner'
 import { FeedbackCard } from './FeedbackCard'
 import { FeedbackModal } from './FeedbackModal'
 import FullMockNudgeModal from '@/components/modals/FullMockNudgeModal'
+import { useSubscription } from '@/context/subscription-context'
 
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -382,6 +384,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
   const displayConfMap    = replayMode ? (localData?.confidenceMap ?? {}) : storeConfidenceMap
   const displayElapsed    = replayMode ? (localData?.elapsedSeconds ?? 0) : storeElapsed
   const displayPaperLabel = replayMode ? (localData?.paperLabel ?? '') : storePaperLabel
+
+  const { isPro } = useSubscription()
+  // PYQ sessions have exam_type 'UPSC_PRE' on their questions
+  const isPyq = (displayQuestions[0]?.exam_type ?? '') === 'UPSC_PRE'
 
   const reattemptQuestions = useMemo(
     () => displayQuestions.filter(q => {
@@ -1242,6 +1248,10 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
           )}
         </div>
 
+        {isPyq && !isPro ? (
+          <div className="relative mt-6">
+            <div className="blur-sm pointer-events-none select-none opacity-80">
+
         {/* ═══════════════════════════════════ */}
         {/* SECTION 2 — Strategy Protocols     */}
         {/* ═══════════════════════════════════ */}
@@ -1636,6 +1646,418 @@ export function ResultsView({ sessionId, replayMode = false }: ResultsViewProps)
             })}
           </div>
         </div>
+
+            </div>{/* end blur-sm */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 z-10">
+              <Lock className="h-20 w-20 text-amber-400 drop-shadow-2xl" strokeWidth={1.5} />
+              <Link
+                href="/pricing"
+                className="bg-[#4A90E2] text-white px-8 py-4 rounded-2xl font-black text-base md:text-lg shadow-2xl shadow-blue-200 hover:bg-blue-600 transition-colors text-center"
+              >
+                Unlock complete analysis just ₹5/day
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+
+        {/* ═══════════════════════════════════ */}
+        {/* SECTION 2 — Strategy Protocols     */}
+        {/* ═══════════════════════════════════ */}
+        {strategyProtocols && (
+          <div
+            className="rounded-[2rem] p-6 md:p-8 text-white relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #141518 0%, #1e1f24 100%)' }}
+          >
+            {/* Decorative chevron */}
+            <div className="absolute bottom-0 right-0 opacity-[0.04] pointer-events-none select-none" style={{ fontSize: 200, lineHeight: 1, fontWeight: 900, color: '#F59E0B', transform: 'translate(20%, 20%)' }}>›</div>
+
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-6 md:mb-8">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#F59E0B' }}>
+                <Zap className="h-4.5 w-4.5 text-black" style={{ width: 18, height: 18 }} />
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Strategy Protocols</h3>
+            </div>
+
+            {/* 3-column priorities */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-5">
+
+              {/* Priority 1 — Weakest subject */}
+              {strategyProtocols.weakest && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0" style={{ borderColor: '#F59E0B' }}>
+                      <span className="text-[11px] font-black" style={{ color: '#F59E0B' }}>1</span>
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: '#F59E0B' }}>Priority 1</span>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">
+                    <span className="font-black text-white">{strategyProtocols.weakest.label}</span> is pulling your score down the most
+                    {' '}({strategyProtocols.weakest.accuracy}% accuracy)
+                  </p>
+                  <button
+                    onClick={handleShowWeakAreas}
+                    className="mt-auto w-fit px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-80 active:scale-95"
+                    style={{ border: '1.5px solid #F59E0B', color: '#F59E0B', background: 'transparent' }}
+                  >
+                    Show me my weak areas
+                  </button>
+                </div>
+              )}
+
+              {/* Priority 2 — Overthinking (changed answers) */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0" style={{ borderColor: '#F59E0B' }}>
+                    <span className="text-[11px] font-black" style={{ color: '#F59E0B' }}>2</span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: '#F59E0B' }}>Priority 2</span>
+                </div>
+                {strategyProtocols.overthinking ? (
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">
+                    You lost marks due to overthinking and second guessing in{' '}
+                    <span className="font-black text-white">{strategyProtocols.overthinking.label}</span>
+                    {' '}({strategyProtocols.overthinking.count} changed answer{strategyProtocols.overthinking.count !== 1 ? 's' : ''})
+                  </p>
+                ) : (
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">No second-guessing detected — your first instincts were solid this test.</p>
+                )}
+                <button
+                  onClick={handleSeeChangedAnswers}
+                  className="mt-auto w-fit px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-80 active:scale-95"
+                  style={{ border: '1.5px solid #F59E0B', color: '#F59E0B', background: 'transparent' }}
+                >
+                  See changed answers
+                </button>
+              </div>
+
+              {/* Priority 3 — Skipped questions */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0" style={{ borderColor: '#F59E0B' }}>
+                    <span className="text-[11px] font-black" style={{ color: '#F59E0B' }}>3</span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: '#F59E0B' }}>Priority 3</span>
+                </div>
+                {strategyProtocols.mostSkipped ? (
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">
+                    You left marks on the table in{' '}
+                    <span className="font-black text-white">{strategyProtocols.mostSkipped.label}</span>
+                    {' '}— {strategyProtocols.mostSkipped.count} skipped question{strategyProtocols.mostSkipped.count !== 1 ? 's' : ''}
+                  </p>
+                ) : (
+                  <p className="text-sm font-semibold text-gray-200 leading-relaxed">No questions left unanswered — full coverage this test.</p>
+                )}
+                <button
+                  onClick={handleAnalyseSkipped}
+                  className="mt-auto w-fit px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-80 active:scale-95"
+                  style={{ border: '1.5px solid #F59E0B', color: '#F59E0B', background: 'transparent' }}
+                >
+                  Analyse skipped questions
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════ */}
+        {/* SECTION 3 — Confidence Accordions + Revision  */}
+        {/* ═══════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-4 items-start">
+
+          {/* Left: Sure / 50:50 / Guess accordions */}
+          <div className="space-y-3">
+
+            {/* Sure Items */}
+            {(() => {
+              const bu = analytics.buttonUsageStats || {}
+              const total   = bu.totalAreYouSure   ?? 0
+              const correct = bu.correctAreYouSure ?? 0
+              const mistakes = total - correct
+              const insight = getSureInsight(mistakes)
+              return (
+                <div
+                  ref={sureCardRef}
+                  className={`bg-emerald-50/60 rounded-2xl border shadow-sm overflow-hidden transition-all duration-300 ${
+                    lostMarksHighlighted ? 'border-[#4A90E2] ring-2 ring-[#4A90E2] ring-offset-2' : 'border-emerald-100'
+                  }`}
+                >
+                  <button
+                    onClick={() => setIsExpandedSure(v => !v)}
+                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-emerald-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                        <CheckCircle className="h-4 w-4 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">Sure Items</p>
+                        <p className="text-xs text-gray-400 font-medium">
+                          {total > 0 ? `${correct} / ${total} correct · ${mistakes} mistake${mistakes !== 1 ? 's' : ''}` : 'No sure answers tagged'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {mistakes > 0 && (
+                        <span className="hidden sm:inline text-xs font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                          −{(mistakes * 2.667).toFixed(1)} marks
+                        </span>
+                      )}
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${isExpandedSure ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {isExpandedSure && (
+                    <div className="px-5 pb-5 pt-2 border-t border-emerald-100 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
+                      <div className="bg-white rounded-xl p-4 shadow-sm">
+                        {insight ? (
+                          <>
+                            <p className="text-sm font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                            <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                            {total > 0 ? 'Perfect accuracy on sure items — your confident answers are reliable.' : 'Tag questions as "Sure" during the test to track your confident answers.'}
+                          </p>
+                        )}
+                      </div>
+                      <TaggedQuestionsDropdown tag="sure" title="Review Sure Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* 50:50 Logic */}
+            {(() => {
+              const bu = analytics.buttonUsageStats || {}
+              const total   = bu.total5050   ?? 0
+              const correct = bu.correct5050 ?? 0
+              const hitRate = total > 0 ? Math.round((correct / total) * 100) : null
+              const insight = hitRate !== null ? getHitRateInsight(hitRate) : null
+              const wrong50 = total - correct
+              return (
+                <div className="bg-blue-50/60 rounded-2xl border border-blue-100 shadow-sm overflow-hidden transition-all duration-300">
+                  <button
+                    onClick={() => setIsExpanded5050(v => !v)}
+                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-blue-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                        <Brain className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">50:50 Logic</p>
+                        <p className="text-xs text-gray-400 font-medium">
+                          {total > 0 ? `${correct} / ${total} correct · ${hitRate}% hit rate` : 'No 50:50 answers tagged'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {wrong50 > 0 && (
+                        <span className="hidden sm:inline text-xs font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                          −{(wrong50 * MARKS_PER_QUESTION).toFixed(1)} marks
+                        </span>
+                      )}
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${isExpanded5050 ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {isExpanded5050 && (
+                    <div className="px-5 pb-5 pt-2 border-t border-blue-100 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
+                      <div className="bg-white rounded-xl p-4 shadow-sm">
+                        {insight ? (
+                          <>
+                            <p className="text-sm font-semibold text-gray-800 leading-relaxed">{insight.message}</p>
+                            <p className="text-xs text-gray-500 font-medium leading-relaxed mt-1.5">{insight.recommendation}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500 font-medium leading-relaxed">Tag questions where you narrowed to two options to track your elimination accuracy.</p>
+                        )}
+                      </div>
+                      <TaggedQuestionsDropdown tag="fifty_fifty" title="Review Fifty-Fifty Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* Guesses */}
+            {(() => {
+              const bu = analytics.buttonUsageStats || {}
+              const total   = bu.totalGuess   ?? 0
+              const correct = bu.correctGuess ?? 0
+              const wrongGuess = total - correct
+              return (
+                <div className="bg-violet-50/60 rounded-2xl border border-violet-100 shadow-sm overflow-hidden transition-all duration-300">
+                  <button
+                    onClick={() => setIsExpandedGuesses(v => !v)}
+                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-violet-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+                        <Zap className="h-4 w-4 text-violet-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">Guesses</p>
+                        <p className="text-xs text-gray-400 font-medium">
+                          {total > 0 ? `${correct} / ${total} correct · in this zone` : 'No guess answers tagged'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {wrongGuess > 0 && (
+                        <span className="hidden sm:inline text-xs font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                          −{(wrongGuess * MARKS_PER_QUESTION).toFixed(1)} marks
+                        </span>
+                      )}
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${isExpandedGuesses ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {isExpandedGuesses && (
+                    <div className="px-5 pb-5 pt-2 border-t border-violet-100 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-4">
+                      <TaggedQuestionsDropdown tag="guess" title="Review Guess Items" questions={displayQuestions} answers={displayAnswers} confidenceMap={displayConfMap} onQuestionClick={handleQuestionClick} />
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* Right: Answer Revision */}
+          <div>
+            {revisionSummary && revisionSummary.total > 0 && (() => {
+              const ctw     = revisionSummary.correctToWrong
+              const nLost   = ctw.length
+              const marksLost = parseFloat((nLost * MARKS_PER_QUESTION).toFixed(2))
+              return (
+                <div
+                  ref={revisionCardRef}
+                  className={`rounded-2xl bg-amber-50/60 border shadow-sm overflow-hidden transition-all duration-300 ${
+                    lostMarksHighlighted ? 'border-[#4A90E2] ring-2 ring-[#4A90E2] ring-offset-2' : 'border-amber-100'
+                  }`}
+                >
+                  <button
+                    onClick={() => setIsExpandedRevision(v => !v)}
+                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-amber-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                        <RefreshCw className="h-4 w-4 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">Answer Revisions</p>
+                        <p className="text-xs text-gray-400 font-medium">
+                          Changed <span className="font-black text-gray-700">{revisionSummary.total}</span> answer{revisionSummary.total !== 1 ? 's' : ''} during this test
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isFullLength && nLost > 0 && (
+                        <span className="hidden sm:inline text-xs font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                          −{marksLost} marks
+                        </span>
+                      )}
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${isExpandedRevision ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {isExpandedRevision && (
+                    <div className="px-5 pb-5 pt-2 border-t border-amber-100 animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
+                      {nLost > 0 && (
+                        <div className={`rounded-xl px-4 py-3 transition-all duration-500 ${highlightChangedAnswers ? 'bg-amber-50 border border-amber-300 ring-2 ring-amber-400 ring-offset-1' : 'bg-red-50 border border-red-100'}`}>
+                          <p className="text-sm font-bold text-red-800 leading-snug mb-1">
+                            Changed <span className="text-emerald-700">correct</span> → <span className="text-red-700">wrong</span>
+                          </p>
+                          <p className="text-xs text-red-600 font-semibold mb-3">
+                            {isFullLength
+                              ? <>Marks lost: <span className="font-black">−{marksLost}</span> &nbsp;({nLost} × {MARKS_PER_QUESTION})</>
+                              : <>{nLost} correct answer{nLost !== 1 ? 's' : ''} thrown away by revision</>
+                            }
+                          </p>
+                          <p className="text-[9px] font-black text-red-400 uppercase tracking-[0.15em] mb-2">Click to review</p>
+                          <div className="flex flex-wrap gap-2">
+                            {ctw.map(r => (
+                              <button
+                                key={r.qNum}
+                                onClick={() => handleQuestionClick(r.qNum - 1)}
+                                className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-red-100 border-red-300 text-red-700 hover:bg-red-200"
+                                title={`Q${r.qNum} — revised correct → wrong`}
+                              >
+                                {r.qNum}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {revisionSummary.wrongToCorrect.length > 0 && (
+                        <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                          <p className="text-sm font-bold text-emerald-800 leading-snug mb-1">
+                            Changed <span className="text-red-600">wrong</span> → <span className="text-emerald-700">correct</span>
+                          </p>
+                          <p className="text-xs text-emerald-600 font-semibold mb-2">
+                            {revisionSummary.wrongToCorrect.length} good revision{revisionSummary.wrongToCorrect.length !== 1 ? 's' : ''} — your instinct was right
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {revisionSummary.wrongToCorrect.map(r => (
+                              <button
+                                key={r.qNum}
+                                onClick={() => handleQuestionClick(r.qNum - 1)}
+                                className="h-9 w-9 flex items-center justify-center rounded-xl font-black text-xs border transition-all hover:scale-110 active:scale-95 bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200"
+                                title={`Q${r.qNum} — revised wrong → correct`}
+                              >
+                                {r.qNum}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {nLost === 0 && revisionSummary.wrongToCorrect.length === 0 && revisionSummary.neutral.length > 0 && (
+                        <p className="text-xs text-gray-500 font-medium">
+                          {revisionSummary.neutral.length} neutral revision{revisionSummary.neutral.length !== 1 ? 's' : ''} — changed between wrong options
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════ */}
+        {/* SECTION 4 — Subject Drill-Down     */}
+        {/* ═══════════════════════════════════ */}
+        <div ref={subjectSectionRef} className="pt-6 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight italic">Subject wise performance</h2>
+              <p className="text-xs text-gray-500 font-medium">Click a question number to jump into review mode</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {[...analytics.subjectStats].sort((a: any, b: any) => (a.accuracy || 0) - (b.accuracy || 0)).map((stat: any) => {
+              const subjectUUID = Object.keys(subjectMap).find(id => subjectMap[id] === stat.subject) ?? stat.subject
+              return (
+                <SubjectPerformanceCard
+                  key={stat.subject}
+                  subject={subjectUUID}
+                  label={stat.subject}
+                  correct={stat.correct}
+                  total={stat.total}
+                  accuracy={stat.accuracy}
+                  questions={displayQuestions}
+                  answers={mergedAnswers}
+                  onQuestionClick={handleQuestionClick}
+                  forceExpand={openSubjectLabel === stat.subject}
+                  highlightAreas={highlightAreasSubject === stat.subject}
+                />
+              )
+            })}
+          </div>
+        </div>
+
+          </>
+        )}
 
       </main>
 
