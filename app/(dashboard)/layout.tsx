@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getCurrentUser, signOut, clearSessionCookie } from '@/lib/supabase/auth'
 import { getProfile, getDueNotesCount } from '@/lib/supabase/queries'
+import { SubscriptionProvider } from '@/context/subscription-context'
+import { getSubscription } from '@/lib/supabase/queries'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -56,6 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [dueCount, setDueCount] = useState(0)
+  const [isPro, setIsPro] = useState(false)
   const { identify, reset } = useAnalytics()
 
   useEffect(() => {
@@ -63,8 +66,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       try {
         const user = await getCurrentUser()
         if (!user) { router.push('/login'); return }
-        const userProfile = await getProfile(user.$id)
+        const [userProfile, proStatus] = await Promise.all([
+          getProfile(user.$id),
+          getSubscription(user.$id),
+        ])
         setProfile(userProfile as unknown as Profile)
+        setIsPro(proStatus)
         identify(user.$id, {
           email: user.email ?? '',
           name: (userProfile as any)?.full_name ?? '',
@@ -117,10 +124,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Session page: full-screen, no header/footer chrome
   if (isSessionPage) {
-    return <>{children}</>
+    return <SubscriptionProvider isPro={isPro}>{children}</SubscriptionProvider>
   }
 
   return (
+    <SubscriptionProvider isPro={isPro}>
     <div className="flex h-screen bg-gray-50 overflow-hidden">
 
       {/* ── Desktop Left Sidebar ── */}
@@ -310,5 +318,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       </div>
     </div>
+    </SubscriptionProvider>
   )
 }
