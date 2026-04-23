@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { getSubjectsWithCounts, getQuestions, listMocks, getSubjectsWithMockCounts, listTestSessions, getQuestionsByIds, getSeenMockQuestionIds } from '@/lib/supabase/queries'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { useQuizStore } from '@/store/quiz-store'
@@ -11,11 +12,12 @@ import {
   Loader2, ArrowRight, LayoutGrid, FileText, Sparkles, X,
   Clock, Zap, Target, ChevronRight, Search, RotateCcw, Eye,
   TrendingUp, Leaf, Globe, Landmark, Scale, Microscope,
-  Palette, ShieldCheck, BookOpen, FlaskConical, type LucideIcon,
+  Palette, ShieldCheck, BookOpen, FlaskConical, Lock, type LucideIcon,
 } from 'lucide-react'
 import type { Question, Subject, Mock, TestSession } from '@/types'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useSubscription } from '@/context/subscription-context'
 
 function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -100,6 +102,7 @@ function QuizSetupContent() {
   const tabParam = searchParams.get('tab')
   const { setQuestions, setTestMode, setPaperLabel, setPracticeTimerTotal } = useQuizStore()
   const { track } = useAnalytics()
+  const { isPro } = useSubscription()
 
   const [activeTab, setActiveTab] = useState<'mock' | 'full' | 'subject'>(
     tabParam === 'full' ? 'full' : tabParam === 'subject' ? 'subject' : 'mock'
@@ -116,6 +119,9 @@ function QuizSetupContent() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('All')
   const [questionCount, setQuestionCount] = useState(20)
   const [startLoading, setStartLoading] = useState(false)
+
+  const effectiveQuestionCount = isPro ? questionCount : 10
+  const effectiveDifficulty    = isPro ? selectedDifficulty : 'All'
 
   // Mock tab state
   type MockSubjectWithCount = Subject & { count: number }
@@ -379,13 +385,13 @@ function QuizSetupContent() {
     if (!configSubject) return
     setStartLoading(true)
     try {
-      const cap = Math.min(questionCount, configSubject.count || questionCount)
+      const cap = Math.min(effectiveQuestionCount, configSubject.count || effectiveQuestionCount)
       const filters: Parameters<typeof getQuestions>[0] = {
         subjectId: configSubject.$id,
         examType: 'INDICORE_MOCK',
         limit: cap,
       }
-      if (selectedDifficulty !== 'All') filters.difficulty = DIFFICULTY_TO_DB[selectedDifficulty]
+      if (effectiveDifficulty !== 'All') filters.difficulty = DIFFICULTY_TO_DB[effectiveDifficulty]
       const result = await getQuestions(filters)
       if (!result.documents?.length) {
         toast.error('No questions found. Try a different difficulty or count.')
@@ -397,7 +403,7 @@ function QuizSetupContent() {
       setQuestions(qs)
       setTestMode(true)
       setPracticeTimerTotal(qs.length * SECONDS_PER_QUESTION)
-      setPaperLabel(`${configSubject.Name} · ${selectedDifficulty === 'All' ? 'All' : selectedDifficulty} · ${qs.length}Q`)
+      setPaperLabel(`${configSubject.Name} · ${effectiveDifficulty === 'All' ? 'All' : effectiveDifficulty} · ${qs.length}Q`)
       track('subject_practice_started', {
         subject_name: configSubject.Name,
         question_count: qs.length,
@@ -467,7 +473,7 @@ function QuizSetupContent() {
     }
   }
 
-  const totalTimerSeconds = questionCount * SECONDS_PER_QUESTION
+  const totalTimerSeconds = effectiveQuestionCount * SECONDS_PER_QUESTION
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] pb-32">
@@ -824,11 +830,25 @@ function QuizSetupContent() {
                         <div><p className="text-sm font-black text-gray-900">Questions</p><p className="text-xs text-gray-400">How many questions to practice</p></div>
                       </div>
                       <div className="flex gap-3 flex-wrap">
-                        {QUESTION_COUNT_OPTIONS.map(n => (
-                          <button key={n} onClick={() => setQuestionCount(n)}
-                            className={`px-5 py-3 rounded-2xl font-black text-sm transition-all border-2 ${questionCount === n ? 'bg-[#4A90E2] border-[#4A90E2] text-white shadow-lg shadow-blue-100 scale-105' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:text-gray-700'}`}
-                          >{n}</button>
-                        ))}
+                        {QUESTION_COUNT_OPTIONS.map(n => {
+                          const locked = !isPro && n !== 10
+                          return (
+                            <button
+                              key={n}
+                              onClick={() => !locked && setQuestionCount(n)}
+                              className={`relative px-5 py-3 rounded-2xl font-black text-sm transition-all border-2 flex items-center gap-1.5
+                                ${locked
+                                  ? 'bg-white border-gray-100 text-gray-300 cursor-not-allowed opacity-60'
+                                  : effectiveQuestionCount === n
+                                    ? 'bg-[#4A90E2] border-[#4A90E2] text-white shadow-lg shadow-blue-100 scale-105'
+                                    : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                }`}
+                            >
+                              {locked && <Lock className="h-3 w-3" />}
+                              {n}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   )}
@@ -838,12 +858,30 @@ function QuizSetupContent() {
                       <div><p className="text-sm font-black text-gray-900">Difficulty</p><p className="text-xs text-gray-400">Filter questions by difficulty level</p></div>
                     </div>
                     <div className="flex gap-3 flex-wrap">
-                      {DIFFICULTY_OPTIONS.map(d => (
-                        <button key={d} onClick={() => setSelectedDifficulty(d)} className={getDifficultyStyle(d, selectedDifficulty === d)}>
-                          {d === 'Basic' ? '🟢' : d === 'Intermediate' ? '🟡' : d === 'Advanced' ? '🔴' : '⚡'} {d}
-                        </button>
-                      ))}
+                      {DIFFICULTY_OPTIONS.map(d => {
+                        const locked = !isPro && d !== 'All'
+                        return (
+                          <button
+                            key={d}
+                            onClick={() => !locked && setSelectedDifficulty(d)}
+                            className={`${getDifficultyStyle(d, effectiveDifficulty === d)} flex items-center gap-1.5
+                              ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            {locked && <Lock className="h-3 w-3" />}
+                            {d === 'Basic' ? '🟢' : d === 'Intermediate' ? '🟡' : d === 'Advanced' ? '🔴' : '⚡'} {d}
+                          </button>
+                        )
+                      })}
                     </div>
+                    {!isPro && (
+                      <p className="text-xs text-gray-400 font-medium flex items-center gap-1.5 mt-2">
+                        <Lock className="h-3 w-3 text-gray-400" />
+                        Unlock all difficulties and question counts with Pro —{' '}
+                        <Link href="/pricing" className="text-[#4A90E2] font-bold hover:underline">
+                          Upgrade
+                        </Link>
+                      </p>
+                    )}
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="bg-gray-50 rounded-2xl p-4 text-center">
