@@ -103,6 +103,7 @@ function QuizSetupContent() {
   const { setQuestions, setTestMode, setPaperLabel, setPracticeTimerTotal } = useQuizStore()
   const { track } = useAnalytics()
   const { isPro } = useSubscription()
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   const [activeTab, setActiveTab] = useState<'mock' | 'full' | 'subject'>(
     tabParam === 'full' ? 'full' : tabParam === 'subject' ? 'subject' : 'mock'
@@ -550,8 +551,23 @@ function QuizSetupContent() {
                     : mocks.filter(m => m.subject_weights.length > 1).map((mock, idx) => {
                         const theme = idx === 0 ? 'blue' : idx === 1 ? 'black' : 'gray'
                         const isMock1 = idx === 0
+                        const isLocked = !isPro && !isMock1
+
                         return (
-                          <div key={mock.$id} className="relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 group hover:shadow-xl hover:border-blue-100 transition-all flex flex-col" onMouseEnter={() => track('mock_card_viewed', { mock_name: mock.name, total_questions: mock.subject_weights?.reduce((sum: number, w: any) => sum + w.count, 0) ?? 0 })}>
+                          <div
+                            key={mock.$id}
+                            className={`relative bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden p-5 md:p-8 flex flex-col transition-all
+                              ${isLocked ? 'opacity-60 cursor-not-allowed' : 'group hover:shadow-xl hover:border-blue-100'}`}
+                            onClick={isLocked ? () => setShowUpgradeModal(true) : undefined}
+                            onMouseEnter={() => !isLocked && track('mock_card_viewed', { mock_name: mock.name, total_questions: mock.subject_weights?.reduce((sum: number, w: any) => sum + w.count, 0) ?? 0 })}
+                          >
+                            {/* Pro Only badge for locked mocks */}
+                            {isLocked && (
+                              <div className="absolute top-4 right-4 z-10 flex items-center gap-1 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">
+                                <Lock className="h-3 w-3" /> Pro Only
+                              </div>
+                            )}
+
                             {highlighted && isMock1 && (
                               <p className="text-[10px] font-black uppercase tracking-wider text-[#4A90E2] mb-1">
                                 ✨ Recommended for you
@@ -574,17 +590,24 @@ function QuizSetupContent() {
                               </div>
                             </div>
                             <button
-                              onClick={() => handleStartMock(mock)}
-                              disabled={loadingMockId === mock.$id}
-                              className={`h-12 md:h-16 w-full rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60 ${
-                                theme === 'black'
-                                  ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
-                                  : theme === 'gray'
-                                    ? 'bg-gray-800 text-white hover:bg-gray-700 shadow-lg shadow-gray-200'
-                                    : 'bg-[#4A90E2] text-white hover:bg-blue-600 shadow-lg shadow-blue-100'
-                              }`}
+                              onClick={isLocked ? () => setShowUpgradeModal(true) : () => handleStartMock(mock)}
+                              disabled={!isLocked && loadingMockId === mock.$id}
+                              className={`h-12 md:h-16 w-full rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 font-black text-[11px] uppercase tracking-widest transition-all disabled:opacity-60
+                                ${isLocked
+                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                  : theme === 'black'
+                                    ? 'bg-black text-white hover:bg-gray-800 shadow-lg shadow-gray-200'
+                                    : theme === 'gray'
+                                      ? 'bg-gray-800 text-white hover:bg-gray-700 shadow-lg shadow-gray-200'
+                                      : 'bg-[#4A90E2] text-white hover:bg-blue-600 shadow-lg shadow-blue-100'
+                                }`}
                             >
-                              {loadingMockId === mock.$id ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Attempt Test <ArrowRight className="h-4 w-4" /></>}
+                              {isLocked
+                                ? <><Lock className="h-4 w-4" /> Unlock with Pro</>
+                                : loadingMockId === mock.$id
+                                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                                  : <>Attempt Test <ArrowRight className="h-4 w-4" /></>
+                              }
                             </button>
                             {highlighted && isMock1 && (
                               <span className="absolute inset-0 rounded-[inherit] ring-2 ring-[#4A90E2] ring-offset-2 animate-pulse pointer-events-none" />
@@ -908,6 +931,45 @@ function QuizSetupContent() {
           </div>
         )}
       </main>
+
+      {/* ── Pro Upgrade Modal ── */}
+      {showUpgradeModal && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowUpgradeModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col gap-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                <Lock className="h-5 w-5 text-amber-500" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-gray-900">Pro Feature</h2>
+                <p className="text-xs text-gray-400 font-medium">Full-length mock tests</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 font-medium leading-relaxed">
+              Mock 2 &amp; 3 are available exclusively for Pro subscribers. Upgrade to attempt all
+              full-length mocks and unlock complete analytics.
+            </p>
+            <Link
+              href="/pricing"
+              className="w-full py-3 bg-[#4A90E2] text-white rounded-full font-black text-sm uppercase tracking-wider hover:bg-blue-600 transition-all text-center shadow-md shadow-blue-100"
+            >
+              Upgrade to Pro →
+            </Link>
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              className="text-sm text-gray-400 font-medium hover:text-gray-600 transition-colors text-center"
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
