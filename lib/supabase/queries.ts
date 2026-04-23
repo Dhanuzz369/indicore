@@ -65,6 +65,23 @@ export async function updateProfile(userId: string, updates: Record<string, unkn
   return { ...data, $id: data.id } as unknown as Profile
 }
 
+export async function getSubscription(userId: string): Promise<boolean> {
+  try {
+    const sb = createClient()
+    const now = new Date().toISOString()
+    const { data } = await sb
+      .from('subscriptions')
+      .select('status, expires_at')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .gt('expires_at', now)
+      .maybeSingle()
+    return !!data
+  } catch {
+    return false   // fail-safe: never accidentally unlock
+  }
+}
+
 // ── SUBJECTS ──────────────────────────────────────────────────────────────────
 
 export async function getSubjects() {
