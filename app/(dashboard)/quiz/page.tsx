@@ -165,15 +165,23 @@ function QuizSetupContent() {
 
     const fetchSubjects = async () => {
       try {
-        const cached = sessionStorage.getItem('subjects_with_counts_v2')
-        if (cached) {
-          setSubjects(JSON.parse(cached))
-          setLoadingSubjects(false)
-          return
+        // Cache with a 30-min TTL so question counts stay fresh after sessions
+        const CACHE_KEY = 'subjects_with_counts_v2'
+        const CACHE_TTL = 30 * 60 * 1000 // 30 minutes
+        const raw = sessionStorage.getItem(CACHE_KEY)
+        if (raw) {
+          const { data, ts } = JSON.parse(raw)
+          if (Date.now() - ts < CACHE_TTL) {
+            setSubjects(data)
+            setLoadingSubjects(false)
+            return
+          }
+          // Cache expired — clear it and re-fetch
+          sessionStorage.removeItem(CACHE_KEY)
         }
         const result = await getSubjectsWithCounts()
         const docs = result.documents as unknown as SubjectWithCount[]
-        sessionStorage.setItem('subjects_with_counts_v2', JSON.stringify(docs))
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: docs, ts: Date.now() }))
         setSubjects(docs)
       } catch {
         toast.error('Failed to load subjects')
@@ -399,6 +407,8 @@ function QuizSetupContent() {
         setStartLoading(false)
         return
       }
+      // Invalidate subjects cache so fresh counts are loaded on next visit
+      sessionStorage.removeItem('subjects_with_counts_v2')
       useQuizStore.getState().resetQuiz()
       const qs = result.documents as unknown as Question[]
       setQuestions(qs)
