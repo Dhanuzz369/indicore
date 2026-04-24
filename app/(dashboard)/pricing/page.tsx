@@ -270,22 +270,13 @@ export default function PricingPage() {
         </button>
 
         {/* ── Hero ── */}
-        <div className="text-center space-y-3">
-          <h1 className="text-[2.4rem] md:text-5xl font-black text-gray-900 leading-[1.1] tracking-tight">
+        <div className="text-center space-y-4">
+          <h1 className="text-[2.75rem] md:text-6xl font-black text-gray-900 leading-[1.05] tracking-tight">
             Stop guessing.<br />Start improving.
           </h1>
-          <p className="text-sm md:text-base text-gray-500 font-medium max-w-sm mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-gray-500 font-semibold max-w-sm mx-auto leading-relaxed">
             Most platforms sell you tests. We sell you transformation.<br />
             See how Indicore redefines UPSC preparation.
-          </p>
-        </div>
-
-        {/* ── Promo banner ── */}
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3.5 flex items-start gap-3">
-          <span className="text-xl shrink-0 mt-0.5">🎁</span>
-          <p className="text-xs font-semibold text-amber-800 leading-snug">
-            We are <span className="font-black">free till 25th May 2026.</span>{' '}
-            Buy before 24th May 2026 to lock in the discounted rate.
           </p>
         </div>
 
@@ -293,18 +284,15 @@ export default function PricingPage() {
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
 
           {/* Column headers */}
-          <div className="grid grid-cols-[1fr_1.15fr_1fr]">
-            {/* Feature header */}
-            <div className="px-4 py-3.5 border-b border-gray-100">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Feature</span>
+          <div className="grid grid-cols-[1fr_1.2fr_1fr]">
+            <div className="px-4 py-4 border-b border-gray-100">
+              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Feature</span>
             </div>
-            {/* Indicore header — blue highlight */}
-            <div className="bg-[#4A90E2] px-4 py-3.5 flex items-center justify-center border-b border-[#3a7fd4]">
-              <span className="text-sm font-black text-white tracking-wide">Indicore</span>
+            <div className="bg-[#4A90E2] px-4 py-4 flex items-center justify-center border-b border-[#3a7fd4]">
+              <span className="text-base font-black text-white tracking-wide">Indicore</span>
             </div>
-            {/* Others header */}
-            <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-center">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center leading-tight">Other Platforms</span>
+            <div className="px-4 py-4 border-b border-gray-100 flex items-center justify-center">
+              <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest text-center leading-tight">Other Platforms</span>
             </div>
           </div>
 
@@ -312,31 +300,31 @@ export default function PricingPage() {
           {COMPARISON_ROWS.map((row, i) => (
             <div
               key={row.feature}
-              className={`grid grid-cols-[1fr_1.15fr_1fr] ${i < COMPARISON_ROWS.length - 1 ? 'border-b border-gray-50' : ''}`}
+              className={`grid grid-cols-[1fr_1.2fr_1fr] ${i < COMPARISON_ROWS.length - 1 ? 'border-b border-gray-50' : ''}`}
             >
               {/* Feature label */}
-              <div className="px-4 py-4 flex items-start gap-2.5">
+              <div className="px-4 py-5 flex items-start gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 mt-0.5">
                   <row.Icon className="h-3.5 w-3.5 text-gray-400" />
                 </div>
-                <span className="text-[11px] font-bold text-gray-700 leading-snug pt-0.5">{row.feature}</span>
+                <span className="text-xs font-bold text-gray-700 leading-snug pt-0.5">{row.feature}</span>
               </div>
 
-              {/* Indicore value — blue bg */}
-              <div className="bg-[#EBF4FF] px-3 py-4 flex flex-col justify-center gap-0.5">
+              {/* Indicore value */}
+              <div className="bg-[#EBF4FF] px-3 py-5 flex flex-col justify-center">
                 <div className="flex items-start gap-1.5">
-                  <Check className="h-3.5 w-3.5 text-[#4A90E2] shrink-0 mt-[1px]" />
+                  <Check className="h-4 w-4 text-[#4A90E2] shrink-0 mt-[1px]" />
                   <div>
-                    <span className="text-[11px] font-black text-[#4A90E2] block leading-snug">{row.bold}</span>
-                    <span className="text-[10px] font-medium text-gray-500 leading-snug">{row.desc}</span>
+                    <span className="text-xs font-black text-[#4A90E2] block leading-snug">{row.bold}</span>
+                    <span className="text-[11px] font-semibold text-gray-500 leading-snug">{row.desc}</span>
                   </div>
                 </div>
               </div>
 
               {/* Other platforms value */}
-              <div className="px-3 py-4 flex items-start gap-1.5 justify-center">
-                <X className="h-3.5 w-3.5 text-red-400 shrink-0 mt-[1px]" />
-                <span className="text-[10px] font-medium text-gray-400 leading-snug">{row.others}</span>
+              <div className="px-3 py-5 flex items-start gap-1.5 justify-center">
+                <X className="h-4 w-4 text-red-400 shrink-0 mt-[1px]" />
+                <span className="text-[11px] font-semibold text-gray-400 leading-snug">{row.others}</span>
               </div>
             </div>
           ))}
@@ -354,13 +342,13 @@ export default function PricingPage() {
             }`}
           >
             <div className="mb-3">
-              <span className="text-[28px] font-black text-gray-900 leading-none">₹149</span>
-              <span className="text-xs font-bold text-gray-400">/month</span>
+              <span className="text-4xl font-black text-gray-900 leading-none">₹149</span>
+              <span className="text-sm font-bold text-gray-400">/month</span>
             </div>
-            <div className="inline-flex items-center bg-[#EBF4FF] text-[#4A90E2] text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full mb-2">
+            <div className="inline-flex items-center bg-[#EBF4FF] text-[#4A90E2] text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full mb-2">
               Billed Annually
             </div>
-            <p className="text-[10px] text-gray-400 font-medium leading-snug">Valid till UPSC Prelims 2027</p>
+            <p className="text-xs text-gray-400 font-semibold leading-snug">Valid till UPSC Prelims 2027</p>
             {selected === 'annual' && (
               <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-[#4A90E2] flex items-center justify-center">
                 <Check className="h-3 w-3 text-white" />
@@ -378,13 +366,13 @@ export default function PricingPage() {
             }`}
           >
             <div className="mb-3">
-              <span className="text-[28px] font-black text-gray-900 leading-none">₹199</span>
-              <span className="text-xs font-bold text-gray-400">/month</span>
+              <span className="text-4xl font-black text-gray-900 leading-none">₹199</span>
+              <span className="text-sm font-bold text-gray-400">/month</span>
             </div>
-            <div className="inline-flex items-center bg-gray-100 text-gray-500 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full mb-2">
+            <div className="inline-flex items-center bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full mb-2">
               Billed Monthly
             </div>
-            <p className="text-[10px] text-gray-400 font-medium leading-snug">Cancel anytime</p>
+            <p className="text-xs text-gray-400 font-semibold leading-snug">Cancel anytime</p>
             {selected === 'monthly' && (
               <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-[#4A90E2] flex items-center justify-center">
                 <Check className="h-3 w-3 text-white" />
@@ -398,7 +386,7 @@ export default function PricingPage() {
           <button
             onClick={() => handlePurchase(selected)}
             disabled={isLoading}
-            className="w-full py-4 rounded-2xl bg-[#4A90E2] text-white font-black text-base tracking-wide shadow-xl shadow-blue-200 hover:bg-[#3a7fd4] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl bg-[#4A90E2] text-white font-black text-lg tracking-wide shadow-xl shadow-blue-200 hover:bg-[#3a7fd4] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -409,7 +397,7 @@ export default function PricingPage() {
               'Start Your Journey'
             )}
           </button>
-          <p className="text-center text-[11px] text-gray-400 font-medium">
+          <p className="text-center text-xs text-gray-400 font-semibold">
             No contracts · Cancel anytime · Full cycle access
           </p>
         </div>

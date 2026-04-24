@@ -418,6 +418,10 @@ function QuizSetupContent() {
 
   // ── Subject Practice ──
   const openConfig = (subj: SubjectWithCount) => {
+    if (quotaLocked) {
+      router.push('/pricing')
+      return
+    }
     setConfigSubject(subj)
     setSelectedDifficulty('All')
     setQuestionCount(20)
@@ -783,33 +787,7 @@ function QuizSetupContent() {
         {/* ── SUBJECT PRACTICE TAB ── */}
         {activeTab === 'subject' && (
           <div className="space-y-8">
-            {quotaLocked ? (
-              /* ── Daily quota locked screen ── */
-              <div className="flex flex-col items-center justify-center py-16 md:py-24 gap-6 text-center">
-                <div className="h-20 w-20 rounded-full bg-amber-50 flex items-center justify-center">
-                  <Lock className="h-10 w-10 text-amber-400" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">FREE QUOTA USED</p>
-                  <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-3">Daily Practice Complete</h2>
-                  <p className="text-sm text-gray-400 font-medium mb-4 max-w-sm mx-auto leading-relaxed">
-                    You've used your 10 free questions for today. Upgrade to Pro for unlimited practice.
-                  </p>
-                  {unlockCountdown && (
-                    <p className="text-sm font-bold text-gray-600">
-                      Practice unlocks in{' '}
-                      <span className="text-[#4A90E2] font-black">{unlockCountdown}</span>
-                    </p>
-                  )}
-                </div>
-                <Link
-                  href="/pricing"
-                  className="bg-[#4A90E2] text-white px-8 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:bg-blue-600 transition-colors"
-                >
-                  Unlock Unlimited Practice with Pro →
-                </Link>
-              </div>
-            ) : !configSubject ? (
+            {!configSubject ? (
               <>
                 {/* Header */}
                 <div>
@@ -858,9 +836,9 @@ function QuizSetupContent() {
                             {/* Configure & Start — full width like mock/PYQ button */}
                             <button
                               className="h-12 md:h-14 w-full rounded-xl md:rounded-2xl flex items-center justify-center gap-2 font-black text-[11px] uppercase tracking-widest transition-all hover:opacity-90 shadow-sm"
-                              style={{ backgroundColor: color, color: '#fff' }}
+                              style={quotaLocked ? { backgroundColor: '#F59E0B', color: '#fff' } : { backgroundColor: color, color: '#fff' }}
                             >
-                              Configure & Start <ArrowRight className="h-4 w-4" />
+                              {quotaLocked ? <><Lock className="h-4 w-4" /> Quota Used — Upgrade</> : <>Configure & Start <ArrowRight className="h-4 w-4" /></>}
                             </button>
                           </div>
                         )
