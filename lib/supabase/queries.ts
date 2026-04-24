@@ -82,6 +82,30 @@ export async function getSubscription(userId: string): Promise<boolean> {
   }
 }
 
+/**
+ * Returns the submitted_at timestamp of the most recent subject-practice
+ * session completed by this user in the last 24 hours, or null if none.
+ * Used to enforce the free-tier daily 10-question quota.
+ */
+export async function getLastSubjectPracticeSession(userId: string): Promise<{ submitted_at: string } | null> {
+  try {
+    const sb = createClient()
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { data } = await sb
+      .from('test_sessions')
+      .select('submitted_at')
+      .eq('user_id', userId)
+      .eq('mode', 'subject_practice')
+      .gte('submitted_at', since)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    return data ? { submitted_at: data.submitted_at } : null
+  } catch {
+    return null
+  }
+}
+
 // ── SUBJECTS ──────────────────────────────────────────────────────────────────
 
 export async function getSubjects() {

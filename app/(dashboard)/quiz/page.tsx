@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { getSubjectsWithCounts, getQuestions, listMocks, getSubjectsWithMockCounts, listTestSessions, getQuestionsByIds, getSeenMockQuestionIds } from '@/lib/supabase/queries'
+import { getSubjectsWithCounts, getQuestions, listMocks, getSubjectsWithMockCounts, listTestSessions, getQuestionsByIds, getSeenMockQuestionIds, getLastSubjectPracticeSession } from '@/lib/supabase/queries'
 import { getCurrentUser } from '@/lib/supabase/auth'
 import { useQuizStore } from '@/store/quiz-store'
 import { toast } from 'sonner'
@@ -105,6 +105,11 @@ function QuizSetupContent() {
   const { isPro } = useSubscription()
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
+  // Free quota tracking
+  const [userId, setUserId] = useState<string | null>(null)
+  const [freeQuotaUsedAt, setFreeQuotaUsedAt] = useState<string | null>(null)
+  const [unlockCountdown, setUnlockCountdown] = useState('')
+
   const [activeTab, setActiveTab] = useState<'mock' | 'full' | 'subject'>(
     tabParam === 'full' ? 'full' : tabParam === 'subject' ? 'subject' : 'mock'
   )
@@ -123,6 +128,8 @@ function QuizSetupContent() {
 
   const effectiveQuestionCount = isPro ? questionCount : 10
   const effectiveDifficulty    = isPro ? selectedDifficulty : 'All'
+  // Free users are locked out for 24h after completing any subject-practice session
+  const quotaLocked = !isPro && !!freeQuotaUsedAt
 
   // Mock tab state
   type MockSubjectWithCount = Subject & { count: number }
@@ -153,6 +160,7 @@ function QuizSetupContent() {
   useEffect(() => {
     getCurrentUser().then(user => {
       if (user) {
+        setUserId(user.$id)
         setUserName(user.name || 'Aspirant')
         listTestSessions({ userId: user.$id, examType: 'INDICORE_MOCK', sort: 'newest', limit: 5 })
           .then(r => setMockSessions(r.documents))
@@ -214,6 +222,31 @@ function QuizSetupContent() {
     fetchMocks()
     fetchMockSubjects()
   }, [])
+
+  // Fetch last subject-practice session to enforce daily quota for free users
+  useEffect(() => {
+    if (!userId || isPro) return
+    getLastSubjectPracticeSession(userId).then(session => {
+      setFreeQuotaUsedAt(session?.submitted_at ?? null)
+    })
+  }, [userId, isPro])
+
+  // Live countdown: recalculate remaining time every minute
+  useEffect(() => {
+    if (!freeQuotaUsedAt) { setUnlockCountdown(''); return }
+    const compute = () => {
+      const usedAt = new Date(freeQuotaUsedAt).getTime()
+      const unlockAt = usedAt + 24 * 60 * 60 * 1000
+      const remaining = unlockAt - Date.now()
+      if (remaining <= 0) { setFreeQuotaUsedAt(null); setUnlockCountdown(''); return }
+      const h = Math.floor(remaining / (60 * 60 * 1000))
+      const m = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000))
+      setUnlockCountdown(`${h}h ${m}m`)
+    }
+    compute()
+    const interval = setInterval(compute, 60_000)
+    return () => clearInterval(interval)
+  }, [freeQuotaUsedAt])
 
   // ── Full Length PYQ Test ──
   const handleStartTest = async (paper: typeof PAPER_OPTIONS[0]) => {
@@ -409,6 +442,8 @@ function QuizSetupContent() {
       }
       // Invalidate subjects cache so fresh counts are loaded on next visit
       sessionStorage.removeItem('subjects_with_counts_v2')
+      // Mark daily quota as used immediately (optimistic — server confirms on next load)
+      if (!isPro) setFreeQuotaUsedAt(new Date().toISOString())
       useQuizStore.getState().resetQuiz()
       const qs = result.documents as unknown as Question[]
       setQuestions(qs)
@@ -748,7 +783,33 @@ function QuizSetupContent() {
         {/* ── SUBJECT PRACTICE TAB ── */}
         {activeTab === 'subject' && (
           <div className="space-y-8">
-            {!configSubject ? (
+            {quotaLocked ? (
+              /* ── Daily quota locked screen ── */
+              <div className="flex flex-col items-center justify-center py-16 md:py-24 gap-6 text-center">
+                <div className="h-20 w-20 rounded-full bg-amber-50 flex items-center justify-center">
+                  <Lock className="h-10 w-10 text-amber-400" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">FREE QUOTA USED</p>
+                  <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-3">Daily Practice Complete</h2>
+                  <p className="text-sm text-gray-400 font-medium mb-4 max-w-sm mx-auto leading-relaxed">
+                    You've used your 10 free questions for today. Upgrade to Pro for unlimited practice.
+                  </p>
+                  {unlockCountdown && (
+                    <p className="text-sm font-bold text-gray-600">
+                      Practice unlocks in{' '}
+                      <span className="text-[#4A90E2] font-black">{unlockCountdown}</span>
+                    </p>
+                  )}
+                </div>
+                <Link
+                  href="/pricing"
+                  className="bg-[#4A90E2] text-white px-8 py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:bg-blue-600 transition-colors"
+                >
+                  Unlock Unlimited Practice with Pro →
+                </Link>
+              </div>
+            ) : !configSubject ? (
               <>
                 {/* Header */}
                 <div>
