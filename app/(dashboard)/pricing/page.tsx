@@ -100,7 +100,7 @@ const COMPARISON_ROWS = [
     feature: 'Performance Analysis',
     Icon:    BarChart3,
     bold:    'PERSONALISED.',
-    desc:    'Personalised Real-Time Behavioural Analysis',
+    desc:    'Personalised Real-Time Analysis',
     others:  'No analysis provided',
   },
   {
@@ -108,7 +108,7 @@ const COMPARISON_ROWS = [
     Icon:    Clock,
     bold:    '5 MIN.',
     desc:    '5 minutes (save 60+ hours)',
-    others:  '2-3 hours per test (manual)',
+    others:  '2–3 hours per test',
   },
   {
     feature: 'Learning Approach',
@@ -129,7 +129,7 @@ const COMPARISON_ROWS = [
     Icon:    CalendarCheck,
     bold:    'FULL CYCLE.',
     desc:    '1 Complete UPSC Cycle',
-    others:  'Only 2-3 months',
+    others:  'Only 2–3 months',
   },
 ]
 
@@ -259,7 +259,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] pb-24">
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-8">
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
 
         {/* Back button */}
         <button
@@ -270,19 +270,54 @@ export default function PricingPage() {
         </button>
 
         {/* ── Hero ── */}
-        <div className="text-center space-y-4">
-          <h1 className="text-[2.75rem] md:text-6xl font-black text-gray-900 leading-[1.05] tracking-tight">
+        <div className="text-center space-y-3">
+          <h1 className="text-[1.85rem] sm:text-[2.75rem] md:text-6xl font-black text-gray-900 leading-[1.1] tracking-tight">
             Stop guessing.<br />Start improving.
           </h1>
-          <p className="text-base md:text-lg text-gray-500 font-semibold max-w-sm mx-auto leading-relaxed">
-            Most platforms sell you tests. We sell you transformation.<br />
-            See how Indicore redefines UPSC preparation.
+          <p className="text-sm sm:text-base md:text-lg text-gray-500 font-semibold max-w-sm mx-auto leading-relaxed">
+            Most platforms sell you tests. We sell you transformation.
+            <span className="hidden sm:inline"><br />See how Indicore redefines UPSC preparation.</span>
           </p>
         </div>
 
         {/* ── Comparison table ── */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Mobile: feature cards; md+: 3-column table */}
 
+        {/* Mobile card layout (hidden on md+) */}
+        <div className="md:hidden space-y-3">
+          {COMPARISON_ROWS.map((row) => (
+            <div key={row.feature} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              {/* Feature header */}
+              <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-50">
+                <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                  <row.Icon className="h-3.5 w-3.5 text-gray-400" />
+                </div>
+                <span className="text-xs font-black text-gray-700 uppercase tracking-wide">{row.feature}</span>
+              </div>
+              {/* Two columns: Indicore vs Others */}
+              <div className="grid grid-cols-2">
+                <div className="bg-[#EBF4FF] px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <Check className="h-3.5 w-3.5 text-[#4A90E2] shrink-0" />
+                    <span className="text-[10px] font-black text-[#4A90E2] uppercase tracking-wide">Indicore</span>
+                  </div>
+                  <p className="text-xs font-black text-[#4A90E2] leading-snug">{row.bold}</p>
+                  <p className="text-[11px] font-semibold text-gray-500 leading-snug">{row.desc}</p>
+                </div>
+                <div className="px-4 py-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <X className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Others</span>
+                  </div>
+                  <p className="text-[11px] font-semibold text-gray-400 leading-snug">{row.others}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop 3-column table (hidden on mobile) */}
+        <div className="hidden md:block bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
           {/* Column headers */}
           <div className="grid grid-cols-[1fr_1.2fr_1fr]">
             <div className="px-4 py-4 border-b border-gray-100">
@@ -302,15 +337,12 @@ export default function PricingPage() {
               key={row.feature}
               className={`grid grid-cols-[1fr_1.2fr_1fr] ${i < COMPARISON_ROWS.length - 1 ? 'border-b border-gray-50' : ''}`}
             >
-              {/* Feature label */}
               <div className="px-4 py-5 flex items-start gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 mt-0.5">
                   <row.Icon className="h-3.5 w-3.5 text-gray-400" />
                 </div>
                 <span className="text-xs font-bold text-gray-700 leading-snug pt-0.5">{row.feature}</span>
               </div>
-
-              {/* Indicore value */}
               <div className="bg-[#EBF4FF] px-3 py-5 flex flex-col justify-center">
                 <div className="flex items-start gap-1.5">
                   <Check className="h-4 w-4 text-[#4A90E2] shrink-0 mt-[1px]" />
@@ -320,8 +352,6 @@ export default function PricingPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Other platforms value */}
               <div className="px-3 py-5 flex items-start gap-1.5 justify-center">
                 <X className="h-4 w-4 text-red-400 shrink-0 mt-[1px]" />
                 <span className="text-[11px] font-semibold text-gray-400 leading-snug">{row.others}</span>
@@ -331,24 +361,30 @@ export default function PricingPage() {
         </div>
 
         {/* ── Pricing cards ── */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Stack on mobile, side-by-side on sm+ */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
           {/* Annual */}
           <button
             onClick={() => setSelected('annual')}
-            className={`relative rounded-3xl p-5 text-left transition-all border-2 ${
+            className={`relative rounded-2xl sm:rounded-3xl p-4 sm:p-5 text-left transition-all border-2 ${
               selected === 'annual'
                 ? 'border-[#4A90E2] bg-white shadow-lg shadow-blue-100'
                 : 'border-gray-100 bg-white shadow-sm'
             }`}
           >
-            <div className="mb-3">
-              <span className="text-4xl font-black text-gray-900 leading-none">₹149</span>
-              <span className="text-sm font-bold text-gray-400">/month</span>
+            {/* Best value badge */}
+            <div className="inline-flex items-center bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mb-2.5">
+              Best Value
             </div>
-            <div className="inline-flex items-center bg-[#EBF4FF] text-[#4A90E2] text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full mb-2">
+            <div className="flex items-baseline gap-1 mb-2">
+              <span className="text-3xl sm:text-4xl font-black text-gray-900 leading-none">₹149</span>
+              <span className="text-sm font-bold text-gray-400">/mo</span>
+            </div>
+            <div className="inline-flex items-center bg-[#EBF4FF] text-[#4A90E2] text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full mb-1.5">
               Billed Annually
             </div>
-            <p className="text-xs text-gray-400 font-semibold leading-snug">Valid till UPSC Prelims 2027</p>
+            <p className="text-[11px] text-gray-400 font-semibold leading-snug">Valid till UPSC Prelims 2027</p>
             {selected === 'annual' && (
               <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-[#4A90E2] flex items-center justify-center">
                 <Check className="h-3 w-3 text-white" />
@@ -359,20 +395,23 @@ export default function PricingPage() {
           {/* Monthly */}
           <button
             onClick={() => setSelected('monthly')}
-            className={`relative rounded-3xl p-5 text-left transition-all border-2 ${
+            className={`relative rounded-2xl sm:rounded-3xl p-4 sm:p-5 text-left transition-all border-2 ${
               selected === 'monthly'
                 ? 'border-[#4A90E2] bg-white shadow-lg shadow-blue-100'
                 : 'border-gray-100 bg-white shadow-sm'
             }`}
           >
-            <div className="mb-3">
-              <span className="text-4xl font-black text-gray-900 leading-none">₹199</span>
-              <span className="text-sm font-bold text-gray-400">/month</span>
+            <div className="inline-flex items-center bg-gray-50 text-gray-400 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mb-2.5">
+              Flexible
             </div>
-            <div className="inline-flex items-center bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full mb-2">
+            <div className="flex items-baseline gap-1 mb-2">
+              <span className="text-3xl sm:text-4xl font-black text-gray-900 leading-none">₹199</span>
+              <span className="text-sm font-bold text-gray-400">/mo</span>
+            </div>
+            <div className="inline-flex items-center bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full mb-1.5">
               Billed Monthly
             </div>
-            <p className="text-xs text-gray-400 font-semibold leading-snug">Cancel anytime</p>
+            <p className="text-[11px] text-gray-400 font-semibold leading-snug">Cancel anytime</p>
             {selected === 'monthly' && (
               <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-[#4A90E2] flex items-center justify-center">
                 <Check className="h-3 w-3 text-white" />
@@ -386,7 +425,7 @@ export default function PricingPage() {
           <button
             onClick={() => handlePurchase(selected)}
             disabled={isLoading}
-            className="w-full py-4 rounded-2xl bg-[#4A90E2] text-white font-black text-lg tracking-wide shadow-xl shadow-blue-200 hover:bg-[#3a7fd4] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl bg-[#4A90E2] text-white font-black text-base sm:text-lg tracking-wide shadow-xl shadow-blue-200 hover:bg-[#3a7fd4] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -397,7 +436,7 @@ export default function PricingPage() {
               'Start Your Journey'
             )}
           </button>
-          <p className="text-center text-xs text-gray-400 font-semibold">
+          <p className="text-center text-[11px] sm:text-xs text-gray-400 font-semibold">
             No contracts · Cancel anytime · Full cycle access
           </p>
         </div>
